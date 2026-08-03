@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="440" viewBox="0 0 1280 440" role="img" aria-labelledby="title desc">
+  <title id="title">nature-figure publication workflow</title>
+  <desc id="desc">A three-stage workflow from figure contract to rendering to review audit, with a publication figure preview.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071A38"/>
+      <stop offset="0.58" stop-color="#0C2F67"/>
+      <stop offset="1" stop-color="#123E80"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#73B7FF"/>
+      <stop offset="1" stop-color="#2E66D7"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.35" r="0.8">
+      <stop offset="0" stop-color="#8FC5FF" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#8FC5FF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#020A1A" flood-opacity="0.34"/>
+    </filter>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="440" rx="28" fill="url(#bg)"/>
+  <circle cx="1120" cy="70" r="170" fill="#4F9BFF" opacity="0.08"/>
+  <circle cx="1145" cy="82" r="100" fill="#9DCBFF" opacity="0.07" filter="url(#soft)"/>
+  <circle cx="40" cy="420" r="150" fill="#0B5AC4" opacity="0.16"/>
+
+  <g font-family="Arial, Helvetica, sans-serif">
+    <g transform="translate(64 62)">
+      <circle cx="44" cy="44" r="60" fill="url(#halo)"/>
+      <rect x="12" y="12" width="64" height="64" rx="16" fill="url(#brand)" filter="url(#shadow)"/>
+      <path d="M46 23 29 49h13l-7 20 24-31H46Z" fill="#fff"/>
+    </g>
+
+    <text x="170" y="106" fill="#FFFFFF" font-size="52" font-weight="700">nature-figure</text>
+    <text x="170" y="148" fill="#CFE4FF" font-size="24">A reviewable workflow for publication figures</text>
+    <text x="170" y="187" fill="#9FC4F2" font-size="18">Claim → evidence → layout → export → audit</text>
+
+    <g transform="translate(68 244)">
+      <rect width="160" height="42" rx="21" fill="#1D5CA8" stroke="#62A8FF" stroke-opacity="0.5"/>
+      <text x="80" y="27" text-anchor="middle" fill="#FFFFFF" font-size="17" font-weight="700">Python / R gate</text>
+      <rect x="178" width="178" height="42" rx="21" fill="#1D5CA8" stroke="#62A8FF" stroke-opacity="0.5"/>
+      <text x="267" y="27" text-anchor="middle" fill="#FFFFFF" font-size="17" font-weight="700">Independent exports</text>
+      <rect x="374" width="160" height="42" rx="21" fill="#1D5CA8" stroke="#62A8FF" stroke-opacity="0.5"/>
+      <text x="454" y="27" text-anchor="middle" fill="#FFFFFF" font-size="17" font-weight="700">Review-safe layout</text>
+    </g>
+
+    <g transform="translate(716 50)" filter="url(#shadow)">
+      <rect width="492" height="336" rx="18" fill="#F8FBFF"/>
+      <rect width="492" height="46" rx="18" fill="#E8F1FC"/>
+      <rect y="28" width="492" height="18" fill="#E8F1FC"/>
+      <circle cx="24" cy="23" r="6" fill="#FF7D72"/>
+      <circle cx="44" cy="23" r="6" fill="#FFC85A"/>
+      <circle cx="64" cy="23" r="6" fill="#54C878"/>
+      <text x="94" y="28" fill="#55708F" font-size="15">figure-contract / final-audit</text>
+
+      <g transform="translate(26 76)">
+        <rect width="242" height="202" rx="10" fill="#FFFFFF" stroke="#D2E0F0"/>
+        <line x1="36" y1="166" x2="218" y2="166" stroke="#7D95AE" stroke-width="1.5"/>
+        <line x1="36" y1="20" x2="36" y2="166" stroke="#7D95AE" stroke-width="1.5"/>
+        <path d="M48 139 C74 110 76 122 98 92 S130 121 148 84 S182 89 207 46" fill="none" stroke="#2E66D7" stroke-width="3"/>
+        <path d="M48 144 C76 130 88 146 107 119 S138 140 157 111 S187 113 207 86" fill="none" stroke="#35A38B" stroke-width="3"/>
+        <g fill="#2E66D7">
+          <circle cx="48" cy="139" r="4"/><circle cx="98" cy="92" r="4"/><circle cx="148" cy="84" r="4"/><circle cx="207" cy="46" r="4"/>
+        </g>
+        <g fill="#35A38B">
+          <circle cx="48" cy="144" r="4"/><circle cx="107" cy="119" r="4"/><circle cx="157" cy="111" r="4"/><circle cx="207" cy="86" r="4"/>
+        </g>
+        <text x="40" y="190" fill="#6C8299" font-size="12">independent figure · editable SVG</text>
+      </g>
+
+      <g transform="translate(292 76)">
+        <rect width="174" height="202" rx="10" fill="#F2F7FD" stroke="#D2E0F0"/>
+        <text x="18" y="27" fill="#244665" font-size="15" font-weight="700">Audit checks</text>
+        <g transform="translate(18 48)">
+          <rect width="138" height="34" rx="8" fill="#E3F5E9"/>
+          <circle cx="18" cy="17" r="9" fill="#2E9E64"/>
+          <path d="m14 17 3 3 6-7" fill="none" stroke="#fff" stroke-width="2"/>
+          <text x="36" y="22" fill="#286746" font-size="13">legend clear</text>
+        </g>
+        <g transform="translate(18 91)">
+          <rect width="138" height="34" rx="8" fill="#E3F5E9"/>
+          <circle cx="18" cy="17" r="9" fill="#2E9E64"/>
+          <path d="m14 17 3 3 6-7" fill="none" stroke="#fff" stroke-width="2"/>
+          <text x="36" y="22" fill="#286746" font-size="13">palette readable</text>
+        </g>
+        <g transform="translate(18 134)">
+          <rect width="138" height="34" rx="8" fill="#E3F5E9"/>
+          <circle cx="18" cy="17" r="9" fill="#2E9E64"/>
+          <path d="m14 17 3 3 6-7" fill="none" stroke="#fff" stroke-width="2"/>
+          <text x="36" y="22" fill="#286746" font-size="13">data unobstructed</text>
+        </g>
+      </g>
+    </g>
+
+    <g transform="translate(708 404)">
+      <text x="0" y="0" fill="#A7C8F2" font-size="15">A derivative extension focused on reproducible, reviewable figure production.</text>
+    </g>
+  </g>
+</svg>
