@@ -26,8 +26,8 @@
   <text x="200" y="69" font-size="14" font-weight="600" fill="#7fb9ff" text-anchor="middle" letter-spacing="2">AGENT SKILL · 派生扩展</text>
   <text x="80" y="136" font-size="54" font-weight="700" fill="#ffffff">让每一张论文配图</text>
   <text x="80" y="204" font-size="54" font-weight="700" fill="url(#headline)">都经得起审稿人追问</text>
-  <text x="82" y="250" font-size="19" fill="#cfe0ff">图表契约 → 后端门禁 → 独立导出 → 语义配色 · Python / R 单后端全套交付</text>
-  <!-- 右侧图表契约卡片 -->
+  <text x="82" y="250" font-size="19" fill="#cfe0ff">上游骨架原样继承 + 本地新增三规则：独立导出 · 不遮挡 · 语义配色</text>
+  <!-- 右侧扩展规则卡片 -->
   <g transform="rotate(-4 940 150)" filter="url(#card-shadow)">
     <rect x="760" y="42" width="360" height="216" rx="18" fill="#ffffff"/>
     <rect x="760" y="42" width="360" height="48" rx="18" fill="#f4f7fc"/>
@@ -35,19 +35,19 @@
     <circle cx="786" cy="66" r="6" fill="#ff5f57"/>
     <circle cx="808" cy="66" r="6" fill="#febc2e"/>
     <circle cx="830" cy="66" r="6" fill="#28c840"/>
-    <text x="940" y="72" font-size="15" font-weight="600" fill="#1e2a44" text-anchor="middle">Figure Contract 图表契约</text>
+    <text x="940" y="72" font-size="15" font-weight="600" fill="#1e2a44" text-anchor="middle">本仓库本地扩展 · 三条规则</text>
     <g font-size="13" fill="#333b4d">
       <circle cx="800" cy="112" r="10" fill="#2f5fb8"/>
       <path d="M 795 112 L 799 116 L 805 108" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <text x="820" y="116">核心结论一句话，面板对齐证据链</text>
+      <text x="820" y="116">多图不静默合并，跨图统一交付</text>
       <circle cx="800" cy="148" r="10" fill="#2f5fb8"/>
       <path d="M 795 148 L 799 152 L 805 144" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <text x="820" y="152">Python or R？锁定后不再换后端</text>
+      <text x="820" y="152">图例与统计信息让开数据点云</text>
       <circle cx="800" cy="184" r="10" fill="#2f5fb8"/>
       <path d="M 795 184 L 799 188 L 805 180" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <text x="820" y="188">图例不遮数据 · 颜色按科学角色</text>
+      <text x="820" y="188">颜色按科学角色分配·附调色板</text>
     </g>
     <rect x="800" y="212" width="200" height="30" rx="15" fill="url(#accent)"/>
-    <text x="900" y="232" font-size="12.5" font-weight="600" fill="#0f172a" text-anchor="middle">可编辑 SVG · PDF · TIFF 交付</text>
+    <text x="900" y="232" font-size="12.5" font-weight="600" fill="#0f172a" text-anchor="middle">每条规则都带可复用代码</text>
   </g>
 </svg>
