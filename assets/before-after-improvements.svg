@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="480" viewBox="0 0 880 480" font-family="PingFang SC, Microsoft YaHei, sans-serif">
+  <rect width="880" height="480" fill="#ffffff"/>
+  <text x="60" y="56" font-size="22" font-weight="700" fill="#1e2a44">同样的数据，两种审稿体验</text>
+  <text x="60" y="86" font-size="14" fill="#66708a">四项工作流改进落到图面上，就是这个差别。</text>
+
+  <!-- ===== 第一组：图例遮挡 ===== -->
+  <!-- Before：图例盖住数据 -->
+  <rect x="50" y="112" width="380" height="160" rx="14" fill="#ffffff" stroke="#dfe5ef"/>
+  <circle cx="78" cy="140" r="10" fill="#e5484d"/>
+  <path d="M 73.5 135.5 L 82.5 144.5 M 82.5 135.5 L 73.5 144.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+  <text x="96" y="145" font-size="13" font-weight="700" fill="#c0392b">Before · 图例压在数据上</text>
+  <g>
+    <path d="M 86 168 L 86 246 L 330 246" fill="none" stroke="#8a94a6" stroke-width="1.2"/>
+    <g fill="#4a7bd6">
+      <circle cx="120" cy="226" r="4"/><circle cx="138" cy="214" r="4"/><circle cx="156" cy="222" r="4"/>
+      <circle cx="174" cy="204" r="4"/><circle cx="192" cy="212" r="4"/><circle cx="210" cy="196" r="4"/>
+      <circle cx="228" cy="188" r="4"/><circle cx="246" cy="196" r="4"/><circle cx="264" cy="180" r="4"/>
+    </g>
+    <g fill="#f5a623">
+      <circle cx="232" cy="172" r="4"/><circle cx="250" cy="164" r="4"/><circle cx="268" cy="170" r="4"/>
+      <circle cx="286" cy="158" r="4"/><circle cx="300" cy="166" r="4"/><circle cx="314" cy="176" r="4"/>
+      <circle cx="278" cy="182" r="4"/><circle cx="296" cy="188" r="4"/>
+    </g>
+    <!-- 图例框压在橙色点云上 -->
+    <rect x="238" y="156" width="92" height="44" rx="4" fill="#ffffff" fill-opacity="0.92" stroke="#c9d2e0"/>
+    <circle cx="250" cy="170" r="3.5" fill="#4a7bd6"/><text x="260" y="174" font-size="9.5" fill="#333b4d">Control</text>
+    <circle cx="250" cy="188" r="3.5" fill="#f5a623"/><text x="260" y="192" font-size="9.5" fill="#333b4d">Treatment</text>
+  </g>
+  <text x="86" y="262" font-size="10.5" fill="#8a94a6">默认位置图例盖住右侧点云，审稿人看到的是遮挡</text>
+
+  <!-- 箭头 -->
+  <g stroke="#8a94a6" stroke-width="2" fill="none"><path d="M 438 192 L 460 192"/></g>
+  <path d="M 460 186 L 460 198 L 468 192 Z" fill="#8a94a6"/>
+
+  <!-- After：图例外置 -->
+  <rect x="470" y="112" width="380" height="160" rx="14" fill="#ffffff" stroke="#28a745" stroke-opacity="0.5"/>
+  <circle cx="498" cy="140" r="10" fill="#28a745"/>
+  <path d="M 493 140 L 497 144 L 503.5 135.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="516" y="145" font-size="13" font-weight="700" fill="#1e7d3c">After · 图例外置，数据完整</text>
+  <g>
+    <path d="M 506 168 L 506 246 L 726 246" fill="none" stroke="#8a94a6" stroke-width="1.2"/>
+    <g fill="#4a7bd6">
+      <circle cx="536" cy="226" r="4"/><circle cx="554" cy="214" r="4"/><circle cx="572" cy="222" r="4"/>
+      <circle cx="590" cy="204" r="4"/><circle cx="608" cy="212" r="4"/><circle cx="626" cy="196" r="4"/>
+      <circle cx="644" cy="188" r="4"/><circle cx="662" cy="196" r="4"/><circle cx="680" cy="180" r="4"/>
+    </g>
+    <g fill="#f5a623">
+      <circle cx="648" cy="172" r="4"/><circle cx="666" cy="164" r="4"/><circle cx="684" cy="170" r="4"/>
+      <circle cx="700" cy="158" r="4"/><circle cx="712" cy="166" r="4"/><circle cx="694" cy="182" r="4"/>
+      <circle cx="706" cy="188" r="4"/><circle cx="676" cy="176" r="4"/>
+    </g>
+    <!-- 外置图例：无框，放在绘图区右侧 -->
+    <g>
+      <circle cx="756" cy="188" r="4" fill="#4a7bd6"/><text x="766" y="192" font-size="10" fill="#333b4d">Control</text>
+      <circle cx="756" cy="212" r="4" fill="#f5a623"/><text x="766" y="216" font-size="10" fill="#333b4d">Treatment</text>
+    </g>
+    <line x1="738" y1="168" x2="738" y2="246" stroke="#dfe5ef" stroke-width="1" stroke-dasharray="3 3"/>
+  </g>
+  <text x="506" y="262" font-size="10.5" fill="#8a94a6">专用图例区 / 无框图例 / 统计条居中，均不遮挡观测点</text>
+
+  <!-- ===== 第二组：配色语义 ===== -->
+  <!-- Before：顺序套色 -->
+  <rect x="50" y="296" width="380" height="160" rx="14" fill="#ffffff" stroke="#dfe5ef"/>
+  <circle cx="78" cy="324" r="10" fill="#e5484d"/>
+  <path d="M 73.5 319.5 L 82.5 328.5 M 82.5 319.5 L 73.5 328.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+  <text x="96" y="329" font-size="13" font-weight="700" fill="#c0392b">Before · 按列表顺序套色</text>
+  <g>
+    <path d="M 96 340 L 96 418 L 380 418" fill="none" stroke="#8a94a6" stroke-width="1.2"/>
+    <rect x="124" y="366" width="40" height="52" fill="#e5484d"/>
+    <rect x="188" y="350" width="40" height="68" fill="#28a745"/>
+    <rect x="252" y="382" width="40" height="36" fill="#4a7bd6"/>
+    <rect x="316" y="358" width="40" height="60" fill="#f5a623"/>
+  </g>
+  <text x="96" y="449" font-size="10.5" fill="#8a94a6">四种颜色没有含义，读者只能猜哪个是主方法</text>
+
+  <!-- 箭头 -->
+  <g stroke="#8a94a6" stroke-width="2" fill="none"><path d="M 438 376 L 460 376"/></g>
+  <path d="M 460 370 L 460 382 L 468 376 Z" fill="#8a94a6"/>
+
+  <!-- After：语义配色 -->
+  <rect x="470" y="296" width="380" height="160" rx="14" fill="#ffffff" stroke="#28a745" stroke-opacity="0.5"/>
+  <circle cx="498" cy="324" r="10" fill="#28a745"/>
+  <path d="M 493 324 L 497 328 L 503.5 319.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="516" y="329" font-size="13" font-weight="700" fill="#1e7d3c">After · 颜色按科学角色分配</text>
+  <g>
+    <path d="M 516 340 L 516 418 L 800 418" fill="none" stroke="#8a94a6" stroke-width="1.2"/>
+    <!-- Baseline 族：同族同色 -->
+    <rect x="544" y="366" width="40" height="52" fill="#9aa8c0"/>
+    <rect x="596" y="382" width="40" height="36" fill="#9aa8c0"/>
+    <!-- 主结论：高显著色 -->
+    <rect x="660" y="346" width="40" height="72" fill="#2f5fb8"/>
+    <!-- 其他：中性浅色 -->
+    <rect x="724" y="374" width="40" height="44" fill="#e3e8f1" stroke="#c9d2e0" stroke-width="1"/>
+    <text x="564" y="431" font-size="9.5" fill="#8a94a6" text-anchor="middle">Baseline</text>
+    <text x="616" y="431" font-size="9.5" fill="#8a94a6" text-anchor="middle">Baseline</text>
+    <text x="680" y="431" font-size="9.5" font-weight="700" fill="#2f5fb8" text-anchor="middle">Ours</text>
+    <text x="744" y="431" font-size="9.5" fill="#8a94a6" text-anchor="middle">Other</text>
+  </g>
+  <text x="516" y="449" font-size="10" fill="#66708a">同族同色 · 高亮留给主结论 · 灰度打印可退回网纹</text>
+
+  <text x="60" y="474" font-size="11" fill="#66708a">以上规则全部写成文档化的工作流（SKILL.md + references/），可复现、可审查、可沿用。</text>
+</svg>

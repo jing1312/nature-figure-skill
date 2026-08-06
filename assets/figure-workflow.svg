@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="420" viewBox="0 0 880 420" font-family="PingFang SC, Microsoft YaHei, sans-serif">
+  <defs>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e4277"/>
+      <stop offset="1" stop-color="#4a7bd6"/>
+    </linearGradient>
+  </defs>
+  <rect width="880" height="420" fill="#ffffff"/>
+  <text x="60" y="62" font-size="22" font-weight="700" fill="#1e2a44">一张图的完整工作流：先立契约，再写代码</text>
+  <text x="60" y="92" font-size="14" fill="#66708a">科学结论与审查风险在写代码之前解决；选定的后端从绘制、预览到导出全程唯一。</text>
+  <!-- 主流程五个阶段 -->
+  <rect x="60" y="140" width="120" height="56" rx="12" fill="url(#accent)"/>
+  <text x="120" y="164" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">用户作图请求</text>
+  <text x="120" y="182" font-size="10.5" fill="#cfe0ff" text-anchor="middle">“帮我画三张图”</text>
+  <rect x="210" y="140" width="130" height="56" rx="12" fill="#ffffff" stroke="#dfe5ef"/>
+  <text x="275" y="164" font-size="14" font-weight="600" fill="#1e2a44" text-anchor="middle">图表契约</text>
+  <text x="275" y="182" font-size="10.5" fill="#8a94a6" text-anchor="middle">结论·证据链·面板</text>
+  <rect x="370" y="140" width="130" height="56" rx="12" fill="#eef4ff" stroke="#2f5fb8"/>
+  <text x="435" y="164" font-size="14" font-weight="600" fill="#1e4277" text-anchor="middle">后端门禁</text>
+  <text x="435" y="182" font-size="10.5" fill="#4a7bd6" text-anchor="middle">Python or R？</text>
+  <rect x="530" y="140" width="130" height="56" rx="12" fill="#ffffff" stroke="#dfe5ef"/>
+  <text x="595" y="164" font-size="14" font-weight="600" fill="#1e2a44" text-anchor="middle">绘制与布局 QA</text>
+  <text x="595" y="182" font-size="10.5" fill="#8a94a6" text-anchor="middle">单后端·审查自查</text>
+  <rect x="690" y="140" width="130" height="56" rx="12" fill="url(#accent)"/>
+  <text x="755" y="164" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">独立导出</text>
+  <text x="755" y="182" font-size="10.5" fill="#cfe0ff" text-anchor="middle">SVG+PDF/TIFF/PNG</text>
+  <!-- 主流程箭头 -->
+  <g stroke="#8a94a6" stroke-width="1.6" fill="none">
+    <path d="M 184 168 L 202 168"/>
+    <path d="M 344 168 L 362 168"/>
+    <path d="M 504 168 L 522 168"/>
+    <path d="M 664 168 L 682 168"/>
+  </g>
+  <g fill="#8a94a6">
+    <path d="M 202 163 L 202 173 L 210 168 Z"/>
+    <path d="M 362 163 L 362 173 L 370 168 Z"/>
+    <path d="M 522 163 L 522 173 L 530 168 Z"/>
+    <path d="M 682 163 L 682 173 L 690 168 Z"/>
+  </g>
+  <!-- 扩展区标签 -->
+  <text x="60" y="262" font-size="15" font-weight="700" fill="#1e2a44">本仓库的 4 项 nature-figure 工作流扩展</text>
+  <rect x="421" y="248" width="188" height="20" rx="10" fill="#eef4ff"/>
+  <text x="515" y="262" font-size="10.5" font-weight="600" fill="#2f5fb8" text-anchor="middle">衍生快照的本地贡献 ↓</text>
+  <!-- 虚线连接 -->
+  <g stroke="#a78bfa" stroke-width="1.6" stroke-dasharray="4 4" fill="none">
+    <path d="M 275 196 L 275 292"/>
+    <path d="M 435 196 L 435 292"/>
+    <path d="M 595 196 L 595 292"/>
+    <path d="M 755 196 L 755 292"/>
+  </g>
+  <!-- 扩展卡片 -->
+  <g>
+    <rect x="204" y="292" width="142" height="86" rx="12" fill="#ffffff" stroke="#a78bfa" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <circle cx="226" cy="316" r="11" fill="#a78bfa"/>
+    <text x="226" y="320" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="244" y="320.5" font-size="13" font-weight="700" fill="#1e2a44">语义配色</text>
+    <text x="220" y="344" font-size="10.5" fill="#66708a">颜色按科学角色分配</text>
+    <text x="220" y="362" font-size="10.5" fill="#66708a">同族同色·绿红示方向</text>
+  </g>
+  <g>
+    <rect x="364" y="292" width="142" height="86" rx="12" fill="#ffffff" stroke="#a78bfa" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <circle cx="386" cy="316" r="11" fill="#a78bfa"/>
+    <text x="386" y="320" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="404" y="320.5" font-size="13" font-weight="700" fill="#1e2a44">后端门禁</text>
+    <text x="380" y="344" font-size="10.5" fill="#66708a">未选后端不动手画图</text>
+    <text x="380" y="362" font-size="10.5" fill="#66708a">缺依赖即停·不跨语言</text>
+  </g>
+  <g>
+    <rect x="524" y="292" width="142" height="86" rx="12" fill="#ffffff" stroke="#a78bfa" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <circle cx="546" cy="316" r="11" fill="#a78bfa"/>
+    <text x="546" y="320" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+    <text x="564" y="320.5" font-size="13" font-weight="700" fill="#1e2a44">布局保护数据</text>
+    <text x="540" y="344" font-size="10.5" fill="#66708a">图例统计避开密集数据</text>
+    <text x="540" y="362" font-size="10.5" fill="#66708a">图例面板+无框统计条</text>
+  </g>
+  <g>
+    <rect x="684" y="292" width="142" height="86" rx="12" fill="#ffffff" stroke="#a78bfa" stroke-width="1.6" stroke-dasharray="5 4"/>
+    <circle cx="706" cy="316" r="11" fill="#a78bfa"/>
+    <text x="706" y="320" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+    <text x="724" y="320.5" font-size="13" font-weight="700" fill="#1e2a44">独立图集导出</text>
+    <text x="700" y="344" font-size="10.5" fill="#66708a">多图不静默合并成一张</text>
+    <text x="700" y="362" font-size="10.5" fill="#66708a">字体·轴词·精度跨图统一</text>
+  </g>
+</svg>
