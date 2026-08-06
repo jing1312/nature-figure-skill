@@ -88,12 +88,7 @@
 
 ## 📦 产物长什么样
 
-仓库根目录就有一份按本工作流产出的散点图样例（[`skill_scatter_plot.svg`](skill_scatter_plot.svg) /
-[`skill_scatter_plot.png`](skill_scatter_plot.png)）：文字可编辑、统计信息不遮挡点云、颜色按角色分配。
-
-![skill_scatter_plot](skill_scatter_plot.png)
-
-正式交付时，每张图是一组文件，而不是一张位图：
+本工作流的交付不是「一张位图」，而是**每张图一组文件**：
 
 ```text
 figure-01.svg    ← 主产物：文字保持可编辑，编辑部可直接改字
@@ -103,6 +98,7 @@ figure-01.png    ← 预览/演示用
 ```
 
 同一图集内的所有图共享字体、轴措辞、颜色语义与统计精度——返修时改一处，整套图一致更新。
+仓库根目录的 `skill_scatter_plot` 是随快照引入的静态示例素材，不代表本工作流的实际产出，效果见仁见智。
 
 ## 🧭 你能这样用
 
