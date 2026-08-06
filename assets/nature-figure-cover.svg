@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#12294f"/>
+      <stop offset="55%" stop-color="#1e4277"/>
+      <stop offset="100%" stop-color="#2f5fb8"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="headline" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7fb9ff"/>
+      <stop offset="100%" stop-color="#c9e2ff"/>
+    </linearGradient>
+    <filter id="card-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#0a1830" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="300" fill="url(#bg)"/>
+  <circle cx="1050" cy="50" r="190" fill="#38bdf8" opacity="0.07"/>
+  <circle cx="1130" cy="290" r="160" fill="#a78bfa" opacity="0.06"/>
+  <circle cx="60" cy="300" r="140" fill="#38bdf8" opacity="0.05"/>
+  <!-- 左侧文案 -->
+  <rect x="80" y="46" width="240" height="34" rx="17" fill="none" stroke="#38bdf8" stroke-opacity="0.55"/>
+  <text x="200" y="69" font-size="14" font-weight="600" fill="#7fb9ff" text-anchor="middle" letter-spacing="2">AGENT SKILL · 派生扩展</text>
+  <text x="80" y="136" font-size="54" font-weight="700" fill="#ffffff">让每一张论文配图</text>
+  <text x="80" y="204" font-size="54" font-weight="700" fill="url(#headline)">都经得起审稿人追问</text>
+  <text x="82" y="250" font-size="19" fill="#cfe0ff">图表契约 → 后端门禁 → 独立导出 → 语义配色 · Python / R 单后端全套交付</text>
+  <!-- 右侧图表契约卡片 -->
+  <g transform="rotate(-4 940 150)" filter="url(#card-shadow)">
+    <rect x="760" y="42" width="360" height="216" rx="18" fill="#ffffff"/>
+    <rect x="760" y="42" width="360" height="48" rx="18" fill="#f4f7fc"/>
+    <rect x="760" y="66" width="360" height="24" fill="#f4f7fc"/>
+    <circle cx="786" cy="66" r="6" fill="#ff5f57"/>
+    <circle cx="808" cy="66" r="6" fill="#febc2e"/>
+    <circle cx="830" cy="66" r="6" fill="#28c840"/>
+    <text x="940" y="72" font-size="15" font-weight="600" fill="#1e2a44" text-anchor="middle">Figure Contract 图表契约</text>
+    <g font-size="13" fill="#333b4d">
+      <circle cx="800" cy="112" r="10" fill="#2f5fb8"/>
+      <path d="M 795 112 L 799 116 L 805 108" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="820" y="116">核心结论一句话，面板对齐证据链</text>
+      <circle cx="800" cy="148" r="10" fill="#2f5fb8"/>
+      <path d="M 795 148 L 799 152 L 805 144" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="820" y="152">Python or R？锁定后不再换后端</text>
+      <circle cx="800" cy="184" r="10" fill="#2f5fb8"/>
+      <path d="M 795 184 L 799 188 L 805 180" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="820" y="188">图例不遮数据 · 颜色按科学角色</text>
+    </g>
+    <rect x="800" y="212" width="200" height="30" rx="15" fill="url(#accent)"/>
+    <text x="900" y="232" font-size="12.5" font-weight="600" fill="#0f172a" text-anchor="middle">可编辑 SVG · PDF · TIFF 交付</text>
+  </g>
+</svg>
