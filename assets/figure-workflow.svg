@@ -7,7 +7,7 @@
   </defs>
   <rect width="880" height="430" fill="#ffffff"/>
   <text x="60" y="62" font-size="22" font-weight="700" fill="#1e2a44">上游工作流骨架 + 本仓库的三项落地扩展</text>
-  <text x="60" y="92" font-size="14" fill="#66708a">蓝色主流程为上游 nature-figure 原样继承；紫色虚线框是本仓库 +180 行的纯新增贡献。</text>
+  <text x="60" y="92" font-size="14" fill="#66708a">蓝色主流程为上游 nature-figure 继承；紫色虚线框是本仓库的纯新增贡献。</text>
   <!-- 主流程标签 -->
   <rect x="60" y="112" width="150" height="20" rx="10" fill="#eef4ff"/>
   <text x="135" y="126" font-size="10.5" font-weight="600" fill="#2f5fb8" text-anchor="middle">上游骨架 · 原样继承</text>
@@ -40,7 +40,7 @@
     <path d="M 682 167 L 682 177 L 690 172 Z"/>
   </g>
   <!-- 扩展区标签 -->
-  <text x="60" y="262" font-size="15" font-weight="700" fill="#1e2a44">本仓库的 3 项扩展（+180 行纯新增、零删除）</text>
+  <text x="60" y="262" font-size="15" font-weight="700" fill="#1e2a44">本仓库的 3 项扩展</text>
   <rect x="430" y="248" width="250" height="20" rx="10" fill="#f4efff"/>
   <text x="555" y="262" font-size="10.5" font-weight="600" fill="#7c5cd6" text-anchor="middle">每条规则都带可复用模式或 helper ↓</text>
   <!-- 虚线连接：绘制QA → 语义配色 / 非遮挡；导出 → 独立图集 -->
