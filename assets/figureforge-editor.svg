@@ -17,13 +17,13 @@
 
   <!-- title -->
   <text x="80" y="58" font-size="22" font-weight="700" fill="#1e2a44">在浏览器里直接拖出论文配图</text>
-  <text x="80" y="88" font-size="14" fill="#66708a">FigureForge · 先选模板骨架，AI 填数据，再像 PPT 一样拖到位 · 支持撤销重做</text>
+  <text x="80" y="88" font-size="14" fill="#5a6478">FigureForge · 先选模板骨架，AI 填数据，再像 PPT 一样拖到位 · 支持撤销重做</text>
   <rect x="962" y="38" width="158" height="30" rx="15" fill="none" stroke="#38bdf8" stroke-opacity="0.55"/>
   <text x="1041" y="58" font-size="12" font-weight="600" fill="#2f5fb8" text-anchor="middle">在线可用 · 无需安装</text>
 
   <!-- ═══ editor window (tilted card) ═══ -->
   <g transform="rotate(-1.5 600 345)" filter="url(#winshadow)">
-    <rect x="100" y="110" width="1000" height="470" rx="16" fill="#ffffff" stroke="#dfe5ef"/>
+    <rect x="100" y="110" width="1000" height="470" rx="16" fill="#ffffff" stroke="#d3ddea" stroke-width="1.4"/>
     <!-- chrome -->
     <path d="M 100 126 a 16 16 0 0 1 16 -16 h 968 a 16 16 0 0 1 16 16 v 24 h -1000 Z" fill="#f4f7fc"/>
     <circle cx="126" cy="130" r="6" fill="#ff5f57"/>
@@ -31,14 +31,14 @@
     <circle cx="170" cy="130" r="6" fill="#28c840"/>
     <text x="600" y="136" font-size="14" font-weight="700" fill="#1e2a44" text-anchor="middle">FigureForge</text>
     <!-- editor toolbar -->
-    <line x1="100" y1="150" x2="1100" y2="150" stroke="#e6ebf3"/>
+    <line x1="100" y1="150" x2="1100" y2="150" stroke="#e6ebf3" stroke-width="1.4"/>
     <g fill="#eef2f8">
       <rect x="116" y="158" width="24" height="24" rx="4"/><rect x="144" y="158" width="24" height="24" rx="4"/>
       <rect x="180" y="158" width="24" height="24" rx="4"/>
       <rect x="216" y="158" width="24" height="24" rx="4"/><rect x="244" y="158" width="24" height="24" rx="4"/>
       <rect x="280" y="158" width="24" height="24" rx="4"/>
     </g>
-    <g font-size="12" fill="#66708a" text-anchor="middle">
+    <g font-size="12" fill="#5a6478" text-anchor="middle">
       <text x="128" y="174">↶</text><text x="156" y="174">↷</text>
       <text x="192" y="175" font-weight="700" font-family="Georgia, serif">T</text>
       <text x="228" y="174">⊞</text><text x="256" y="174">⇄</text>
@@ -49,14 +49,14 @@
 
     <!-- ── left panel: library ── -->
     <rect x="100" y="196" width="190" height="384" fill="#f8fafc"/>
-    <line x1="290" y1="196" x2="290" y2="580" stroke="#e6ebf3"/>
-    <text x="114" y="218" font-size="12" font-weight="700" fill="#66708a">📊 图表</text>
+    <line x1="290" y1="196" x2="290" y2="580" stroke="#e6ebf3" stroke-width="1.4"/>
+    <text x="114" y="218" font-size="12" font-weight="700" fill="#5a6478">📊 图表</text>
     <rect x="170" y="206" width="38" height="17" rx="8" fill="#eef4ff"/>
-    <text x="189" y="218" font-size="10" fill="#2f5fb8" text-anchor="middle">新建</text>
+    <text x="189" y="218" font-size="11" fill="#2f5fb8" text-anchor="middle">新建</text>
     <rect x="212" y="206" width="38" height="17" rx="8" fill="#eef4ff"/>
-    <text x="231" y="218" font-size="10" fill="#2f5fb8" text-anchor="middle">导入</text>
+    <text x="231" y="218" font-size="11" fill="#2f5fb8" text-anchor="middle">导入</text>
     <rect x="254" y="206" width="24" height="17" rx="8" fill="#eef4ff"/>
-    <text x="266" y="218" font-size="10" fill="#2f5fb8" text-anchor="middle">📁</text>
+    <text x="266" y="218" font-size="11" fill="#2f5fb8" text-anchor="middle">📁</text>
     <!-- template cards 2×3 -->
     <g>
       <rect x="112" y="232" width="82" height="54" rx="7" fill="#ffffff" stroke="#2f5fb8" stroke-width="1.5"/>
@@ -65,26 +65,26 @@
       <text x="153" y="280" font-size="12" fill="#1e2a44" text-anchor="middle">柱状图</text>
     </g>
     <g>
-      <rect x="200" y="232" width="82" height="54" rx="7" fill="#ffffff" stroke="#e6ebf3"/>
+      <rect x="200" y="232" width="82" height="54" rx="7" fill="#ffffff" stroke="#e6ebf3" stroke-width="1.4"/>
       <rect x="204" y="236" width="74" height="30" rx="3" fill="#f8fafc"/>
       <polyline points="212,258 228,248 244,252 264,242" fill="none" stroke="#4a7bd6" stroke-width="1.8"/>
       <text x="241" y="280" font-size="12" fill="#1e2a44" text-anchor="middle">折线图</text>
     </g>
     <g>
-      <rect x="112" y="294" width="82" height="54" rx="7" fill="#ffffff" stroke="#e6ebf3"/>
+      <rect x="112" y="294" width="82" height="54" rx="7" fill="#ffffff" stroke="#e6ebf3" stroke-width="1.4"/>
       <rect x="116" y="298" width="74" height="30" rx="3" fill="#f8fafc"/>
       <circle cx="136" cy="310" r="2.6" fill="#4a7bd6"/><circle cx="150" cy="316" r="2.6" fill="#4a7bd6"/><circle cx="164" cy="306" r="2.6" fill="#4a7bd6"/><circle cx="178" cy="312" r="2.6" fill="#4a7bd6"/>
       <text x="153" y="342" font-size="12" fill="#1e2a44" text-anchor="middle">散点图</text>
     </g>
     <g>
-      <rect x="200" y="294" width="82" height="54" rx="7" fill="#ffffff" stroke="#e6ebf3"/>
+      <rect x="200" y="294" width="82" height="54" rx="7" fill="#ffffff" stroke="#e6ebf3" stroke-width="1.4"/>
       <rect x="204" y="298" width="74" height="30" rx="3" fill="#f8fafc"/>
       <circle cx="241" cy="313" r="11" fill="#1e4277"/>
       <path d="M241 313 L241 302 A11 11 0 0 1 251 316 Z" fill="#7c5cd6"/>
       <text x="241" y="342" font-size="12" fill="#1e2a44" text-anchor="middle">饼图</text>
     </g>
     <g>
-      <rect x="112" y="356" width="82" height="54" rx="7" fill="#ffffff" stroke="#e6ebf3"/>
+      <rect x="112" y="356" width="82" height="54" rx="7" fill="#ffffff" stroke="#e6ebf3" stroke-width="1.4"/>
       <rect x="116" y="360" width="74" height="30" rx="3" fill="#f8fafc"/>
       <rect x="136" y="370" width="18" height="12" fill="#c9d8f5" stroke="#44507a" stroke-width="0.8"/>
       <line x1="136" y1="376" x2="154" y2="376" stroke="#44507a" stroke-width="1.3"/>
@@ -92,40 +92,40 @@
       <text x="153" y="404" font-size="12" fill="#1e2a44" text-anchor="middle">箱线图</text>
     </g>
     <g>
-      <rect x="200" y="356" width="82" height="54" rx="7" fill="#ffffff" stroke="#e6ebf3"/>
+      <rect x="200" y="356" width="82" height="54" rx="7" fill="#ffffff" stroke="#e6ebf3" stroke-width="1.4"/>
       <rect x="204" y="360" width="74" height="30" rx="3" fill="#f8fafc"/>
       <rect x="218" y="366" width="16" height="9" fill="#7c5cd6" opacity="0.75"/><rect x="236" y="366" width="16" height="9" fill="#a78bfa" opacity="0.75"/>
       <rect x="218" y="377" width="16" height="9" fill="#38bdf8" opacity="0.75"/><rect x="236" y="377" width="16" height="9" fill="#7fb9ff" opacity="0.75"/>
       <text x="241" y="404" font-size="12" fill="#1e2a44" text-anchor="middle">热图</text>
     </g>
     <!-- folders -->
-    <rect x="112" y="422" width="170" height="22" rx="6" fill="#ffffff" stroke="#e6ebf3"/>
-    <text x="122" y="437" font-size="9" fill="#8a94a6">▾</text>
-    <text x="136" y="437" font-size="11">📁</text>
+    <rect x="112" y="422" width="170" height="22" rx="6" fill="#ffffff" stroke="#e6ebf3" stroke-width="1.4"/>
+    <text x="122" y="437" font-size="9" fill="#5f6b81">▾</text>
+    <text x="136" y="437" font-size="12">📁</text>
     <text x="152" y="437" font-size="12" fill="#1e2a44">论文Figures</text>
-    <text x="274" y="437" font-size="10" fill="#8a94a6" text-anchor="end">2</text>
-    <rect x="112" y="450" width="170" height="22" rx="6" fill="#ffffff" stroke="#e6ebf3"/>
-    <text x="122" y="465" font-size="9" fill="#8a94a6">▸</text>
-    <text x="136" y="465" font-size="11">📁</text>
+    <text x="274" y="437" font-size="11" fill="#5f6b81" text-anchor="end">2</text>
+    <rect x="112" y="450" width="170" height="22" rx="6" fill="#ffffff" stroke="#e6ebf3" stroke-width="1.4"/>
+    <text x="122" y="465" font-size="9" fill="#5f6b81">▸</text>
+    <text x="136" y="465" font-size="12">📁</text>
     <text x="152" y="465" font-size="12" fill="#1e2a44">示意图</text>
-    <text x="274" y="465" font-size="10" fill="#8a94a6" text-anchor="end">3</text>
+    <text x="274" y="465" font-size="11" fill="#5f6b81" text-anchor="end">3</text>
     <!-- context menu hint -->
-    <rect x="196" y="474" width="150" height="66" rx="8" fill="#ffffff" stroke="#dfe5ef" filter="url(#winshadow)"/>
-    <text x="208" y="494" font-size="11" fill="#1e2a44">✏️ 重命名</text>
-    <text x="208" y="511" font-size="11" fill="#1e2a44">📂 移动到分组</text>
-    <text x="208" y="528" font-size="11" fill="#c0392b">🗑 删除模板</text>
+    <rect x="196" y="474" width="150" height="66" rx="8" fill="#ffffff" stroke="#d3ddea" stroke-width="1.4" filter="url(#winshadow)"/>
+    <text x="208" y="494" font-size="12" fill="#1e2a44">✏️ 重命名</text>
+    <text x="208" y="511" font-size="12" fill="#1e2a44">📂 移动到分组</text>
+    <text x="208" y="528" font-size="12" fill="#c0392b">🗑 删除模板</text>
 
     <!-- ── canvas area ── -->
     <rect x="290" y="196" width="600" height="384" fill="#eef2f8"/>
-    <rect x="340" y="216" width="500" height="300" rx="6" fill="#ffffff" stroke="#e6ebf3"/>
+    <rect x="340" y="216" width="500" height="300" rx="6" fill="#ffffff" stroke="#e6ebf3" stroke-width="1.4"/>
     <text x="590" y="246" font-size="15" font-weight="700" fill="#333333" text-anchor="middle">Figure 1 | Bar chart</text>
-    <line x1="400" y1="270" x2="400" y2="462" stroke="#333333" stroke-width="1.1"/>
-    <line x1="400" y1="462" x2="780" y2="462" stroke="#333333" stroke-width="1.1"/>
-    <g font-size="11" fill="#8a94a6" text-anchor="end">
+    <line x1="400" y1="270" x2="400" y2="462" stroke="#333333" stroke-width="1.4"/>
+    <line x1="400" y1="462" x2="780" y2="462" stroke="#333333" stroke-width="1.4"/>
+    <g font-size="12" fill="#5f6b81" text-anchor="end">
       <text x="391" y="466">0</text><text x="391" y="420">20</text><text x="391" y="374">40</text>
       <text x="391" y="328">60</text><text x="391" y="282">80</text>
     </g>
-    <g font-size="11" fill="#8a94a6" text-anchor="middle">
+    <g font-size="12" fill="#5f6b81" text-anchor="middle">
       <text x="444" y="478">A</text><text x="512" y="478">B</text><text x="580" y="478">C</text>
       <text x="648" y="478">D</text><text x="716" y="478">E</text>
     </g>
@@ -140,78 +140,78 @@
     <circle cx="486" cy="292" r="2.4" fill="#e91e8c"/><circle cx="600" cy="292" r="2.4" fill="#e91e8c"/>
     <text x="608" y="287" font-size="12" font-weight="600" fill="#e91e8c"></text>
     <!-- toast -->
-    <rect x="440" y="540" width="300" height="28" rx="14" fill="#ffffff" stroke="#dfe5ef"/>
-    <text x="590" y="558" font-size="12" fill="#66708a" text-anchor="middle">💾 已保存 · 重新打开接着改</text>
+    <rect x="440" y="540" width="300" height="28" rx="14" fill="#ffffff" stroke="#d3ddea" stroke-width="1.4"/>
+    <text x="590" y="558" font-size="12" fill="#5a6478" text-anchor="middle">💾 已保存 · 重新打开接着改</text>
 
     <!-- ── right panel: properties ── -->
     <rect x="890" y="196" width="1" height="384" fill="#e6ebf3"/>
     <rect x="891" y="196" width="209" height="384" fill="#f8fafc"/>
     <text x="904" y="218" font-size="13" font-weight="700" fill="#2f5fb8">属性 · rect</text>
-    <g font-size="13" fill="#66708a">
+    <g font-size="13" fill="#5a6478">
       <text x="904" y="244">填充</text>
       <text x="904" y="274">描边</text>
       <text x="904" y="304">圆角</text>
       <text x="904" y="334">X</text>
       <text x="904" y="364">Y</text>
     </g>
-    <rect x="958" y="231" width="22" height="16" rx="3" fill="#7884B4" stroke="#dfe5ef"/>
-    <rect x="986" y="231" width="100" height="16" rx="3" fill="#ffffff" stroke="#dfe5ef"/>
-    <text x="993" y="243" font-size="11" fill="#1e2a44" font-family="monospace">#7884B4</text>
-    <rect x="958" y="261" width="22" height="16" rx="3" fill="#333333" stroke="#dfe5ef"/>
-    <rect x="986" y="261" width="100" height="16" rx="3" fill="#ffffff" stroke="#dfe5ef"/>
-    <text x="993" y="273" font-size="11" fill="#1e2a44" font-family="monospace">#333333</text>
+    <rect x="958" y="231" width="22" height="16" rx="3" fill="#7884B4" stroke="#d3ddea" stroke-width="1.4"/>
+    <rect x="986" y="231" width="100" height="16" rx="3" fill="#ffffff" stroke="#d3ddea" stroke-width="1.4"/>
+    <text x="993" y="243" font-size="12" fill="#1e2a44" font-family="monospace">#7884B4</text>
+    <rect x="958" y="261" width="22" height="16" rx="3" fill="#333333" stroke="#d3ddea" stroke-width="1.4"/>
+    <rect x="986" y="261" width="100" height="16" rx="3" fill="#ffffff" stroke="#d3ddea" stroke-width="1.4"/>
+    <text x="993" y="273" font-size="12" fill="#1e2a44" font-family="monospace">#333333</text>
     <rect x="958" y="298" width="110" height="4" rx="2" fill="#e6ebf3"/>
     <circle cx="960" cy="300" r="5" fill="#2f5fb8"/>
-    <text x="1080" y="304" font-size="11" fill="#8a94a6" font-family="monospace">0</text>
+    <text x="1080" y="304" font-size="12" fill="#5f6b81" font-family="monospace">0</text>
     <rect x="958" y="328" width="110" height="4" rx="2" fill="#e6ebf3"/>
     <circle cx="986" cy="330" r="5" fill="#2f5fb8"/>
-    <text x="1074" y="334" font-size="11" fill="#8a94a6" font-family="monospace">496</text>
+    <text x="1074" y="334" font-size="12" fill="#5f6b81" font-family="monospace">496</text>
     <rect x="958" y="358" width="110" height="4" rx="2" fill="#e6ebf3"/>
     <circle cx="1064" cy="360" r="5" fill="#2f5fb8"/>
-    <text x="1074" y="364" font-size="11" fill="#8a94a6" font-family="monospace">212</text>
-    <line x1="904" y1="384" x2="1086" y2="384" stroke="#e6ebf3"/>
-    <text x="904" y="406" font-size="12" font-weight="700" fill="#66708a">🌍 全局设置</text>
-    <text x="904" y="430" font-size="12" fill="#66708a">色板</text>
-    <rect x="958" y="417" width="128" height="18" rx="4" fill="#ffffff" stroke="#dfe5ef"/>
-    <text x="965" y="430" font-size="11" fill="#1e2a44">Classic Nature</text>
-    <text x="1076" y="429" font-size="8" fill="#8a94a6">▾</text>
-    <text x="904" y="458" font-size="12" fill="#66708a">轴粗细</text>
+    <text x="1074" y="364" font-size="12" fill="#5f6b81" font-family="monospace">212</text>
+    <line x1="904" y1="384" x2="1086" y2="384" stroke="#e6ebf3" stroke-width="1.4"/>
+    <text x="904" y="406" font-size="12" font-weight="700" fill="#5a6478">🌍 全局设置</text>
+    <text x="904" y="430" font-size="12" fill="#5a6478">色板</text>
+    <rect x="958" y="417" width="128" height="18" rx="4" fill="#ffffff" stroke="#d3ddea" stroke-width="1.4"/>
+    <text x="965" y="430" font-size="12" fill="#1e2a44">Classic Nature</text>
+    <text x="1076" y="429" font-size="8" fill="#5f6b81">▾</text>
+    <text x="904" y="458" font-size="12" fill="#5a6478">轴粗细</text>
     <rect x="958" y="445" width="110" height="4" rx="2" fill="#e6ebf3"/>
     <circle cx="1000" cy="447" r="5" fill="#2f5fb8"/>
-    <text x="1074" y="458" font-size="11" fill="#8a94a6" font-family="monospace">1.5</text>
+    <text x="1074" y="458" font-size="12" fill="#5f6b81" font-family="monospace">1.5</text>
   </g>
 
   <!-- ═══ feature cards ═══ -->
   <g>
-    <rect x="80" y="610" width="260" height="96" rx="12" fill="#ffffff" stroke="#dfe5ef"/>
+    <rect x="80" y="610" width="260" height="96" rx="12" fill="#ffffff" stroke="#d3ddea" stroke-width="1.4"/>
     <circle cx="104" cy="636" r="11" fill="url(#accent)"/>
-    <text x="104" y="640" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="104" y="640" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
     <text x="124" y="640" font-size="14" font-weight="700" fill="#1e2a44">智能参考线</text>
-    <text x="102" y="666" font-size="12" fill="#66708a">边缘与中心自动吸附对齐</text>
-    <text x="102" y="686" font-size="12" fill="#66708a">拖动时“噔”地吸上 · Alt 临时关闭</text>
+    <text x="102" y="666" font-size="12" fill="#5a6478">边缘与中心自动吸附对齐</text>
+    <text x="102" y="686" font-size="12" fill="#5a6478">拖动时“噔”地吸上 · Alt 临时关闭</text>
   </g>
   <g>
-    <rect x="360" y="610" width="260" height="96" rx="12" fill="#ffffff" stroke="#dfe5ef"/>
+    <rect x="360" y="610" width="260" height="96" rx="12" fill="#ffffff" stroke="#d3ddea" stroke-width="1.4"/>
     <circle cx="384" cy="636" r="11" fill="url(#accent)"/>
-    <text x="384" y="640" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="384" y="640" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
     <text x="404" y="640" font-size="14" font-weight="700" fill="#1e2a44">多选与成组</text>
-    <text x="382" y="666" font-size="12" fill="#66708a">Shift+点击 / 框选多元素</text>
-    <text x="382" y="686" font-size="12" fill="#66708a">Ctrl+G 成组 · 批量改色与排列</text>
+    <text x="382" y="666" font-size="12" fill="#5a6478">Shift+点击 / 框选多元素</text>
+    <text x="382" y="686" font-size="12" fill="#5a6478">Ctrl+G 成组 · 批量改色与排列</text>
   </g>
   <g>
-    <rect x="640" y="610" width="260" height="96" rx="12" fill="#ffffff" stroke="#dfe5ef"/>
+    <rect x="640" y="610" width="260" height="96" rx="12" fill="#ffffff" stroke="#d3ddea" stroke-width="1.4"/>
     <circle cx="664" cy="636" r="11" fill="url(#accent)"/>
-    <text x="664" y="640" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+    <text x="664" y="640" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
     <text x="684" y="640" font-size="14" font-weight="700" fill="#1e2a44">会话自动保存</text>
-    <text x="662" y="666" font-size="12" fill="#66708a">每次编辑自动存入浏览器</text>
-    <text x="662" y="686" font-size="12" fill="#66708a">关闭后重新打开接着改</text>
+    <text x="662" y="666" font-size="12" fill="#5a6478">每次编辑自动存入浏览器</text>
+    <text x="662" y="686" font-size="12" fill="#5a6478">关闭后重新打开接着改</text>
   </g>
   <g>
-    <rect x="920" y="610" width="260" height="96" rx="12" fill="#ffffff" stroke="#dfe5ef"/>
+    <rect x="920" y="610" width="260" height="96" rx="12" fill="#ffffff" stroke="#d3ddea" stroke-width="1.4"/>
     <circle cx="944" cy="636" r="11" fill="url(#accent)"/>
-    <text x="944" y="640" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+    <text x="944" y="640" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
     <text x="964" y="640" font-size="14" font-weight="700" fill="#1e2a44">多格式导出</text>
-    <text x="942" y="666" font-size="12" fill="#66708a">SVG · PNG · TIFF · PPTX · JSON</text>
-    <text x="942" y="686" font-size="12" fill="#66708a">1×–4× · 1280/1920px · 300/600 dpi</text>
+    <text x="942" y="666" font-size="12" fill="#5a6478">SVG · PNG · TIFF · PPTX · JSON</text>
+    <text x="942" y="686" font-size="12" fill="#5a6478">1×–4× · 1280/1920px · 300/600 dpi</text>
   </g>
 </svg>
