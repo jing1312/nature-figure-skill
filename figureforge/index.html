@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FigureForge — 可视化图形编辑器</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header id="topbar">
+    <div class="logo">
+      <span class="logo-icon">🎨</span>
+      <span class="logo-text">FigureForge</span>
+    </div>
+    <div class="toolbar">
+      <button id="btn-undo" class="tool-btn" title="撤销 (Ctrl+Z)" disabled>↶</button>
+      <button id="btn-redo" class="tool-btn" title="重做 (Ctrl+Y)" disabled>↷</button>
+      <span class="tool-sep"></span>
+      <button id="btn-zoom-out" class="tool-btn" title="缩小">−</button>
+      <span id="zoom-level" class="zoom-display">100%</span>
+      <button id="btn-zoom-in" class="tool-btn" title="放大">+</button>
+      <button id="btn-zoom-fit" class="tool-btn" title="适应窗口">⤢</button>
+      <span class="tool-sep"></span>
+      <button id="btn-grid" class="tool-btn active" title="网格">⊞</button>
+      <button id="btn-snap" class="tool-btn active" title="对齐辅助">⇄</button>
+    </div>
+    <div class="export-bar">
+      <button id="btn-export-svg" class="export-btn">导出 SVG</button>
+      <button id="btn-export-png" class="export-btn">导出 PNG</button>
+      <button id="btn-copy-svg" class="export-btn">复制 SVG</button>
+    </div>
+  </header>
+  <div id="main-layout">
+    <aside id="left-panel">
+      <div class="panel-section">
+        <h3 class="panel-title">📐 图表类型</h3>
+        <div id="chart-gallery" class="template-gallery"></div>
+      </div>
+      <div class="panel-section">
+        <h3 class="panel-title">🏗️ 布局模式</h3>
+        <div id="layout-gallery" class="template-gallery"></div>
+      </div>
+      <div class="panel-section ai-section">
+        <h3 class="panel-title">🤖 AI 生成</h3>
+        <textarea id="ai-prompt" class="ai-input" rows="4" placeholder="描述你想要的图表，例如：&#10;3组数据的柱状图，比较不同方法的准确率..."></textarea>
+        <div class="ai-controls">
+          <select id="ai-palette-select" class="ai-select" title="选择色板"></select>
+          <button id="btn-ai-generate" class="ai-generate-btn">✨ 生成</button>
+        </div>
+        <div id="ai-status" class="ai-status"></div>
+      </div>
+    </aside>
+    <main id="canvas-area">
+      <div id="canvas-container">
+        <div id="canvas-empty" class="canvas-empty">
+          <div class="empty-icon">👈</div>
+          <p>从左侧选择一个模板开始</p>
+          <p class="empty-hint">或使用 AI 生成</p>
+        </div>
+        <div id="svg-canvas" class="svg-canvas hidden"></div>
+        <div id="selection-overlay" class="selection-overlay"></div>
+      </div>
+      <div id="context-menu" class="context-menu hidden"></div>
+    </main>
+    <aside id="right-panel">
+      <div id="prop-empty" class="prop-empty">
+        <p>选择一个元素查看属性</p>
+      </div>
+      <div id="prop-panel" class="prop-panel hidden">
+        <h3 class="panel-title" id="prop-title">属性</h3>
+        <div id="prop-content"></div>
+      </div>
+      <div class="panel-section global-section">
+        <h3 class="panel-title">🌍 全局设置</h3>
+        <div class="prop-row">
+          <label>色板</label>
+          <select id="global-palette" class="prop-select"></select>
+        </div>
+        <div class="prop-row">
+          <label>宽度 (mm)</label>
+          <input type="number" id="global-width" class="prop-input" value="183" min="50" max="500">
+        </div>
+        <div class="prop-row">
+          <label>高度 (mm)</label>
+          <input type="number" id="global-height" class="prop-input" value="120" min="50" max="500">
+        </div>
+        <div class="prop-row">
+          <label>背景</label>
+          <select id="global-bg" class="prop-select">
+            <option value="#FFFFFF">白色</option>
+            <option value="#000000">黑色</option>
+            <option value="transparent">透明</option>
+          </select>
+        </div>
+      </div>
+    </aside>
+  </div>
+  <script src="js/palettes.js"></script>
+  <script src="js/templates.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/canvas.js"></script>
+  <script src="js/properties.js"></script>
+  <script src="js/ai-generate.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
