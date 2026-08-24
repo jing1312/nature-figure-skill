@@ -20,7 +20,7 @@
 </div>
 
 > [!IMPORTANT]
-> 这是上游 `nature-skills`（袁一哲及贡献者）的**派生快照**，不是原仓库本身，也不声称替代上游。
+> 这是 `nature-skills`（袁一哲及贡献者）的**派生快照**。
 > 上游 MIT 许可与署名保留在 [`LICENSE`](LICENSE) 与 [`DERIVATIVE_NOTICE.md`](DERIVATIVE_NOTICE.md)。
 > 下文「[文件级贡献说明](#-文件级贡献说明可审查)」逐文件区分了本地修改与未改动的上游内容。
 
@@ -39,13 +39,13 @@
 - **颜色没有含义**：颜色按列表顺序套，读者看不出哪个是主方法，换一次顺序含义就变一次。
 - **组图各说各话**：字体、轴措辞、数值精度跨图不一致，返修时整套图被打回来统一。
 
-上游 `nature-figure` 已经给了一套完整的配图工作流骨架；本仓库的本地贡献不是再造一套流程，
+上游 `nature-figure` 已经给了一套完整的配图工作流骨架；本仓库的贡献不是再造一套流程，
 而是往这张「画布」上补齐**真正落地到画图动作的三类规则 + 两个可直接复用的 helper**——
 它们对应上面四个痛点里最容易返工的部分。
 
 ## ✨ 本仓库改进了什么（全部可对代码）
 
-本地修改集中在四个 `nature-figure` 文件、合计 **+180 行纯新增**（零删除），围绕三个主题；
+修改围绕三个主题；
 每条规则都配了可直接调用的模式或 helper，下文代码均摘自仓库。
 
 <img src="assets/figure-workflow.svg" alt="上游工作流骨架与本仓库三项扩展的组成" width="100%"/>
@@ -205,26 +205,12 @@ done
 更细的安装说明见 [`install.md`](install.md)。注意：部分插件元数据仍署上游项目名并面向上游配置，
 因此**手动整目录安装**是使用本派生快照最不容易出歧义的方式。
 
-### 想要上游最新版？
-
-```bash
-git clone https://github.com/Yuan1z0825/nature-skills.git
-```
-
-上游持续更新，本仓库是带扩展的历史快照、不自动同步。要最新技能列表请走上游，并参考
-[上游 README](https://github.com/Yuan1z0825/nature-skills#readme) 的安装方式。
-
-## 🛡️ 边界与不承诺
-
-- 这是**工作流与文档层面的扩展**，不是新的绘图库，也不保证任何期刊一定接收。
-- 它不能替代期刊的投稿须知、统计审查、无障碍检查和科学内容本身的验证。
-- 后端门禁、独立性、配色等规则能显著减少返修风险，但最终判断仍以审稿意见为准。
 
 ## 🔍 文件级贡献说明（可审查）
 
 把初始派生提交 [`11fc2b8`](https://github.com/jing1312/nature-figure-skill/commit/11fc2b84a4fcd4f035b7a6f32045a9b2832c6a12)
 与上游基线 [`f3941a1`](https://github.com/Yuan1z0825/nature-skills/commit/f3941a1722e39af78b24bc7a34167b8880629545)（2026-05-24）
-逐文件比对：实质性本地修改只有四个 `nature-figure` 文件，合计 **+180 行纯新增、零删除**：
+文件比对：
 
 | 文件 | 新增 | 本地贡献 |
 | --- | ---: | --- |
@@ -251,11 +237,5 @@ diff -r nature-skills/skills/nature-figure nature-figure-skill/skills/nature-fig
 上游项目归 **Yuan Yizhe（袁一哲）** 及其贡献者所有，按 [MIT 许可](LICENSE) 分发；
 本派生仓库保留原许可与版权。简明再分发须知见 [`DERIVATIVE_NOTICE.md`](DERIVATIVE_NOTICE.md)。
 
-再分发本仓库时请：
-
-1. 保留原始版权与许可；
-2. 注明它是 `Yuan1z0825/nature-skills` 的派生作品；
-3. 区分本地修改与未改动的上游内容；
-4. 不暗示上游维护者的背书或官方关联。
 
 欢迎提交 Issue / PR 改进 `nature-figure` 工作流扩展；涉及上游内容变更的建议，请优先提给上游。
