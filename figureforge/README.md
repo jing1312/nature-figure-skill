@@ -16,7 +16,10 @@ With traditional AI figure generation (including the `nature-figure-skill` workf
 
 ### Direct Manipulation (WYSIWYG)
 - Click to select → blue highlight overlay
-- Drag to move elements (with grid snapping)
+- Drag to move elements with **smart alignment guides** (BioRender / Figma style):
+  edges & centers snap to other elements and to the canvas frame, magenta
+  guide lines appear on alignment, hold <kbd>Alt</kbd> to bypass snapping
+- Grid snapping as fallback (5-unit step), toggle via the ⇄ toolbar button
 - Double-click to edit text inline
 - Right-click context menu: duplicate, bring to front, send to back, delete
 - Zoom (wheel / Ctrl±), pan, fit-to-view

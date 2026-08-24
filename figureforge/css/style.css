@@ -69,6 +69,15 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); over
 .svg-canvas svg text[data-edit="true"] { cursor: text; }
 .selection-overlay { position: absolute; pointer-events: none; border: 1.5px solid var(--selection); border-radius: 2px; box-shadow: 0 0 0 1px rgba(74,158,255,0.3); display: none; }
 .selection-overlay.active { display: block; }
+
+/* Smart alignment guides (BioRender / Figma style) */
+#guides-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 30; overflow: visible; }
+#guides-overlay .smart-guide { stroke: #e91e8c; stroke-width: 1; stroke-dasharray: none; opacity: 0.95; }
+
+/* Inline text editor */
+.text-editor { position: absolute; display: none; z-index: 40; background: rgba(255,255,255,0.96); border: 1px solid var(--accent); border-radius: 2px; padding: 0 3px; outline: none; font-family: var(--font); pointer-events: auto; }
+.text-editor.active { display: block; }
+
 .context-menu { position: absolute; background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 100; min-width: 140px; padding: 4px 0; }
 .context-menu.hidden { display: none; }
 .context-menu-item { padding: 6px 12px; cursor: pointer; font-size: 12px; color: var(--text); display: flex; align-items: center; gap: 6px; }
