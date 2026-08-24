@@ -9,12 +9,15 @@
 <body>
   <header id="topbar">
     <div class="logo">
+      <button id="btn-collapse-left" class="tool-btn" title="收起/展开左侧栏">«</button>
       <span class="logo-icon">🎨</span>
       <span class="logo-text">FigureForge</span>
     </div>
     <div class="toolbar">
       <button id="btn-undo" class="tool-btn" title="撤销 (Ctrl+Z)" disabled>↶</button>
       <button id="btn-redo" class="tool-btn" title="重做 (Ctrl+Y)" disabled>↷</button>
+      <span class="tool-sep"></span>
+      <button id="btn-insert-text" class="tool-btn text-btn" title="插入文本框">T</button>
       <span class="tool-sep"></span>
       <button id="btn-zoom-out" class="tool-btn" title="缩小">−</button>
       <span id="zoom-level" class="zoom-display">100%</span>
@@ -23,21 +26,33 @@
       <span class="tool-sep"></span>
       <button id="btn-grid" class="tool-btn active" title="网格">⊞</button>
       <button id="btn-snap" class="tool-btn active" title="对齐辅助">⇄</button>
+      <span class="tool-sep"></span>
+      <button id="btn-save" class="tool-btn" title="保存到浏览器 (Ctrl+S)，下次打开自动恢复">💾</button>
+      <button id="btn-help" class="tool-btn" title="快捷键帮助 (?)">?</button>
     </div>
     <div class="export-bar">
-      <button id="btn-export-svg" class="export-btn">导出 SVG</button>
-      <button id="btn-export-png" class="export-btn">导出 PNG</button>
+      <button id="btn-export-svg" class="export-btn">导出…</button>
+      <button id="btn-export-png" class="export-btn">PNG 2×</button>
       <button id="btn-copy-svg" class="export-btn">复制 SVG</button>
     </div>
   </header>
   <div id="main-layout">
     <aside id="left-panel">
       <div class="panel-section">
-        <h3 class="panel-title">📐 图表类型</h3>
+        <div class="panel-title-row">
+          <h3 class="panel-title">📊 图表</h3>
+          <div class="panel-title-actions">
+            <button id="btn-new-figure" class="mini-btn" title="新建空白图">➕ 新建</button>
+            <button id="btn-import-svg" class="mini-btn" title="导入 SVG 文件为模板">📥 导入</button>
+            <button id="btn-new-folder" class="mini-btn" title="新建分组文件夹">📁</button>
+          </div>
+        </div>
         <div id="chart-gallery" class="template-gallery"></div>
       </div>
       <div class="panel-section">
-        <h3 class="panel-title">🏗️ 布局模式</h3>
+        <div class="panel-title-row">
+          <h3 class="panel-title">🏗️ 布局</h3>
+        </div>
         <div id="layout-gallery" class="template-gallery"></div>
       </div>
       <div class="panel-section ai-section">
@@ -55,7 +70,7 @@
         <div id="canvas-empty" class="canvas-empty">
           <div class="empty-icon">👈</div>
           <p>从左侧选择一个模板开始</p>
-          <p class="empty-hint">或使用 AI 生成</p>
+          <p class="empty-hint">或使用 AI 生成 · 支持拖入 SVG / PNG 文件</p>
         </div>
         <div id="svg-canvas" class="svg-canvas hidden"></div>
         <svg id="guides-overlay"></svg>
@@ -67,6 +82,7 @@
     <aside id="right-panel">
       <div id="prop-empty" class="prop-empty">
         <p>选择一个元素查看属性</p>
+        <p class="empty-hint">Shift+点击多选 · 框选 · Ctrl+G 成组</p>
       </div>
       <div id="prop-panel" class="prop-panel hidden">
         <h3 class="panel-title" id="prop-title">属性</h3>
@@ -87,19 +103,82 @@
           <input type="number" id="global-height" class="prop-input" value="120" min="50" max="500">
         </div>
         <div class="prop-row">
-          <label>背景</label>
-          <select id="global-bg" class="prop-select">
-            <option value="#FFFFFF">白色</option>
-            <option value="#000000">黑色</option>
-            <option value="transparent">透明</option>
+          <label>图形背景</label>
+          <div class="bg-controls">
+            <input type="color" id="global-bg-color" value="#FFFFFF" title="图形背景色">
+            <label class="check-label"><input type="checkbox" id="global-bg-transparent"> 透明</label>
+          </div>
+        </div>
+        <div class="prop-row">
+          <label>工作区背景</label>
+          <select id="workspace-bg" class="prop-select">
+            <option value="#0f0f1a">深蓝黑</option>
+            <option value="#2b2b36">深灰</option>
+            <option value="#e8e8ec">浅灰</option>
+            <option value="#ffffff">白色</option>
+            <option value="#1a2e1f">墨绿</option>
+            <option value="#2e1a2a">暗紫</option>
           </select>
         </div>
       </div>
     </aside>
   </div>
+
+  <div id="export-modal" class="modal hidden">
+    <div class="modal-box">
+      <h3 class="modal-title">导出图形</h3>
+      <div class="modal-row">
+        <span class="modal-label">格式</span>
+        <div id="exp-formats" class="seg-group"></div>
+      </div>
+      <div class="modal-row" id="exp-scale-row">
+        <span class="modal-label">分辨率</span>
+        <div id="exp-scales" class="seg-group"></div>
+      </div>
+      <div class="modal-row" id="exp-bg-row">
+        <span class="modal-label">背景</span>
+        <div class="seg-group">
+          <label class="seg-btn radio-label"><input type="radio" name="exp-bg" value="#FFFFFF" checked> 白色</label>
+          <label class="seg-btn radio-label"><input type="radio" name="exp-bg" value="transparent"> 透明</label>
+        </div>
+      </div>
+      <p id="exp-hint" class="modal-hint"></p>
+      <div class="modal-actions">
+        <button id="btn-export-cancel" class="export-btn">取消</button>
+        <button id="btn-export-do" class="ai-generate-btn">导出</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="help-modal" class="modal hidden">
+    <div class="modal-box">
+      <h3 class="modal-title">⌨️ 快捷键</h3>
+      <div class="help-grid">
+        <span>撤销 / 重做</span><span>Ctrl+Z / Ctrl+Y</span>
+        <span>保存到浏览器</span><span>Ctrl+S</span>
+        <span>导出对话框</span><span>Ctrl+E</span>
+        <span>多选元素</span><span>Shift+点击 / 空白处拖框选</span>
+        <span>全选</span><span>Ctrl+A</span>
+        <span>成组 / 解组</span><span>Ctrl+G / Ctrl+Shift+G</span>
+        <span>复制 / 删除</span><span>Ctrl+D / Delete</span>
+        <span>微移元素</span><span>方向键（Shift+方向键 = 10 单位）</span>
+        <span>缩放画布</span><span>Ctrl+加/减/0，或鼠标滚轮</span>
+        <span>关闭吸附</span><span>按住 Alt 拖动</span>
+        <span>复制 SVG</span><span>Ctrl+Shift+C</span>
+        <span>本帮助</span><span>?</span>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-help-close" class="export-btn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="file-import-svg" accept=".svg" class="hidden" />
   <script src="js/palettes.js"></script>
   <script src="js/templates.js"></script>
   <script src="js/history.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/library.js"></script>
   <script src="js/canvas.js"></script>
   <script src="js/properties.js"></script>
   <script src="js/ai-generate.js"></script>

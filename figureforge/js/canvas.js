@@ -1,34 +1,33 @@
 /**
  * FigureForge — Canvas Direct Manipulation Engine
  *
- * Core SVG interaction: selection, drag, smart alignment guides (BioRender /
- * Figma style snapping), inline text edit, context menu, zoom.
- *
- * Smart guides: while dragging, the moving element's edges/centers are matched
- * against every other element's edges/centers plus the canvas edges/center.
- * On a hit the element snaps into exact alignment and a magenta guide line is
- * drawn between the two elements. Hold Alt to disable snapping temporarily.
+ * Selection: click / Shift+click multi-select / rubber-band marquee.
+ * Smart alignment guides (BioRender/Figma style) with Alt bypass.
+ * Grouping (Ctrl+G), ungrouping (Ctrl+Shift+G), inline text edit,
+ * arrow-key nudge, wheel zoom, external file drop.
  */
 const Canvas = (function () {
   let svgEl = null;
-  let selectedEl = null;
+  let selection = [];          // ordered selected elements (last = active)
   let zoom = 1;
   let vbW = 400;
   let vbH = 280;
   let showGrid = true;
   let snapEnabled = true;
 
-  const SNAP_DIST_PX = 6;      // snap tolerance in screen pixels
-  const GRID_SIZE = 5;         // fallback grid step (SVG units)
+  const SNAP_DIST_PX = 6;
+  const GRID_SIZE = 5;
   const MIN_ZOOM = 0.1;
   const MAX_ZOOM = 8;
+  const SVGNS = 'http://www.w3.org/2000/svg';
 
   let isDragging = false;
-  let dragStart = null;        // mouse position at drag start (SVG units)
-  let dragOrigPos = null;      // element logical position at drag start
-  let dragOrigBBox = null;     // element world bbox at drag start
+  let dragStart = null;
+  let dragStartState = [];     // [{el, pos, bbox}]
   let dragMoved = false;
-  let activeGuides = [];       // guide lines currently displayed
+
+  let rubber = null;           // marquee {x0,y0,x1,y1} svg coords
+  let activeGuides = [];
 
   // ── Load SVG markup into canvas ──
   function loadSVG(svgMarkup) {
@@ -40,7 +39,7 @@ const Canvas = (function () {
     svgEl = container.querySelector('svg');
     if (showGrid) container.classList.add('show-grid');
     else container.classList.remove('show-grid');
-    selectedEl = null;
+    selection = [];
     hideGuides();
     closeContextMenu();
     const vb = parseViewBox();
@@ -48,6 +47,7 @@ const Canvas = (function () {
     zoom = 1;
     updateSelectionOverlay();
     attachSVGListeners();
+    wireDrop();
     fitToView();
   }
 
@@ -65,31 +65,53 @@ const Canvas = (function () {
 
   function getSVGElement() { return svgEl; }
 
-  // ── Attach interaction listeners ──
   function attachSVGListeners() {
     if (!svgEl) return;
     svgEl.addEventListener('mousedown', onCanvasMouseDown);
     svgEl.addEventListener('dblclick', onCanvasDblClick);
     svgEl.addEventListener('contextmenu', onContextMenu);
+    svgEl.addEventListener('wheel', onWheel, { passive: false });
+  }
+
+  function onWheel(e) {
+    if (!svgEl) return;
+    e.preventDefault();
+    zoomBy(e.deltaY < 0 ? 1.1 : 1 / 1.1);
   }
 
   // ── Selection ──
-  function selectElement(el) {
-    if (selectedEl) selectedEl.removeAttribute('data-selected');
-    selectedEl = el;
-    if (el) el.setAttribute('data-selected', 'true');
+  function setSelection(els) {
+    selection.forEach(el => el.removeAttribute('data-selected'));
+    selection = (els || []).filter(Boolean);
+    selection.forEach(el => el.setAttribute('data-selected', 'true'));
+    notifySelectionChanged();
+  }
+
+  function selectElement(el) { setSelection(el ? [el] : []); }
+
+  function toggleInSelection(el) {
+    if (selection.includes(el)) setSelection(selection.filter(x => x !== el));
+    else setSelection([...selection, el]);
+  }
+
+  function addToSelection(els) {
+    const merged = [...selection];
+    els.forEach(el => { if (!merged.includes(el)) merged.push(el); });
+    setSelection(merged);
+  }
+
+  function getSelection() { return selection.slice(); }
+  function getSelected() { return selection.length ? selection[selection.length - 1] : null; }
+  function deselect() { setSelection([]); }
+
+  function notifySelectionChanged() {
     updateSelectionOverlay();
+    const el = getSelected();
     if (window.__ffOnSelectionChanged) window.__ffOnSelectionChanged(el);
     else if (window.Properties) Properties.onSelectionChanged(el);
   }
 
-  function getSelected() { return selectedEl; }
-
-  function deselect() { selectElement(null); }
-
-  // ── Coordinate helpers ──
-
-  // Screen point -> SVG user coordinates
+  // ── Coordinates ──
   function getMousePos(e) {
     const ctm = svgEl.getScreenCTM();
     if (!ctm) return { x: 0, y: 0 };
@@ -97,7 +119,6 @@ const Canvas = (function () {
     return { x: pt.x, y: pt.y };
   }
 
-  // SVG user coordinates -> pixel offsets relative to #canvas-container
   function toContainerOffset(x, y) {
     const containerRect = document.getElementById('canvas-container').getBoundingClientRect();
     const svgRect = svgEl.getBoundingClientRect();
@@ -122,7 +143,6 @@ const Canvas = (function () {
     return null;
   }
 
-  // Bounding box in world (viewBox) coordinates, including our own translate().
   function getWorldBBox(el) {
     let b;
     try { b = el.getBBox(); } catch (e) { b = { x: 0, y: 0, width: 0, height: 0 }; }
@@ -135,7 +155,16 @@ const Canvas = (function () {
     return { x: b.x + dx, y: b.y + dy, w: b.width, h: b.height };
   }
 
-  // Logical position used by drag math and the properties panel.
+  function unionBBox(boxes) {
+    if (!boxes.length) return { x: 0, y: 0, w: 0, h: 0 };
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    boxes.forEach(b => {
+      x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y);
+      x1 = Math.max(x1, b.x + b.w); y1 = Math.max(y1, b.y + b.h);
+    });
+    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+  }
+
   function getElementPosition(el) {
     const tag = el.tagName;
     if (tag === 'circle' || tag === 'ellipse')
@@ -162,7 +191,6 @@ const Canvas = (function () {
       for (let i = 0; i + 1 < pts.length; i += 2) { pts[i] += dx; pts[i + 1] += dy; }
       el.setAttribute('points', pts.join(','));
     } else {
-      // paths, groups and anything else: cumulative translate()
       let ox = 0, oy = 0;
       const tr = el.getAttribute('transform');
       if (tr) {
@@ -181,46 +209,55 @@ const Canvas = (function () {
   // ── Selection overlay ──
   function updateSelectionOverlay() {
     const overlay = document.getElementById('selection-overlay');
-    if (!selectedEl || !svgEl) {
+    const guidesSvg = document.getElementById('guides-overlay');
+    if (guidesSvg) guidesSvg.querySelectorAll('.member-rect,.rubber-rect').forEach(r => r.remove());
+    if (!selection.length || !svgEl) {
       if (overlay) overlay.classList.remove('active');
       return;
     }
     try {
-      const bbox = getWorldBBox(selectedEl);
-      const tl = toContainerOffset(bbox.x, bbox.y);
+      const boxes = selection.map(getWorldBBox);
+      const union = unionBBox(boxes);
+      const tl = toContainerOffset(union.x, union.y);
       const scale = currentScale();
-      overlay.style.left = tl.x + 'px';
-      overlay.style.top = tl.y + 'px';
-      overlay.style.width = (bbox.w * scale.sx) + 'px';
-      overlay.style.height = (bbox.h * scale.sy) + 'px';
-      overlay.classList.add('active');
-    } catch (e) { /* getBBox can fail for non-rendered elements */ }
+      if (overlay) {
+        overlay.style.left = tl.x + 'px';
+        overlay.style.top = tl.y + 'px';
+        overlay.style.width = (union.w * scale.sx) + 'px';
+        overlay.style.height = (union.h * scale.sy) + 'px';
+        overlay.classList.add('active');
+      }
+      if (guidesSvg && selection.length > 1) {
+        boxes.forEach(b => {
+          const r = document.createElementNS(SVGNS, 'rect');
+          const p = toContainerOffset(b.x, b.y);
+          r.setAttribute('x', p.x); r.setAttribute('y', p.y);
+          r.setAttribute('width', b.w * scale.sx); r.setAttribute('height', b.h * scale.sy);
+          r.setAttribute('class', 'member-rect');
+          guidesSvg.appendChild(r);
+        });
+      }
+    } catch (e) { /* non-rendered elements */ }
   }
 
   // ── Smart alignment guides ──
-
-  // Collect candidate alignment targets from sibling elements + canvas frame.
-  function collectSnapTargets(excludeEl) {
+  function collectSnapTargets(excludeSet) {
     const xs = [], ys = [];
-    const addX = (v, src) => xs.push({ v, src });
-    const addY = (v, src) => ys.push({ v, src });
-
-    // canvas edges + centers
-    [0, vbW / 2, vbW].forEach(v => addX(v, null));
-    [0, vbH / 2, vbH].forEach(v => addY(v, null));
-
+    [0, vbW / 2, vbW].forEach(v => xs.push({ v, src: null }));
+    [0, vbH / 2, vbH].forEach(v => ys.push({ v, src: null }));
     svgEl.querySelectorAll('[data-edit="true"]').forEach(el => {
-      if (el === excludeEl || el.contains(excludeEl) || excludeEl.contains(el)) return;
-      if (!el.isConnected) return;
+      if (excludeSet.has(el)) return;
+      let anc = el.parentNode, skip = false;
+      while (anc && anc !== svgEl) { if (excludeSet.has(anc)) { skip = true; break; } anc = anc.parentNode; }
+      if (skip || !el.isConnected) return;
       const b = getWorldBBox(el);
       if (!b.w && !b.h) return;
-      addX(b.x, b); addX(b.x + b.w / 2, b); addX(b.x + b.w, b);
-      addY(b.y, b); addY(b.y + b.h / 2, b); addY(b.y + b.h, b);
+      xs.push({ v: b.x, src: b }, { v: b.x + b.w / 2, src: b }, { v: b.x + b.w, src: b });
+      ys.push({ v: b.y, src: b }, { v: b.y + b.h / 2, src: b }, { v: b.y + b.h, src: b });
     });
     return { xs, ys };
   }
 
-  // Find best snap for one axis. Returns { delta, guidePos, targetBBox } or null.
   function bestSnap(movingEdges, targets, tol) {
     let best = null;
     for (const t of targets) {
@@ -235,13 +272,13 @@ const Canvas = (function () {
     return best;
   }
 
-  function renderGuideLines(guides, movingBBox) {
+  function renderGuideLines(guides) {
     const overlay = document.getElementById('guides-overlay');
     if (!overlay) return;
-    overlay.innerHTML = '';
+    overlay.querySelectorAll('.smart-guide').forEach(l => l.remove());
     activeGuides = guides;
     for (const g of guides) {
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      const line = document.createElementNS(SVGNS, 'line');
       if (g.axis === 'v') {
         const p1 = toContainerOffset(g.pos, g.from);
         const p2 = toContainerOffset(g.pos, g.to);
@@ -261,112 +298,276 @@ const Canvas = (function () {
   function hideGuides() {
     activeGuides = [];
     const overlay = document.getElementById('guides-overlay');
-    if (overlay) overlay.innerHTML = '';
+    if (overlay) overlay.querySelectorAll('.smart-guide').forEach(l => l.remove());
   }
 
-  // ── Mouse down: start drag or select ──
+  // ── Mouse down ──
   function onCanvasMouseDown(e) {
     closeContextMenu();
     if (e.button !== 0) return;
+    commitTextEdit();
     const target = findEditableElement(e.target);
-    if (!target) { deselect(); return; }
-    selectElement(target);
-    isDragging = true;
-    dragMoved = false;
-    dragStart = getMousePos(e);
-    dragOrigPos = getElementPosition(target);
-    dragOrigBBox = getWorldBBox(target);
-    document.addEventListener('mousemove', onCanvasMouseMove);
-    document.addEventListener('mouseup', onCanvasMouseUp);
+    if (target) {
+      if (e.shiftKey) toggleInSelection(target);
+      else if (!selection.includes(target)) selectElement(target);
+      startDrag(e);
+    } else {
+      if (!e.shiftKey) deselect();
+      startRubber(e);
+    }
     e.preventDefault();
   }
 
+  function startDrag(e) {
+    isDragging = true;
+    dragMoved = false;
+    dragStart = getMousePos(e);
+    dragStartState = selection.map(el => ({ el, pos: getElementPosition(el), bbox: getWorldBBox(el) }));
+    document.addEventListener('mousemove', onCanvasMouseMove);
+    document.addEventListener('mouseup', onCanvasMouseUp);
+  }
+
+  function startRubber(e) {
+    const p = getMousePos(e);
+    rubber = { x0: p.x, y0: p.y, x1: p.x, y1: p.y, additive: e.shiftKey };
+    document.addEventListener('mousemove', onRubberMove);
+    document.addEventListener('mouseup', onRubberUp);
+  }
+
+  function onRubberMove(e) {
+    if (!rubber) return;
+    const p = getMousePos(e);
+    rubber.x1 = p.x; rubber.y1 = p.y;
+    const overlay = document.getElementById('guides-overlay');
+    if (!overlay) return;
+    overlay.querySelectorAll('.rubber-rect').forEach(r => r.remove());
+    const scale = currentScale();
+    const a = toContainerOffset(Math.min(rubber.x0, rubber.x1), Math.min(rubber.y0, rubber.y1));
+    const r = document.createElementNS(SVGNS, 'rect');
+    r.setAttribute('x', a.x); r.setAttribute('y', a.y);
+    r.setAttribute('width', Math.abs(rubber.x1 - rubber.x0) * scale.sx);
+    r.setAttribute('height', Math.abs(rubber.y1 - rubber.y0) * scale.sy);
+    r.setAttribute('class', 'rubber-rect');
+    overlay.appendChild(r);
+  }
+
+  function onRubberUp() {
+    document.removeEventListener('mousemove', onRubberMove);
+    document.removeEventListener('mouseup', onRubberUp);
+    if (!rubber) return;
+    const overlay = document.getElementById('guides-overlay');
+    if (overlay) overlay.querySelectorAll('.rubber-rect').forEach(r => r.remove());
+    const rx0 = Math.min(rubber.x0, rubber.x1), rx1 = Math.max(rubber.x0, rubber.x1);
+    const ry0 = Math.min(rubber.y0, rubber.y1), ry1 = Math.max(rubber.y0, rubber.y1);
+    const tiny = Math.abs(rx1 - rx0) < 2 && Math.abs(ry1 - ry0) < 2;
+    const hits = [];
+    if (!tiny) {
+      svgEl.querySelectorAll('[data-edit="true"]').forEach(el => {
+        const b = getWorldBBox(el);
+        if (b.x < rx1 && b.x + b.w > rx0 && b.y < ry1 && b.y + b.h > ry0) hits.push(el);
+      });
+    }
+    if (rubber.additive) addToSelection(hits); else setSelection(hits);
+    rubber = null;
+  }
+
   function onCanvasMouseMove(e) {
-    if (!isDragging || !selectedEl) return;
+    if (!isDragging || !selection.length) return;
     const pos = getMousePos(e);
     let dx = pos.x - dragStart.x;
     let dy = pos.y - dragStart.y;
     if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragMoved = true;
     if (!dragMoved) return;
 
-    let newX = dragOrigPos.x + dx;
-    let newY = dragOrigPos.y + dy;
+    const union = unionBBox(dragStartState.map(s => s.bbox));
     let snapped = false;
 
     if (snapEnabled && !e.altKey) {
       const tol = SNAP_DIST_PX / Math.max(currentScale().sx, 0.0001);
-      const m = {
-        x: dragOrigBBox.x + dx,
-        y: dragOrigBBox.y + dy,
-        w: dragOrigBBox.w,
-        h: dragOrigBBox.h,
-      };
-      const targets = collectSnapTargets(selectedEl);
-
+      const m = { x: union.x + dx, y: union.y + dy, w: union.w, h: union.h };
+      const exclude = new Set(selection);
+      const targets = collectSnapTargets(exclude);
       const snapX = bestSnap([m.x, m.x + m.w / 2, m.x + m.w], targets.xs, tol);
       const snapY = bestSnap([m.y, m.y + m.h / 2, m.y + m.h], targets.ys, tol);
-
       const guides = [];
       if (snapX) {
-        newX += snapX.delta; snapped = true;
-        guides.push({
-          axis: 'v', pos: snapX.guidePos,
+        dx += snapX.delta; snapped = true;
+        guides.push({ axis: 'v', pos: snapX.guidePos,
           from: Math.min(m.y, snapX.targetBBox ? snapX.targetBBox.y : 0),
-          to: Math.max(m.y + m.h, snapX.targetBBox ? snapX.targetBBox.y + snapX.targetBBox.h : vbH),
-        });
+          to: Math.max(m.y + m.h, snapX.targetBBox ? snapX.targetBBox.y + snapX.targetBBox.h : vbH) });
       }
       if (snapY) {
-        newY += snapY.delta; snapped = true;
-        guides.push({
-          axis: 'h', pos: snapY.guidePos,
+        dy += snapY.delta; snapped = true;
+        guides.push({ axis: 'h', pos: snapY.guidePos,
           from: Math.min(m.x, snapY.targetBBox ? snapY.targetBBox.x : 0),
-          to: Math.max(m.x + m.w, snapY.targetBBox ? snapY.targetBBox.x + snapY.targetBBox.w : vbW),
-        });
+          to: Math.max(m.x + m.w, snapY.targetBBox ? snapY.targetBBox.x + snapY.targetBBox.w : vbW) });
       }
-      if (snapped) renderGuideLines(guides, m);
-      else hideGuides();
+      if (snapped) renderGuideLines(guides); else hideGuides();
     }
 
     if (!snapped && snapEnabled && !e.altKey) {
-      // grid fallback
-      newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
-      newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
+      dx = Math.round(dx / GRID_SIZE) * GRID_SIZE;
+      dy = Math.round(dy / GRID_SIZE) * GRID_SIZE;
     }
 
-    setElementPosition(selectedEl, newX, newY);
+    dragStartState.forEach(s => setElementPosition(s.el, s.pos.x + dx, s.pos.y + dy));
     updateSelectionOverlay();
   }
 
   function onCanvasMouseUp() {
-    if (isDragging && dragMoved && selectedEl) {
-      const newPos = getElementPosition(selectedEl);
-      if (newPos.x !== dragOrigPos.x || newPos.y !== dragOrigPos.y) {
-        const el = selectedEl;
-        if (window.History) {
-          History.push({
-            undo: () => setElementPosition(el, dragOrigPos.x, dragOrigPos.y),
-            redo: () => setElementPosition(el, newPos.x, newPos.y),
-            label: 'Move'
-          });
-        }
+    if (isDragging && dragMoved && dragStartState.length) {
+      const moves = dragStartState.map(s => ({ el: s.el, from: s.pos, to: getElementPosition(s.el) }))
+        .filter(m => m.from.x !== m.to.x || m.from.y !== m.to.y);
+      if (moves.length && window.History) {
+        History.push({
+          undo: () => moves.forEach(m => setElementPosition(m.el, m.from.x, m.from.y)),
+          redo: () => moves.forEach(m => setElementPosition(m.el, m.to.x, m.to.y)),
+          label: 'Move'
+        });
       }
     }
     isDragging = false;
     dragMoved = false;
+    dragStartState = [];
     hideGuides();
     document.removeEventListener('mousemove', onCanvasMouseMove);
     document.removeEventListener('mouseup', onCanvasMouseUp);
   }
 
+  // ── Nudge with arrow keys ──
+  function nudge(dx, dy) {
+    if (!selection.length) return;
+    const moves = selection.map(el => ({ el, from: getElementPosition(el) }));
+    moves.forEach(m => setElementPosition(m.el, m.from.x + dx, m.from.y + dy));
+    updateSelectionOverlay();
+    if (window.History) {
+      History.push({
+        undo: () => moves.forEach(m => setElementPosition(m.el, m.from.x, m.from.y)),
+        redo: () => moves.forEach(m => setElementPosition(m.el, m.from.x + dx, m.from.y + dy)),
+        label: 'Nudge'
+      });
+    }
+  }
+
+  // ── Grouping ──
+  function groupSelection() {
+    if (selection.length < 2 || !svgEl) return;
+    const parent = selection[0].parentNode;
+    if (!parent || !selection.every(el => el.parentNode === parent)) {
+      if (window.Export) Export.toast('只能成组同一层级的元素');
+      return;
+    }
+    const anchor = selection[selection.length - 1].nextSibling;
+    const g = document.createElementNS(SVGNS, 'g');
+    g.setAttribute('data-edit', 'true');
+    g.setAttribute('data-role', 'group');
+    const members = selection.slice();
+    parent.insertBefore(g, anchor); // insert first: members may be adjacent siblings
+    members.forEach(el => { el.removeAttribute('data-edit'); el.removeAttribute('data-selected'); g.appendChild(el); });
+    selectElement(g);
+    if (window.History) {
+      History.push({
+        undo: () => { members.forEach(el => { parent.insertBefore(el, g); el.setAttribute('data-edit', 'true'); }); g.remove(); if (selection.includes(g)) setSelection(members); },
+        redo: () => { members.forEach(el => g.appendChild(el)); parent.insertBefore(g, anchor); if (selection.length) selectElement(g); },
+        label: 'Group'
+      });
+    }
+  }
+
+  function ungroupSelection() {
+    const groups = selection.filter(el => el.tagName === 'g' && el.getAttribute('data-role') === 'group');
+    if (!groups.length) return;
+    const restored = [];
+    const records = groups.map(g => {
+      const parent = g.parentNode;
+      const anchor = g.nextSibling;
+      const members = [...g.children];
+      members.forEach(el => { el.setAttribute('data-edit', 'true'); parent.insertBefore(el, g); restored.push(el); });
+      parent.removeChild(g);
+      return { parent, anchor, members, g };
+    });
+    setSelection(restored);
+    if (window.History) {
+      History.push({
+        undo: () => { records.forEach(r => { r.members.forEach(el => { el.removeAttribute('data-edit'); r.g.appendChild(el); }); r.parent.insertBefore(r.g, r.anchor); }); if (records.length) selectElement(records.map(r => r.g)); },
+        redo: () => { records.forEach(r => { r.members.forEach(el => { el.setAttribute('data-edit', 'true'); r.parent.insertBefore(el, r.g); }); r.parent.removeChild(r.g); }); setSelection(restored); },
+        label: 'Ungroup'
+      });
+    }
+  }
+
+  // ── Insert text ──
+  function insertText(x, y, str) {
+    if (!svgEl) return null;
+    const t = document.createElementNS(SVGNS, 'text');
+    t.setAttribute('x', x === undefined ? vbW / 2 : x);
+    t.setAttribute('y', y === undefined ? vbH / 2 : y);
+    t.setAttribute('font-family', "'Arial',sans-serif");
+    t.setAttribute('font-size', '10');
+    t.setAttribute('fill', '#333333');
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('data-edit', 'true');
+    t.textContent = str || '文本 Text';
+    svgEl.appendChild(t);
+    selectElement(t);
+    if (window.History) {
+      History.push({
+        undo: () => { if (t.parentNode) t.parentNode.removeChild(t); },
+        redo: () => { svgEl.appendChild(t); },
+        label: 'Insert Text'
+      });
+    }
+    startTextEdit(t);
+    return t;
+  }
+
+  // ── External file drop ──
+  function wireDrop() {
+    const area = document.getElementById('canvas-area');
+    if (!area) return;
+    area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drop-hover'); });
+    area.addEventListener('dragleave', () => area.classList.remove('drop-hover'));
+    area.addEventListener('drop', e => {
+      e.preventDefault();
+      area.classList.remove('drop-hover');
+      const files = [...(e.dataTransfer.files || [])];
+      if (!files.length) return;
+      if (window.__ffOnFilesDropped) window.__ffOnFilesDropped(files, getMousePos(e));
+    });
+  }
+
+  // Embed a raster image (dataURL) as an <image> element at svg coords.
+  function insertImage(dataURL, x, y) {
+    if (!svgEl) return null;
+    const img = document.createElementNS(SVGNS, 'image');
+    const w = vbW * 0.5;
+    img.setAttribute('x', x === undefined ? vbW * 0.25 : x);
+    img.setAttribute('y', y === undefined ? vbH * 0.25 : y);
+    img.setAttribute('width', w);
+    img.setAttribute('data-edit', 'true');
+    img.setAttribute('href', dataURL);
+    svgEl.appendChild(img);
+    selectElement(img);
+    if (window.History) {
+      History.push({
+        undo: () => { if (img.parentNode) img.parentNode.removeChild(img); },
+        redo: () => { svgEl.appendChild(img); },
+        label: 'Insert Image'
+      });
+    }
+    return img;
+  }
+
   // ── Double-click: inline text edit ──
   function onCanvasDblClick(e) {
     const target = findEditableElement(e.target);
-    if (!target || target.tagName !== 'text') return;
+    if (!target) return;
     e.preventDefault();
-    startTextEdit(target);
+    if (target.tagName === 'text') startTextEdit(target);
+    else if (target.tagName === 'g' && target.getAttribute('data-role') === 'group') ungroupSelection();
   }
 
-  let textEditing = null; // { el, oldText }
+  let textEditing = null;
 
   function startTextEdit(textEl) {
     commitTextEdit();
@@ -376,7 +577,6 @@ const Canvas = (function () {
     const tl = toContainerOffset(bbox.x, bbox.y);
     const scale = currentScale();
     const fontSize = (parseFloat(textEl.getAttribute('font-size')) || 8) * scale.sy;
-
     editor.style.left = tl.x + 'px';
     editor.style.top = (tl.y - fontSize * 0.25) + 'px';
     editor.style.fontSize = fontSize + 'px';
@@ -384,7 +584,6 @@ const Canvas = (function () {
     editor.style.fontWeight = textEl.getAttribute('font-weight') || 'normal';
     editor.style.color = textEl.getAttribute('fill') || '#333333';
     editor.style.minWidth = Math.max(bbox.w * scale.sx, 60) + 'px';
-
     editor.value = textEl.textContent;
     editor.classList.add('active');
     textEl.style.visibility = 'hidden';
@@ -436,23 +635,30 @@ const Canvas = (function () {
   function onContextMenu(e) {
     e.preventDefault();
     const target = findEditableElement(e.target);
-    if (target) selectElement(target);
-    openContextMenu(e.clientX, e.clientY, target);
+    if (target && !selection.includes(target)) {
+      if (e.shiftKey) toggleInSelection(target); else selectElement(target);
+    }
+    openContextMenu(e.clientX, e.clientY);
   }
 
-  function openContextMenu(pageX, pageY, el) {
+  function openContextMenu(pageX, pageY) {
     const menu = document.getElementById('context-menu');
     if (!menu) return;
     menu.innerHTML = '';
+    const el = getSelected();
+    const many = selection.length > 1;
     const items = [];
-    if (el && el.tagName === 'text') items.push({ label: '✏️ 编辑文字', fn: () => startTextEdit(el) });
-    if (el) {
-      items.push({ label: '⧉ 复制元素', fn: duplicateElement });
-      items.push({ label: '⬆ 置顶', fn: () => raiseToTop(el) });
-      items.push({ label: '⬇ 置底', fn: () => lowerToBottom(el) });
+    if (many) items.push({ label: '⛓ 成组 (Ctrl+G)', fn: groupSelection });
+    if (el && el.tagName === 'g' && el.getAttribute('data-role') === 'group')
+      items.push({ label: '⛓✕ 解组 (Ctrl+Shift+G)', fn: ungroupSelection });
+    if (selection.length === 1 && el && el.tagName === 'text') items.push({ label: '✏️ 编辑文字', fn: () => startTextEdit(el) });
+    if (selection.length) {
+      items.push({ label: '⧉ 复制', fn: duplicateElement });
+      items.push({ label: '⬆ 置顶', fn: () => raiseToTop(selection.slice()) });
+      items.push({ label: '⬇ 置底', fn: () => lowerToBottom(selection.slice()) });
       items.push({ label: '🗑 删除', danger: true, fn: deleteElement });
     } else {
-      items.push({ label: '⬅ 取消选择', fn: deselect });
+      items.push({ label: '✒️ 插入文本框', fn: () => insertText() });
     }
     items.forEach(it => {
       const div = document.createElement('div');
@@ -472,62 +678,75 @@ const Canvas = (function () {
     if (menu) menu.classList.add('hidden');
   }
 
-  function pushParentHistory(el, label, undoFn, redoFn) {
-    if (window.History) History.push({ undo: undoFn, redo: redoFn, label });
+  function raiseToTop(els) {
+    const parents = new Set(els.map(el => el.parentNode));
+    if (parents.size !== 1 || !els.length) return;
+    const parent = els[0].parentNode;
+    const anchors = els.map(el => el.nextSibling);
+    els.forEach(el => parent.appendChild(el));
+    if (window.History) History.push({
+      undo: () => { for (let i = els.length - 1; i >= 0; i--) parent.insertBefore(els[i], anchors[i]); },
+      redo: () => els.forEach(el => parent.appendChild(el)),
+      label: 'Raise'
+    });
   }
 
-  function raiseToTop(el) {
-    const parent = el.parentNode;
-    if (!parent) return;
-    const next = el.nextSibling;
-    parent.appendChild(el);
-    pushParentHistory(el, 'Raise', () => { parent.insertBefore(el, next); }, () => parent.appendChild(el));
-  }
-
-  function lowerToBottom(el) {
-    const parent = el.parentNode;
-    if (!parent) return;
+  function lowerToBottom(els) {
+    const parents = new Set(els.map(el => el.parentNode));
+    if (parents.size !== 1 || !els.length) return;
+    const parent = els[0].parentNode;
+    const firsts = new Map();
+    els.forEach(el => { const p = el.parentNode; if (!firsts.has(p)) firsts.set(p, p.firstChild); });
+    const anchors = els.map(el => el.nextSibling);
     const first = parent.firstChild;
-    const next = el.nextSibling;
-    parent.insertBefore(el, first);
-    pushParentHistory(el, 'Lower', () => { parent.insertBefore(el, next); }, () => { parent.insertBefore(el, first); });
+    [...els].reverse().forEach(el => parent.insertBefore(el, first));
+    if (window.History) History.push({
+      undo: () => { for (let i = els.length - 1; i >= 0; i--) parent.insertBefore(els[i], anchors[i]); },
+      redo: () => { [...els].reverse().forEach(el => parent.insertBefore(el, first)); },
+      label: 'Lower'
+    });
   }
 
-  // ── Delete / duplicate ──
+  // ── Delete / duplicate (multi) ──
   function deleteElement() {
-    if (!selectedEl) return;
-    const el = selectedEl;
-    const parent = el.parentNode;
-    if (!parent) return;
-    const next = el.nextSibling;
-    parent.removeChild(el);
+    if (!selection.length) return;
+    const els = selection.slice();
+    const records = els.map(el => ({ parent: el.parentNode, anchor: el.nextSibling, el }));
+    records.forEach(r => r.parent.removeChild(r.el));
     deselect();
     if (window.History) {
       History.push({
-        undo: () => { parent.insertBefore(el, next); },
-        redo: () => { parent.removeChild(el); deselect(); },
+        undo: () => records.forEach(r => { if (!r.el.isConnected) r.parent.insertBefore(r.el, r.anchor); }),
+        redo: () => records.forEach(r => { if (r.el.isConnected) r.parent.removeChild(r.el); }),
         label: 'Delete'
       });
     }
   }
 
   function duplicateElement() {
-    if (!selectedEl || !svgEl) return;
-    const src = selectedEl;
-    const parent = src.parentNode;
-    const anchor = src.nextSibling;
-    const el = src.cloneNode(true);
-    el.removeAttribute('data-selected');
-    applyTranslate(el, 10, -10);
-    parent.insertBefore(el, anchor);
-    selectElement(el);
+    if (!selection.length || !svgEl) return;
+    const clones = selection.map(src => {
+      const parent = src.parentNode;
+      const anchor = src.nextSibling;
+      const el = src.cloneNode(true);
+      el.removeAttribute('data-selected');
+      applyTranslate(el, 10, -10);
+      parent.insertBefore(el, anchor);
+      return { parent, anchor, el };
+    });
+    setSelection(clones.map(c => c.el));
     if (window.History) {
       History.push({
-        undo: () => { if (el.isConnected) { parent.removeChild(el); } if (selectedEl === el) deselect(); },
-        redo: () => { parent.insertBefore(el, anchor); },
+        undo: () => { clones.forEach(c => { if (c.el.isConnected) c.parent.removeChild(c.el); }); },
+        redo: () => { clones.forEach(c => { if (!c.el.isConnected) c.parent.insertBefore(c.el, c.anchor); }); },
         label: 'Duplicate'
       });
     }
+  }
+
+  function selectAll() {
+    if (!svgEl) return;
+    setSelection([...svgEl.querySelectorAll('[data-edit="true"]')]);
   }
 
   // ── Zoom ──
@@ -563,7 +782,6 @@ const Canvas = (function () {
     if (!snapEnabled) hideGuides();
   }
 
-  // ── Init ──
   function initStaticWiring() {
     wireTextEditor();
     document.addEventListener('mousedown', (e) => {
@@ -576,11 +794,14 @@ const Canvas = (function () {
 
   return {
     loadSVG, getSVGMarkup, getSVGElement,
-    selectElement, getSelected, deselect, updateSelectionOverlay,
+    selectElement, setSelection, addToSelection, toggleInSelection,
+    getSelection, getSelected, deselect, selectAll, updateSelectionOverlay,
     getWorldBBox, getElementPosition, setElementPosition, applyTranslate,
+    groupSelection, ungroupSelection,
+    insertText, insertImage,
+    nudge, deleteElement, duplicateElement,
     toggleGrid, toggleSnap,
     zoomBy, setZoom, getZoom, fitToView,
-    deleteElement, duplicateElement,
     startTextEdit, commitTextEdit,
   };
 })();

@@ -6,8 +6,8 @@ const C={bd:"#484878",bm:"#7884B4",bs:"#B4C0E4",ot:"#E4E4F0",ob:"#E4CCD8",ol:"#F
 const F="'Arial',sans-serif";
 
 function axis(title,yLabels,xLabels){
-  let s='<line x1="52" y1="40" x2="52" y2="232" stroke="'+C.ax+'" stroke-width="1"/>';
-  s+='<line x1="52" y1="232" x2="372" y2="232" stroke="'+C.ax+'" stroke-width="1"/>';
+  let s='<line x1="52" y1="40" x2="52" y2="232" stroke="'+C.ax+'" stroke-width="1" data-edit="true" data-role="axis"/>';
+  s+='<line x1="52" y1="232" x2="372" y2="232" stroke="'+C.ax+'" stroke-width="1" data-edit="true" data-role="axis"/>';
   const n=yLabels.length;
   for(let i=0;i<n;i++){
     const y=232-(i*(192/Math.max(n-1,1)));

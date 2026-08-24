@@ -20,9 +20,45 @@ With traditional AI figure generation (including the `nature-figure-skill` workf
   edges & centers snap to other elements and to the canvas frame, magenta
   guide lines appear on alignment, hold <kbd>Alt</kbd> to bypass snapping
 - Grid snapping as fallback (5-unit step), toggle via the ⇄ toolbar button
-- Double-click to edit text inline
+- **Multi-select**: Shift+click or rubber-band marquee on empty canvas;
+  multi-drag keeps relative spacing, batch fill/stroke/order from the panel
+- **Group / ungroup**: Ctrl+G / Ctrl+Shift+G (also in context menu)
+- Double-click to edit text inline; toolbar `T` inserts a new text box
+- Arrow keys nudge (Shift+arrow = 10 units); wheel zooms
 - Right-click context menu: duplicate, bring to front, send to back, delete
-- Zoom (wheel / Ctrl±), pan, fit-to-view
+- Zoom (wheel / Ctrl±), fit-to-view
+
+### Session Persistence
+- 💾 button or Ctrl+S saves to browser localStorage; **reopen the page and
+  continue where you left off** (auto-restores with a toast)
+- Every edit auto-saves (debounced) — closing the tab never loses work
+
+### Template Library Management
+- Section renamed to 「图表」 with **New blank figure**, **Import SVG**,
+  **New folder** actions
+- Rename any template (double-click or right-click), organize into folders,
+  move between folders, delete (right-click menu)
+- Imported/user templates persist in localStorage
+- Left panel collapsible via the « button
+
+### Import
+- **SVG files**: drag onto the canvas (or 📥 导入) — fully editable vectors,
+  optionally added to the template library
+- **PNG / JPG / GIF / WebP**: drag onto canvas → embedded as movable image
+- **Project JSON**: restores a previously saved FigureForge project
+- (TIFF/PDF cannot be edited in-browser; export to those instead)
+
+### Export
+- Dialog (导出… button / Ctrl+E): **SVG · PNG · TIFF · PPTX · JSON**
+- Resolution presets: 1× / 2× / 4× / **300 dpi / 600 dpi** (computed from
+  the mm figure size for print-accurate pixels)
+- PNG supports transparent background; **TIFF is a hand-written baseline
+  encoder** with embedded dpi metadata (journal submission ready); PPTX
+  builds a single-slide deck sized to the figure (loads pptxgenjs from CDN)
+
+### Workspace Appearance
+- Editor canvas background selectable: 深蓝黑 / 深灰 / 浅灰 / 白 / 墨绿 / 暗紫
+  (persisted); figure background color + transparency controlled separately
 
 ### Context-Sensitive Property Panel
 - **Text**: font family, size, weight, fill color, text anchor, position
