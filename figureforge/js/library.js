@@ -171,12 +171,40 @@ const Library = (function () {
   }
 
   // ── Rendering ──
+  // Dedicated fixed-position menu for the left panel (the canvas context
+  // menu lives inside #canvas-area and gets clipped near the panel).
+  function panelMenu() {
+    let menu = document.getElementById('library-menu');
+    if (!menu) {
+      menu = document.createElement('div');
+      menu.id = 'library-menu';
+      menu.className = 'context-menu';
+      document.body.appendChild(menu);
+      document.addEventListener('mousedown', e => {
+        if (!menu.contains(e.target)) menu.classList.add('hidden');
+      }, true);
+      window.addEventListener('blur', () => menu.classList.add('hidden'));
+    }
+    menu.innerHTML = '';
+    menu.classList.remove('hidden');
+    return menu;
+  }
+
+  function showPanelMenuAt(menu, clientX, clientY) {
+    menu.style.left = '0px';
+    menu.style.top = '0px';
+    menu.classList.remove('hidden');
+    const r = menu.getBoundingClientRect();
+    const x = Math.min(clientX, window.innerWidth - r.width - 8);
+    const y = Math.min(clientY, window.innerHeight - r.height - 8);
+    menu.style.left = Math.max(4, x) + 'px';
+    menu.style.top = Math.max(4, y) + 'px';
+  }
+
   function itemMenu(e, id) {
     e.preventDefault();
     e.stopPropagation();
-    const menu = document.getElementById('context-menu');
-    if (!menu) return;
-    menu.innerHTML = '';
+    const menu = panelMenu();
     const mk = (label, fn, danger) => {
       const d = document.createElement('div');
       d.className = 'context-menu-item' + (danger ? ' danger' : '');
@@ -199,13 +227,7 @@ const Library = (function () {
     });
     if (ref && ref.folder) mk('📂 移出到根目录', () => moveItem(id, null));
     mk('🗑 删除模板', () => deleteItem(id), true);
-    menu.classList.remove('hidden');
-    menu.style.left = e.clientX - document.getElementById('left-panel').getBoundingClientRect().left + 'px';
-    menu.style.top = e.clientY - document.getElementById('left-panel').getBoundingClientRect().top + 'px';
-    // context-menu is positioned relative to canvas-area; reposition for panel use
-    const area = document.getElementById('canvas-area').getBoundingClientRect();
-    menu.style.left = (e.clientX - area.left) + 'px';
-    menu.style.top = (e.clientY - area.top) + 'px';
+    showPanelMenuAt(menu, e.clientX, e.clientY);
   }
 
   function startInlineRename(id, labelEl) {
@@ -232,9 +254,7 @@ const Library = (function () {
   function folderMenu(e, folderId) {
     e.preventDefault();
     e.stopPropagation();
-    const menu = document.getElementById('context-menu');
-    if (!menu) return;
-    menu.innerHTML = '';
+    const menu = panelMenu();
     const mk = (label, fn, danger) => {
       const d = document.createElement('div');
       d.className = 'context-menu-item' + (danger ? ' danger' : '');
@@ -257,10 +277,7 @@ const Library = (function () {
       }
     });
     mk('🗑 删除分组（模板移回根目录）', () => deleteFolder(folderId), true);
-    menu.classList.remove('hidden');
-    const area = document.getElementById('canvas-area').getBoundingClientRect();
-    menu.style.left = (e.clientX - area.left) + 'px';
-    menu.style.top = (e.clientY - area.top) + 'px';
+    showPanelMenuAt(menu, e.clientX, e.clientY);
   }
 
   function findFolder(folderId) {
