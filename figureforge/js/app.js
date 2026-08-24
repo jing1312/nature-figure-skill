@@ -94,7 +94,6 @@ const App = (function () {
 
   function wireExportBar() {
     document.getElementById('btn-export-svg')?.addEventListener('click', () => Export.openDialog());
-    document.getElementById('btn-export-png')?.addEventListener('click', () => Export.downloadPNG(2));
     document.getElementById('btn-copy-svg')?.addEventListener('click', () => Export.copySVG());
   }
 

@@ -22,18 +22,20 @@ const Export = (function () {
     { key: '1x', label: '1×', scale: 1 },
     { key: '2x', label: '2×', scale: 2 },
     { key: '4x', label: '4×', scale: 4 },
-    { key: '300dpi', label: '300 dpi', dpi: 300 },
-    { key: '600dpi', label: '600 dpi', dpi: 600 },
+    { key: 'w1280', label: '宽 1280px', targetW: 1280 },
+    { key: 'w1920', label: '宽 1920px', targetW: 1920 },
+    { key: '300dpi', label: '300 dpi (印刷)', dpi: 300 },
+    { key: '600dpi', label: '600 dpi (印刷)', dpi: 600 },
   ];
 
   function cleanSVG(svgEl) {
     const clone = svgEl.cloneNode(true);
     clone.querySelectorAll('*').forEach(el => {
       EDITOR_ATTRS.forEach(attr => el.removeAttribute(attr));
+      if (el.getAttribute('style') === '') el.removeAttribute('style');
     });
     EDITOR_ATTRS.forEach(attr => clone.removeAttribute(attr));
-    clone.querySelectorAll('[data-selected]').forEach(el => el.removeAttribute('data-selected'));
-    clone.style && (clone.style.cssText = '');
+    if (clone.getAttribute('style') === '') clone.removeAttribute('style');
     if (!clone.getAttribute('xmlns')) {
       clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     }
@@ -60,8 +62,8 @@ const Export = (function () {
     if (!s) return 2;
     if (s.scale) return s.scale;
     const vb = viewBoxSize(svgEl);
+    if (s.targetW) return Math.max(0.1, s.targetW / vb.w);
     const mm = mmSize();
-    const mmPerUnit = mm.w / vb.w;
     const pxW = (mm.w / 25.4) * s.dpi;
     return Math.max(0.1, pxW / vb.w);
   }
@@ -87,7 +89,11 @@ const Export = (function () {
       URL.revokeObjectURL(url);
       cb(canvas);
     };
-    img.onerror = function () { URL.revokeObjectURL(url); toast('❌ SVG 渲染失败'); };
+    img.onerror = function () {
+      URL.revokeObjectURL(url);
+      console.error('[FigureForge] SVG rasterization failed, markup head:', svgStr.slice(0, 400));
+      toast('❌ SVG 渲染失败（详见控制台）');
+    };
     img.src = url;
   }
 
