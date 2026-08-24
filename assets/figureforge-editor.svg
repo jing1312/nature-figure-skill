@@ -138,7 +138,7 @@
     <rect x="486" y="286" width="52" height="182" fill="none" stroke="#2f5fb8" stroke-width="1.5"/>
     <line x1="486" y1="292" x2="600" y2="292" stroke="#e91e8c" stroke-width="1.5"/>
     <circle cx="486" cy="292" r="2.4" fill="#e91e8c"/><circle cx="600" cy="292" r="2.4" fill="#e91e8c"/>
-    <text x="608" y="287" font-size="12" font-weight="600" fill="#e91e8c">已吸附</text>
+    <text x="608" y="287" font-size="12" font-weight="600" fill="#e91e8c"></text>
     <!-- toast -->
     <rect x="440" y="540" width="300" height="28" rx="14" fill="#ffffff" stroke="#dfe5ef"/>
     <text x="590" y="558" font-size="12" fill="#66708a" text-anchor="middle">💾 已保存 · 重新打开接着改</text>
