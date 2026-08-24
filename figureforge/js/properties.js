@@ -14,7 +14,9 @@ const Properties = (function () {
     const content = document.getElementById('prop-content');
     const title = document.getElementById('prop-title');
 
-    if (!el) {
+    const count = window.Canvas ? Canvas.getSelection().length : (el ? 1 : 0);
+
+    if (!el || !count) {
       empty.style.display = 'block';
       panel.classList.add('hidden');
       return;
@@ -22,19 +24,94 @@ const Properties = (function () {
 
     empty.style.display = 'none';
     panel.classList.remove('hidden');
+    content.innerHTML = '';
+
+    if (count > 1) { renderMultiProps(content, count); return; }
 
     const tag = el.tagName;
     const role = el.getAttribute('data-role') || '';
     title.textContent = `${tag}${role ? ' · ' + role : ''}`;
 
-    content.innerHTML = '';
     if (tag === 'text') renderTextProps(el, content);
     else if (tag === 'rect') renderRectProps(el, content);
     else if (tag === 'circle') renderCircleProps(el, content);
-    else if (tag === 'line') renderLineProps(el, content);
+    else if (tag === 'line') { if (role === 'axis') renderAxisProps(el, content); else renderLineProps(el, content); }
     else if (tag === 'polyline' || tag === 'polygon') renderPolyProps(el, content);
     else if (tag === 'path') renderPathProps(el, content);
     else renderGenericProps(el, content);
+  }
+
+  function renderMultiProps(c, count) {
+    document.getElementById('prop-title').textContent = `${count} 个元素已选中`;
+    c.appendChild(sectionHeader('批量操作'));
+    const btnRow = document.createElement('div');
+    btnRow.className = 'prop-row';
+    btnRow.innerHTML = `
+      <button class="prop-btn" data-act="group">⛓ 成组</button>
+      <button class="prop-btn" data-act="dup">⧉ 复制</button>
+      <button class="prop-btn danger" data-act="del">🗑 删除</button>`;
+    btnRow.querySelector('[data-act="group"]').addEventListener('click', () => Canvas.groupSelection());
+    btnRow.querySelector('[data-act="dup"]').addEventListener('click', () => Canvas.duplicateElement());
+    btnRow.querySelector('[data-act="del"]').addEventListener('click', () => Canvas.deleteElement());
+    c.appendChild(btnRow);
+    c.appendChild(sectionHeader('公共样式'));
+    c.appendChild(colorPicker('填充', '#4a9eff', v => applyToSelection('fill', v)));
+    c.appendChild(colorPicker('描边', '#333333', v => applyToSelection('stroke', v)));
+    const opRow = slider('透明度', 0, 1, 0.05, 1, v => applyToSelection('opacity', v));
+    c.appendChild(opRow);
+    c.appendChild(sectionHeader('排列'));
+    const arrRow = document.createElement('div');
+    arrRow.className = 'prop-row';
+    arrRow.innerHTML = `
+      <button class="prop-btn" data-act="top">⬆ 置顶</button>
+      <button class="prop-btn" data-act="bottom">⬇ 置底</button>`;
+    arrRow.querySelector('[data-act="top"]').addEventListener('click', () => {
+      const els = Canvas.getSelection(); const parent = els[0].parentNode;
+      els.forEach(el => parent.appendChild(el));
+    });
+    arrRow.querySelector('[data-act="bottom"]').addEventListener('click', () => {
+      const els = Canvas.getSelection(); const parent = els[0].parentNode;
+      [...els].reverse().forEach(el => parent.insertBefore(el, parent.firstChild));
+    });
+    c.appendChild(arrRow);
+  }
+
+  function applyToSelection(attr, value) {
+    const els = Canvas.getSelection();
+    const olds = els.map(el => el.getAttribute(attr));
+    els.forEach(el => el.setAttribute(attr, value));
+    if (window.History) {
+      History.push({
+        undo: () => els.forEach((el, i) => { if (olds[i] === null) el.removeAttribute(attr); else el.setAttribute(attr, olds[i]); }),
+        redo: () => els.forEach(el => el.setAttribute(attr, value)),
+        label: `Batch ${attr}`
+      });
+    }
+    Canvas.updateSelectionOverlay();
+  }
+
+  function renderAxisProps(el, c) {
+    c.appendChild(sectionHeader('坐标轴'));
+    const horizontal = Math.abs(parseFloat(getAttr(el, 'x2')) - parseFloat(getAttr(el, 'x1'))) >=
+                       Math.abs(parseFloat(getAttr(el, 'y2')) - parseFloat(getAttr(el, 'y1')));
+    const len = horizontal
+      ? Math.abs(parseFloat(getAttr(el, 'x2')) - parseFloat(getAttr(el, 'x1')))
+      : Math.abs(parseFloat(getAttr(el, 'y2')) - parseFloat(getAttr(el, 'y1')));
+    c.appendChild(slider('轴长度', 10, 760, 1, len, v => {
+      const old = getAttr(el, horizontal ? 'x2' : 'y2');
+      const base = horizontal ? getAttr(el, 'x1') : getAttr(el, 'y1');
+      const sign = parseFloat(old) >= parseFloat(base) ? 1 : -1;
+      setAttr(el, horizontal ? 'x2' : 'y2', parseFloat(base) + sign * v);
+    }));
+    c.appendChild(slider('轴粗细', 0.25, 6, 0.25, parseFloat(getAttr(el, 'stroke-width', '1')), v => setAttr(el, 'stroke-width', v)));
+    c.appendChild(colorPicker('轴颜色', getAttr(el, 'stroke', '#333333'), v => setAttr(el, 'stroke', v)));
+    c.appendChild(sectionHeader('端点（微调）'));
+    c.appendChild(slider('X1', 0, 800, 1, parseFloat(getAttr(el, 'x1', '0')), v => setAttr(el, 'x1', v)));
+    c.appendChild(slider('Y1', 0, 600, 1, parseFloat(getAttr(el, 'y1', '0')), v => setAttr(el, 'y1', v)));
+    c.appendChild(slider('X2', 0, 800, 1, parseFloat(getAttr(el, 'x2', '0')), v => setAttr(el, 'x2', v)));
+    c.appendChild(slider('Y2', 0, 600, 1, parseFloat(getAttr(el, 'y2', '0')), v => setAttr(el, 'y2', v)));
+    c.appendChild(sectionHeader('刻度/标签字体'));
+    c.appendChild(input('提示', '点击画布中的刻度文字可单独修改字体、字号与粗细', () => {}));
   }
 
   function row(label, innerHTML) {
