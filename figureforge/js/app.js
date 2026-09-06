@@ -61,6 +61,7 @@ const App = (function () {
     // series so line+dot stay the same color (data-series pins it explicitly)
     const seriesRoles = new Set(['bar', 'line', 'area', 'series', 'marker']);
     let next = 0;
+    const changes = []; // { el, attr, old, new } — for undo/redo
     svgEl.querySelectorAll('[data-edit="true"]').forEach(el => {
       const role = el.getAttribute('data-role') || '';
       if (!seriesRoles.has(role)) return;
@@ -69,13 +70,22 @@ const App = (function () {
       const color = colors[(parseInt(idx, 10) || 0) % colors.length];
       const fill = el.getAttribute('fill');
       if (fill && fill !== 'none' && fill.toLowerCase() !== '#ffffff') {
+        changes.push({ el, attr: 'fill', old: fill, new: color });
         el.setAttribute('fill', color);
       }
       const stroke = el.getAttribute('stroke');
       if ((role === 'line' || role === 'series') && stroke && stroke !== 'none') {
+        changes.push({ el, attr: 'stroke', old: stroke, new: color });
         el.setAttribute('stroke', color);
       }
     });
+    if (changes.length && window.History) {
+      History.push({
+        undo: () => changes.forEach(c => c.el.setAttribute(c.attr, c.old)),
+        redo: () => changes.forEach(c => c.el.setAttribute(c.attr, c.new)),
+        label: 'Palette ' + paletteKey
+      });
+    }
     Canvas.updateSelectionOverlay();
     Store.scheduleSave();
   }

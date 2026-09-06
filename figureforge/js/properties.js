@@ -91,12 +91,31 @@ const Properties = (function () {
   function applyToSelection(attr, value) {
     const els = Canvas.getSelection();
     const olds = els.map(el => el.getAttribute(attr));
+    // series linkage: batch recolor also follows data-series peers
+    // (dedup by element, keep the first — true pre-batch — old value;
+    //  peers that are themselves selected are covered by olds)
+    const linkedMap = new Map();
+    els.forEach(el => {
+      if ((attr === 'fill' || attr === 'stroke') && el.getAttribute('data-series') !== null) {
+        Canvas.propagateSeriesColor(el, attr, value).forEach(c => {
+          if (!els.includes(c.el) && !linkedMap.has(c.el)) linkedMap.set(c.el, c);
+        });
+      }
+    });
+    const linked = [...linkedMap.values()];
     els.forEach(el => el.setAttribute(attr, value));
+    linked.forEach(c => c.el.setAttribute(attr, value));
     if (window.History) {
       History.push({
-        undo: () => els.forEach((el, i) => { if (olds[i] === null) el.removeAttribute(attr); else el.setAttribute(attr, olds[i]); }),
-        redo: () => els.forEach(el => el.setAttribute(attr, value)),
-        label: `Batch ${attr}`
+        undo: () => {
+          els.forEach((el, i) => { if (olds[i] === null) el.removeAttribute(attr); else el.setAttribute(attr, olds[i]); });
+          linked.forEach(c => c.el.setAttribute(attr, c.old));
+        },
+        redo: () => {
+          els.forEach(el => el.setAttribute(attr, value));
+          linked.forEach(c => c.el.setAttribute(attr, value));
+        },
+        label: `Batch ${attr}` + (linked.length ? ` (+${linked.length} linked)` : '')
       });
     }
     Canvas.updateSelectionOverlay();
@@ -235,16 +254,22 @@ const Properties = (function () {
   }
 
   function renderTextProps(el, c) {
-    c.appendChild(sectionHeader('文字内容'));
-    c.appendChild(input('内容', el.textContent, v => {
-      const old = el.textContent;
-      el.textContent = v;
+    c.appendChild(sectionHeader('文字内容（可换行）'));
+    const getLines = () => (window.Canvas && Canvas.getTextLines) ? Canvas.getTextLines(el) : el.textContent;
+    const setLines = v => (window.Canvas && Canvas.setTextLines) ? Canvas.setTextLines(el, v) : (el.textContent = v);
+    const taDiv = row('内容', `<textarea class="prop-input" rows="${Math.max(1, getLines().split('\n').length)}"></textarea>`);
+    const ta = taDiv.querySelector('textarea');
+    ta.value = getLines();
+    ta.addEventListener('change', () => {
+      const old = getLines();
+      setLines(ta.value);
       if (window.History) History.push({
-        undo: () => { el.textContent = old; },
-        redo: () => { el.textContent = v; },
+        undo: () => { setLines(old); },
+        redo: () => { setLines(ta.value); },
         label: 'Edit Text'
       });
-    }));
+    });
+    c.appendChild(taDiv);
     c.appendChild(sectionHeader('字体'));
     c.appendChild(select('字体', [
       {value: "'Arial',sans-serif", label: 'Arial'},

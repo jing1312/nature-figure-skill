@@ -180,6 +180,10 @@ const Canvas = (function () {
     if (t === 'text' || t === 'tspan' || t === 'rect' || t === 'image' || t === 'foreignObject') {
       el.setAttribute('x', num('x') + dx);
       el.setAttribute('y', num('y') + dy);
+      // multi-line text: tspans pin their own x — keep them aligned
+      if (t === 'text') el.querySelectorAll('tspan').forEach(ts => {
+        ts.setAttribute('x', (parseFloat(ts.getAttribute('x')) || num('x') - dx) + dx);
+      });
     } else if (t === 'circle' || t === 'ellipse') {
       el.setAttribute('cx', num('cx') + dx);
       el.setAttribute('cy', num('cy') + dy);
@@ -974,12 +978,36 @@ const Canvas = (function () {
     const target = findEditableElement(e.target);
     if (!target) return;
     e.preventDefault();
+    if (target.tagName === 'tspan' && target.parentNode && target.parentNode.tagName === 'text') target = target.parentNode;
     if (target.tagName === 'text') startTextEdit(target);
     else if (target.tagName === 'image') startImageCrop(target);
     else if (target.tagName === 'g' && target.getAttribute('data-role') === 'group') ungroupSelection();
   }
 
   let textEditing = null;
+
+  // ── Multi-line text: SVG <text> can't hold newlines, so lines are split
+  //    into <tspan> children (x pinned per line, dy stacks them).
+  function setTextLines(el, raw) {
+    const lines = String(raw).split('\n');
+    el.textContent = '';
+    if (lines.length <= 1) { el.textContent = lines[0] || ''; return; }
+    const fs = parseFloat(el.getAttribute('font-size')) || 8;
+    const lh = fs * 1.25;
+    lines.forEach((line, i) => {
+      const tspan = document.createElementNS(SVGNS, 'tspan');
+      tspan.setAttribute('x', el.getAttribute('x') || '0');
+      if (i > 0) tspan.setAttribute('dy', lh);
+      tspan.textContent = line;
+      el.appendChild(tspan);
+    });
+  }
+
+  function getTextLines(el) {
+    const spans = el.querySelectorAll('tspan');
+    if (!spans.length) return el.textContent;
+    return [...spans].map(s => s.textContent).join('\n');
+  }
 
   function startTextEdit(textEl) {
     commitTextEdit();
@@ -992,14 +1020,16 @@ const Canvas = (function () {
     editor.style.left = tl.x + 'px';
     editor.style.top = (tl.y - fontSize * 0.25) + 'px';
     editor.style.fontSize = fontSize + 'px';
+    editor.style.lineHeight = '1.25';
     editor.style.fontFamily = textEl.getAttribute('font-family') || 'Arial, sans-serif';
     editor.style.fontWeight = textEl.getAttribute('font-weight') || 'normal';
     editor.style.color = textEl.getAttribute('fill') || '#333333';
     editor.style.minWidth = Math.max(bbox.w * scale.sx, 60) + 'px';
-    editor.value = textEl.textContent;
+    editor.value = getTextLines(textEl);
+    editor.rows = Math.max(1, editor.value.split('\n').length);
     editor.classList.add('active');
     textEl.style.visibility = 'hidden';
-    textEditing = { el: textEl, oldText: textEl.textContent };
+    textEditing = { el: textEl, oldText: getTextLines(textEl) };
     setTimeout(() => { editor.focus(); editor.select(); }, 0);
   }
 
@@ -1012,11 +1042,11 @@ const Canvas = (function () {
     el.style.visibility = '';
     textEditing = null;
     if (newText !== oldText) {
-      el.textContent = newText;
+      setTextLines(el, newText);
       if (window.History) {
         History.push({
-          undo: () => { el.textContent = oldText; },
-          redo: () => { el.textContent = newText; },
+          undo: () => { setTextLines(el, oldText); },
+          redo: () => { setTextLines(el, newText); },
           label: 'Edit Text'
         });
       }
@@ -1036,8 +1066,12 @@ const Canvas = (function () {
     const editor = document.getElementById('text-editor');
     if (!editor) return;
     editor.addEventListener('blur', () => commitTextEdit());
+    editor.addEventListener('input', () => {
+      // grow the box with the line count
+      editor.rows = Math.max(1, editor.value.split('\n').length);
+    });
     editor.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); editor.blur(); }
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); editor.blur(); }
       else if (e.key === 'Escape') { e.preventDefault(); cancelTextEdit(); }
       e.stopPropagation();
     });
@@ -1259,6 +1293,7 @@ const Canvas = (function () {
     rotateImageElement, flipImageElement, replaceImageElement,
     setImageAdjustments, getImageAdjustments, resetImageAdjustments,
     propagateSeriesColor, seriesPeerCount,
+    setTextLines, getTextLines,
     nudge, deleteElement, duplicateElement,
     toggleGrid, toggleSnap,
     zoomBy, setZoom, getZoom, fitToView,

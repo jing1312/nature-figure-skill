@@ -114,8 +114,8 @@ body.theme-light #left-panel, body.theme-light #right-panel { box-shadow: none; 
 #guides-overlay .crop-handle[data-crop-handle="ne"],
 #guides-overlay .crop-handle[data-crop-handle="sw"] { cursor: nesw-resize; }
 
-/* Inline text editor */
-.text-editor { position: absolute; display: none; z-index: 40; background: rgba(255,255,255,0.96); border: 1px solid var(--accent); border-radius: 2px; padding: 0 3px; outline: none; font-family: var(--font); pointer-events: auto; }
+/* Inline text editor (textarea — supports multi-line) */
+.text-editor { position: absolute; display: none; z-index: 40; background: rgba(255,255,255,0.96); border: 1px solid var(--accent); border-radius: 2px; padding: 0 3px; outline: none; font-family: var(--font); pointer-events: auto; resize: none; overflow: hidden; white-space: pre; box-sizing: border-box; }
 .text-editor.active { display: block; }
 
 /* Toolbar extras */
