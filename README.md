@@ -27,7 +27,7 @@
 下面每张图都是 FigureForge 内置模板的**真实输出**——不是效果图：选骨架、改数据、一键导出 SVG / PNG / TIFF / PPTX。
 
 <div align="center">
-  <img src="assets/showcase.svg" alt="FigureForge 模板图鉴：12 格 Chart atlas — 柱状图/分组柱状图/小提琴/箱线/多折线/生存曲线/聚类热图/火山图/森林图/双联面板，多种柔和配色变体" width="100%" />
+  <img src="assets/showcase.svg" alt="FigureForge 模板图鉴：12 格 Chart atlas — 高亮柱状图、分组柱状图、小提琴、箱线、折线+置信带、生存曲线、发散/注释热图、火山图、森林图，柔和低饱和配色" width="100%" />
 </div>
 
 ## 🧪 FigureForge — 不写代码的出图方式
