@@ -209,6 +209,28 @@ const PALETTES = {
     },
     defaultSequence: ["#87D0E8", "#1B86F7", "#F9B7B7", "#F76B5A", "#9D2929", "#F298A8"],
   },
+
+  // ── Candy — five-hue pop: pink/blue/green/yellow/purple ──
+  candy: {
+    name: "Candy 粉蓝绿黄紫",
+    description: "Five-hue pairing: pink/blue/green/yellow/purple — vivid yet soft, 2x2 color pairs or standalone",
+    colors: {
+      blue: "#5B8FDB", pink: "#EC6F9F", green: "#43B39C", yellow: "#F2C14E", purple: "#9C7BD8",
+      rose: "#E58FB1", sky: "#6FC2D0", lilac: "#C9A7E8",
+    },
+    defaultSequence: ["#5B8FDB", "#EC6F9F", "#43B39C", "#F2C14E", "#9C7BD8", "#E58FB1", "#6FC2D0", "#C9A7E8"],
+  },
+
+  // ── Berry — one blue-to-purple-to-pink family, deep to light ──
+  berry_blue: {
+    name: "Berry 蓝紫粉同族",
+    description: "Single family, deep to light: blue to purple to pink; ideal for two-series gradient contrast",
+    colors: {
+      deep_blue: "#3D6BB3", purple: "#7C6FD0", magenta: "#C9699B",
+      soft_pink: "#E8A5C2", light_blue: "#A8C6E8", pale_lilac: "#D4D0EE",
+    },
+    defaultSequence: ["#3D6BB3", "#7C6FD0", "#C9699B", "#E8A5C2", "#A8C6E8", "#D4D0EE"],
+  },
 };
 
 // ── Font stacks ──

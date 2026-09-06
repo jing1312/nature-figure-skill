@@ -9,7 +9,7 @@
 ### 浏览器里的论文配图工作室 —— 模板拖拽即用，Agent 工作流兜底
 
 **两条路，同一个终点：投稿级配图。**
-不想写代码？用 [FigureForge](figureforge/) 可视化编辑器：22 个出版级模板、14 组精选色卡，像 PPT 一样拖到位。
+不想写代码？用 [FigureForge](figureforge/) 可视化编辑器：22 个出版级模板、16 组精选色卡，像 PPT 一样拖到位。
 想全自动化？让 Agent 跑 [nature-figure 工作流](skills/nature-figure/SKILL.md)：图表契约 → 单后端绘制 → 独立导出，Python / R 双修。
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -27,7 +27,7 @@
 下面每张图都是 FigureForge 内置模板的**真实输出**——不是效果图：选骨架、改数据、一键导出 SVG / PNG / TIFF / PPTX。
 
 <div align="center">
-  <img src="assets/showcase.svg" alt="FigureForge 出版级模板拼图：柱状图+原始点、聚类热图、火山图、分组柱状图、小提琴图、生存曲线、箱线图、森林图、多折线图" width="100%" />
+  <img src="assets/showcase.svg" alt="FigureForge 模板图鉴：12 格 Chart atlas — 柱状图/分组柱状图/小提琴/箱线/多折线/生存曲线/聚类热图/火山图/森林图/双联面板，多种柔和配色变体" width="100%" />
 </div>
 
 ## 🧪 FigureForge — 不写代码的出图方式
@@ -41,7 +41,7 @@
 ### 核心能力
 
 - **22 个出版级模板**：柱状图（superplot 原始点叠加）、聚类热图（行列树状图 + 发散色阶）、火山图、森林图、KM 生存曲线、小提琴图、箱线图、多面板综合图……全部按投稿标准预置误差棒、显著性括号、置信带与图例位置。
-- **14 组精选色卡**：Tableau 10、Tol Muted、Economist、莫兰迪、马卡龙等；**系列联动改色**——改一处颜色，同系列数据点、图例、色标全部同步，一次撤销整组回退。
+- **16 组精选色卡**：Tableau 10、Tol Muted、Economist、莫兰迪、马卡龙、Candy 粉蓝绿黄紫、Berry 蓝紫粉同族等；**系列联动改色**——改一处颜色，同系列数据点、图例、色标全部同步，一次撤销整组回退。
 - **Figma 手感编辑**：智能参考线吸附（<kbd>Alt</kbd> 临时关闭）、Shift+点击 / 框选多选、Ctrl+G 成组、四角手柄缩放、方向键微移、全程撤销重做。
 - **位图编辑套件**：拖入或 Ctrl+V 粘贴截图即可上画布，双击裁剪、90° 旋转、镜像、亮度/对比度/饱和度调整。
 - **昼夜双主题**：☀ / 🌙 一键切换，全屏星空过渡动画；工作区背景 14 种可选。
@@ -121,7 +121,7 @@ figure-01.png    ← 预览/演示用
 
 ## 🗺 Roadmap
 
-- [x] 22 个出版级模板 + 14 组色卡
+- [x] 22 个出版级模板 + 16 组色卡
 - [x] 昼夜主题 / 位图编辑套件 / 系列联动改色 / 撤销重做全覆盖
 - [x] 多行文本编辑（tspan 拆行）
 - [ ] PDF 导出（投稿刚需，进行中）
