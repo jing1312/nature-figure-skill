@@ -40,7 +40,7 @@ git 远端：fetch 走 gh-proxy.com 加速，push 已单独固定为直连 githu
 | 项 | 状态 |
 |---|---|
 | favicon 缺失 | ✅ 已修（内联 emoji SVG） |
-| PDF 导出 | ❌ 缺（投稿刚需；已列 Roadmap，候选 pdf-lib / jspdf + svg2pdf.js） |
+| PDF 导出 | ✅ 已实现（svg2pdf.js + jsPDF 矢量导出，CDN 按需加载） |
 | CDN 依赖 | ⚠️ pptxgenjs（PPTX 导出）、UTIF（TIFF 导入）走 jsdelivr，断网时对应功能不可用；离线场景可考虑 vendor 进仓库 |
 | 模板缓存 | ✅ v6 迁移机制正常；改模板记得 `library.js` version++ |
 | 上游引用 | ✅ 代码/编辑器零上游引用，仅 README/DERIVATIVE_NOTICE/PROJECT-NOTES 三个 md 有 |

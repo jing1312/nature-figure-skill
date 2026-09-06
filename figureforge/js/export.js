@@ -1,9 +1,10 @@
 /**
  * FigureForge — Export Functions
  *
- * - Dialog with format (SVG / PNG / TIFF / PPTX / JSON) and resolution
+ * - Dialog with format (SVG / PNG / TIFF / PDF / PPTX / JSON) and resolution
  *   presets: 1x / 2x / 4x / 300 dpi / 600 dpi (dpi computed from mm size)
  * - TIFF: baseline RGB encoder written by hand (browsers cannot encode TIFF)
+ * - PDF: true vector via svg2pdf.js + jsPDF loaded from CDN on demand
  * - PPTX: single-slide deck via pptxgenjs loaded from CDN on demand
  * - Save / Load project JSON, copy SVG to clipboard
  */
@@ -13,6 +14,7 @@ const Export = (function () {
 
   const FORMATS = [
     { key: 'svg', label: 'SVG', hint: '矢量图，可继续编辑 / 期刊投稿' },
+    { key: 'pdf', label: 'PDF', hint: '矢量 PDF，文字可选中，投稿常用' },
     { key: 'png', label: 'PNG', hint: '位图，支持透明背景' },
     { key: 'tiff', label: 'TIFF', hint: '出版级位图（多数期刊要求）' },
     { key: 'pptx', label: 'PPTX', hint: '插入 PowerPoint 幻灯片' },
@@ -28,7 +30,7 @@ const Export = (function () {
     { key: '600dpi', label: '600 dpi (印刷)', dpi: 600 },
   ];
 
-  function cleanSVG(svgEl) {
+  function cleanClone(svgEl) {
     const clone = svgEl.cloneNode(true);
     clone.querySelectorAll('*').forEach(el => {
       EDITOR_ATTRS.forEach(attr => el.removeAttribute(attr));
@@ -39,7 +41,11 @@ const Export = (function () {
     if (!clone.getAttribute('xmlns')) {
       clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     }
-    return new XMLSerializer().serializeToString(clone);
+    return clone;
+  }
+
+  function cleanSVG(svgEl) {
+    return new XMLSerializer().serializeToString(cleanClone(svgEl));
   }
 
   function viewBoxSize(svgEl) {
@@ -185,16 +191,29 @@ const Export = (function () {
     });
   }
 
-  // ── PPTX via pptxgenjs (CDN, loaded on demand) ──
-  function loadPptxGenJS() {
-    if (window.PptxGenJS) return Promise.resolve(window.PptxGenJS);
+  // ── on-demand CDN loaders ──
+  function loadScript(src, globalCheck) {
+    if (globalCheck()) return Promise.resolve();
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
-      s.onload = () => window.PptxGenJS ? resolve(window.PptxGenJS) : reject(new Error('loaded but missing'));
+      s.src = src;
+      s.onload = () => globalCheck() ? resolve() : reject(new Error('loaded but missing global'));
       s.onerror = () => reject(new Error('network'));
       document.head.appendChild(s);
     });
+  }
+
+  function loadPptxGenJS() {
+    return loadScript('https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js',
+      () => window.PptxGenJS).then(() => window.PptxGenJS);
+  }
+
+  function loadPdfLibs() {
+    return loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
+      () => window.jspdf && window.jspdf.jsPDF)
+      .then(() => loadScript('https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.4/dist/svg2pdf.umd.min.js',
+        () => window.svg2pdf && window.svg2pdf.svg2pdf))
+      .then(() => ({ jsPDF: window.jspdf.jsPDF, svg2pdf: window.svg2pdf.svg2pdf }));
   }
 
   function downloadPPTX(scale = 2) {
@@ -218,6 +237,38 @@ const Export = (function () {
         } catch (e) { toast('❌ PPTX 生成失败'); }
       });
     }).catch(() => toast('❌ 无法加载 PPTX 组件（需要联网）'));
+  }
+
+  // ── Vector PDF via svg2pdf.js + jsPDF (CDN, loaded on demand) ──
+  async function downloadPDF() {
+    const svgEl = Canvas.getSVGElement();
+    if (!svgEl) { toast('没有可导出的内容'); return; }
+    toast('⏳ 正在生成矢量 PDF…');
+    try {
+      const { jsPDF, svg2pdf } = await loadPdfLibs();
+      const mm = mmSize();
+      // svg2pdf measures text via getBBox — the clone must be attached to the DOM
+      const clone = cleanClone(svgEl);
+      clone.setAttribute('width', mm.w + 'mm');
+      clone.setAttribute('height', mm.h + 'mm');
+      clone.style.position = 'absolute';
+      clone.style.left = '-99999px';
+      clone.style.top = '0';
+      document.body.appendChild(clone);
+      const doc = new jsPDF({
+        orientation: mm.w >= mm.h ? 'landscape' : 'portrait',
+        unit: 'mm',
+        format: [mm.w, mm.h],
+        compress: true,
+      });
+      await svg2pdf(clone, doc, { x: 0, y: 0, width: mm.w, height: mm.h });
+      document.body.removeChild(clone);
+      doc.save(`figureforge-${timestamp()}.pdf`);
+      toast(`✅ 矢量 PDF 已下载 (${mm.w}×${mm.h}mm)`);
+    } catch (e) {
+      console.error('[FigureForge] PDF export failed:', e);
+      toast('❌ 无法加载 PDF 组件（需要联网）');
+    }
   }
 
   async function copySVG() {
@@ -329,6 +380,7 @@ const Export = (function () {
     const dpi = (SCALES.find(s => s.key === dialogScale) || {}).dpi || 300;
     closeDialog();
     if (dialogFormat === 'svg') downloadSVG();
+    else if (dialogFormat === 'pdf') downloadPDF();
     else if (dialogFormat === 'png') downloadPNG(scale, dialogBg);
     else if (dialogFormat === 'tiff') downloadTIFF(scale, dpi);
     else if (dialogFormat === 'pptx') downloadPPTX(scale);
@@ -376,6 +428,6 @@ const Export = (function () {
     toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
   }
 
-  return { downloadSVG, downloadPNG, downloadTIFF, downloadPPTX, copySVG, saveProject, loadProject, openDialog, closeDialog, cleanSVG, toast };
+  return { downloadSVG, downloadPDF, downloadPNG, downloadTIFF, downloadPPTX, copySVG, saveProject, loadProject, openDialog, closeDialog, cleanSVG, toast };
 })();
 window.Export = Export;
