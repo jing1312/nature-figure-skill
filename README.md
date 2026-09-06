@@ -30,6 +30,12 @@
   <img src="assets/showcase.svg" alt="FigureForge 模板图鉴：12 格 Chart atlas — 高亮柱状图、分组柱状图、小提琴、箱线、折线+置信带、生存曲线、发散/注释热图、火山图、森林图，柔和低饱和配色" width="100%" />
 </div>
 
+**进阶图形**——组学、队列与项目管理级别的复杂图型，同样开箱即用：
+
+<div align="center">
+  <img src="assets/showcase-pro.svg" alt="FigureForge 复杂图形：雷达图、GO 富集气泡图、曼哈顿图、山脊图、桑基图、甘特时间轴" width="100%" />
+</div>
+
 ## 🧪 FigureForge — 不写代码的出图方式
 
 **在线打开（无需安装）**：[jing1312.github.io/nature-figure-skill/figureforge/](https://jing1312.github.io/nature-figure-skill/figureforge/)
