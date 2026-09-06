@@ -18,6 +18,12 @@ Derived from production scripts in [figures4papers](https://github.com/ChenLiu-1
 The original figures4papers demo scripts and preview images are also bundled under
 `assets/figures4papers/` for pattern-level adaptation.
 
+The chart-family selection rules also draw on the public
+[Awesome-Scientific-Figures](https://github.com/Boom5426/Awesome-Virtual-Cell/tree/main/Awesome-Scientific-Figures)
+index: use it as a routing atlas for cloud-rain plots, bubble charts, heatmaps,
+sunburst charts, chord diagrams, radial plots, and other specialized scientific
+visualizations before applying this skill's Nature-grade figure contract.
+
 ---
 
 ## Example output gallery
@@ -79,6 +85,7 @@ nature-figure/
     ├── r-workflow.md            ← R scaffold, patchwork, ComplexHeatmap, export
     ├── r-template-index.md      ← local R template atlas
     ├── qa-contract.md           ← submission/revision QA checklist
+    ├── figure-selection.md      ← chart-family routing guide
     ├── api.md                   ← PALETTE constants, helper function signatures
     ├── design-theory.md         ← typography, color theory, layout, export policy
     ├── common-patterns.md       ← reusable code patterns (bars, legends, heatmaps)

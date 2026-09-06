@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nature Figure"
+  short_description: "Choose and build paper-ready figures"
+  default_prompt: "Use $skill-name to choose the right chart type and build a publication-ready scientific figure."
