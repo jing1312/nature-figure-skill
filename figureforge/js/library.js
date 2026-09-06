@@ -21,12 +21,24 @@ const Library = (function () {
       id: type + ':' + k, name: v.name, icon: v.icon || '', svg: v.svg
     }));
     return {
-      version: 1,
+      version: 6,
       sections: {
         chart: { folders: [], items: conv(getChartTemplates(), 'chart') },
         layout: { folders: [], items: conv(getLayoutTemplates(), 'layout') },
       }
     };
+  }
+
+  // Replace cached built-in templates with current ones (keeps user items).
+  function migrate() {
+    const fresh = defaultData();
+    for (const key of ['chart', 'layout']) {
+      const sec = data.sections[key];
+      const kept = sec.items.filter(t => !/^(chart|layout):/.test(t.id));
+      sec.items = fresh.sections[key].items.concat(kept);
+    }
+    data.version = fresh.version;
+    persist();
   }
 
   function load() {
@@ -35,6 +47,8 @@ const Library = (function () {
       if (raw) {
         data = JSON.parse(raw);
         if (!data || !data.sections || !data.sections.chart) throw new Error('bad lib');
+        const freshV = defaultData().version;
+        if (data.version !== freshV) migrate();
       } else data = defaultData();
     } catch (e) { data = defaultData(); }
     return data;
@@ -160,6 +174,64 @@ const Library = (function () {
       if (window.Export) Export.toast(asTemplate !== false ? '✅ SVG 已导入模板库并打开' : '✅ SVG 已打开');
     };
     reader.readAsText(file);
+  }
+
+  // ── Raster import: PNG / JPG / WebP / GIF / TIFF ──
+  function fileToDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = e => resolve(e.target.result);
+      r.onerror = () => reject(new Error('读取失败'));
+      r.readAsDataURL(file);
+    });
+  }
+
+  function loadUTIF() {
+    if (window.UTIF) return Promise.resolve(window.UTIF);
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js';
+      s.onload = () => window.UTIF ? resolve(window.UTIF) : reject(new Error('TIFF 组件不完整'));
+      s.onerror = () => reject(new Error('TIFF 组件需要联网加载'));
+      document.head.appendChild(s);
+    });
+  }
+
+  async function decodeTIFFFile(file) {
+    const UTIF = await loadUTIF();
+    const buf = await file.arrayBuffer();
+    const ifds = UTIF.decode(buf);
+    if (!ifds.length) throw new Error('TIFF 中没有图像');
+    UTIF.decodeImage(buf, ifds[0]);
+    const rgba = UTIF.toRGBA8(ifds[0]);
+    const w = ifds[0].width, h = ifds[0].height;
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), w, h), 0, 0);
+    return c.toDataURL('image/png');
+  }
+
+  async function importImageFile(file, pos) {
+    const name = (file.name || 'image').toLowerCase();
+    try {
+      let dataURL;
+      if (/\.(tiff?|tif)$/.test(name)) {
+        if (window.Export) Export.toast('⏳ 正在解码 TIFF…');
+        dataURL = await decodeTIFFFile(file);
+      } else {
+        dataURL = await fileToDataURL(file);
+      }
+      Canvas.insertImage(dataURL, pos ? pos.x : undefined, pos ? pos.y : undefined);
+      if (window.Export) Export.toast('🖼 已插入图片 — 可缩放/✂裁剪/旋转，属性面板可调色调');
+    } catch (e) {
+      if (window.Export) Export.toast('❌ 图片导入失败：' + e.message);
+    }
+  }
+
+  function importAnyFile(file, asTemplate, pos) {
+    if (/\.svg$/i.test(file.name)) importSVGFile(file, asTemplate);
+    else if (/\.(png|jpe?g|webp|gif|tiff?|tif)$/i.test(file.name)) importImageFile(file, pos);
+    else if (window.Export) Export.toast('❌ 不支持的格式：' + file.name);
   }
 
   function highlight(id) {
@@ -365,10 +437,10 @@ const Library = (function () {
     document.getElementById('btn-new-figure')?.addEventListener('click', () => newBlankFigure());
     document.getElementById('file-import-svg')?.addEventListener('change', e => {
       const f = e.target.files[0];
-      if (f) importSVGFile(f, true);
+      if (f) importAnyFile(f, true);
     });
   }
 
-  return { init, render, load, persist, addItem, importSVGFile, newBlankFigure, moveItem, deleteItem, renameItem, newFolder, deleteFolder };
+  return { init, render, load, persist, addItem, importSVGFile, importImageFile, importAnyFile, newBlankFigure, moveItem, deleteItem, renameItem, newFolder, deleteFolder };
 })();
 window.Library = Library;

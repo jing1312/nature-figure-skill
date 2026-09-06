@@ -10,7 +10,7 @@ const App = (function () {
   const state = {
     currentTemplate: null,
     selectedElement: null,
-    activePalette: 'classic',
+    activePalette: 'tableau10',
     zoom: 1,
     showGrid: true,
     snapEnabled: true,
@@ -24,11 +24,14 @@ const App = (function () {
     wireExportBar();
     wireAIPanel();
     wireGlobalSettings();
+    wireSettings();
     wireKeyboardShortcuts();
     wireCanvasEvents();
     wirePanelToggle();
     wireHelp();
-    applyWorkspaceBg(Store.getPref('workspaceBg', '#0f0f1a'));
+    wireThemeToggle();
+    applyTheme(Store.getPref('theme', 'dark'));
+    applyWorkspaceBg(Store.getPref('workspaceBg', 'auto'));
     if (!Store.tryRestore()) console.log('FigureForge ready ✅ (fresh start)');
     else console.log('FigureForge ready ✅ (session restored)');
   }
@@ -54,20 +57,23 @@ const App = (function () {
     if (!svgEl) return;
     const colors = getPaletteColors(paletteKey);
     if (!colors || colors.length === 0) return;
-    const seriesRoles = ['bar', 'line', 'area', 'marker', 'legend-marker', 'series'];
-    let colorIdx = 0;
+    // bar/line/area/series get sequential palette slots; marker follows its
+    // series so line+dot stay the same color (data-series pins it explicitly)
+    const seriesRoles = new Set(['bar', 'line', 'area', 'series', 'marker']);
+    let next = 0;
     svgEl.querySelectorAll('[data-edit="true"]').forEach(el => {
       const role = el.getAttribute('data-role') || '';
-      if (seriesRoles.includes(role)) {
-        const fill = el.getAttribute('fill');
-        if (fill && fill !== 'none' && fill !== '#FFFFFF' && fill !== '#ffffff') {
-          el.setAttribute('fill', colors[colorIdx % colors.length]);
-          colorIdx++;
-        }
-        const stroke = el.getAttribute('stroke');
-        if (stroke && stroke !== 'none' && role === 'line') {
-          el.setAttribute('stroke', colors[colorIdx % colors.length]);
-        }
+      if (!seriesRoles.has(role)) return;
+      let idx = el.getAttribute('data-series');
+      if (idx === null) idx = String(role === 'marker' ? Math.max(next - 1, 0) : next++);
+      const color = colors[(parseInt(idx, 10) || 0) % colors.length];
+      const fill = el.getAttribute('fill');
+      if (fill && fill !== 'none' && fill.toLowerCase() !== '#ffffff') {
+        el.setAttribute('fill', color);
+      }
+      const stroke = el.getAttribute('stroke');
+      if ((role === 'line' || role === 'series') && stroke && stroke !== 'none') {
+        el.setAttribute('stroke', color);
       }
     });
     Canvas.updateSelectionOverlay();
@@ -162,9 +168,54 @@ const App = (function () {
   }
 
   function applyWorkspaceBg(color) {
-    document.documentElement.style.setProperty('--bg-canvas', color);
+    if (color === 'auto') {
+      // Follow the theme: drop the inline override so the class decides
+      document.documentElement.style.removeProperty('--bg-canvas');
+    } else {
+      document.documentElement.style.setProperty('--bg-canvas', color);
+    }
     const sel = document.getElementById('workspace-bg');
     if (sel) sel.value = color;
+  }
+
+  function applyTheme(theme) {
+    document.body.classList.toggle('theme-light', theme === 'light');
+    const btn = document.getElementById('btn-theme');
+    if (btn) btn.textContent = theme === 'light' ? '🌙' : '☀️';
+  }
+
+  function wireThemeToggle() {
+    document.getElementById('btn-theme')?.addEventListener('click', () => {
+      const toDark = document.body.classList.contains('theme-light');
+      // The theme flips while the sky covers the page
+      DayNight.play(toDark, () => {
+        applyTheme(toDark ? 'dark' : 'light');
+        Store.setPref('theme', toDark ? 'dark' : 'light');
+        applyWorkspaceBg(Store.getPref('workspaceBg', 'auto'));
+      });
+    });
+  }
+
+  function wireSettings() {
+    const modal = document.getElementById('settings-modal');
+    const base = document.getElementById('set-api-base');
+    const key = document.getElementById('set-api-key');
+    const model = document.getElementById('set-api-model');
+    function open() {
+      base.value = localStorage.getItem('ff_api_base') || '';
+      key.value = localStorage.getItem('ff_api_key') || '';
+      model.value = localStorage.getItem('ff_api_model') || '';
+      modal?.classList.remove('hidden');
+    }
+    function close() { modal?.classList.add('hidden'); }
+    document.getElementById('btn-settings')?.addEventListener('click', open);
+    document.getElementById('btn-settings-close')?.addEventListener('click', close);
+    document.getElementById('btn-settings-save')?.addEventListener('click', () => {
+      AIGenerate.configure(base.value.trim(), key.value.trim(), model.value.trim());
+      close();
+      Export.toast(base.value.trim() && key.value.trim() ? '✅ AI 接口已配置' : '已清除 AI 接口配置');
+    });
+    modal?.addEventListener('mousedown', e => { if (e.target.id === 'settings-modal') close(); });
   }
 
   function wireCanvasEvents() {
@@ -175,20 +226,32 @@ const App = (function () {
         const name = file.name.toLowerCase();
         if (name.endsWith('.svg')) {
           Library.importSVGFile(file, true);
-        } else if (/\.(png|jpe?g|gif|webp)$/.test(name)) {
-          const reader = new FileReader();
-          reader.onload = e => {
-            Canvas.insertImage(e.target.result, pos ? pos.x : undefined, pos ? pos.y : undefined);
-            Export.toast('🖼 已插入图片 ' + file.name);
-          };
-          reader.readAsDataURL(file);
+        } else if (/\.(png|jpe?g|webp|gif|tiff?|tif)$/.test(name)) {
+          Library.importImageFile(file, pos);
         } else if (name.endsWith('.json')) {
           Export.loadProject(file);
         } else {
-          Export.toast('❌ 不支持的格式：' + file.name + '（支持 SVG / PNG / JPG / JSON）');
+          Export.toast('❌ 不支持的格式：' + file.name + '（支持 SVG / PNG / JPG / TIFF / JSON）');
         }
       });
     };
+    // Ctrl+V / Cmd+V: paste a screenshot or copied image straight onto the canvas
+    document.addEventListener('paste', (e) => {
+      const ae = document.activeElement;
+      if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+      const items = [...((e.clipboardData && e.clipboardData.items) || [])];
+      const imgItem = items.find(i => i.type && i.type.startsWith('image/'));
+      if (!imgItem || !Canvas.getSVGElement()) return;
+      e.preventDefault();
+      const file = imgItem.getAsFile();
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        Canvas.insertImage(ev.target.result);
+        Export.toast('🖼 已粘贴剪贴板图片 — 可缩放/✂裁剪/旋转');
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   function wirePanelToggle() {
@@ -227,7 +290,7 @@ const App = (function () {
       else if (e.key === 'ArrowRight') { e.preventDefault(); Canvas.nudge(e.shiftKey ? 10 : 1, 0); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); Canvas.nudge(0, e.shiftKey ? -10 : -1); }
       else if (e.key === 'ArrowDown') { e.preventDefault(); Canvas.nudge(0, e.shiftKey ? 10 : 1); }
-      else if (e.key === 'Escape') { Canvas.deselect(); Export.closeDialog(); toggleHelp(false); }
+      else if (e.key === 'Escape') { Canvas.deselect(); Export.closeDialog(); toggleHelp(false); document.getElementById('settings-modal')?.classList.add('hidden'); }
       else if (ctrl && e.shiftKey && e.key === 'C') { e.preventDefault(); Export.copySVG(); }
       else if (ctrl && (e.key === '=' || e.key === '+')) { e.preventDefault(); Canvas.zoomBy(1.2); updateZoomDisplay(); }
       else if (ctrl && e.key === '-') { e.preventDefault(); Canvas.zoomBy(1 / 1.2); updateZoomDisplay(); }

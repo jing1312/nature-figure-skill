@@ -210,7 +210,7 @@ const Canvas = (function () {
   function updateSelectionOverlay() {
     const overlay = document.getElementById('selection-overlay');
     const guidesSvg = document.getElementById('guides-overlay');
-    if (guidesSvg) guidesSvg.querySelectorAll('.member-rect,.rubber-rect').forEach(r => r.remove());
+    if (guidesSvg) guidesSvg.querySelectorAll('.member-rect,.rubber-rect,.resize-handle').forEach(r => r.remove());
     if (!selection.length || !svgEl) {
       if (overlay) overlay.classList.remove('active');
       return;
@@ -237,7 +237,103 @@ const Canvas = (function () {
           guidesSvg.appendChild(r);
         });
       }
+      if (guidesSvg && selection.length === 1) renderResizeHandles(boxes[0]);
     } catch (e) { /* non-rendered elements */ }
+  }
+
+  // ── Resize handles (single selection of rect / image / circle / ellipse) ──
+  const RESIZABLE = new Set(['rect', 'image', 'circle', 'ellipse']);
+  let resizing = null;   // {el, corner, start, orig, type}
+  let resizeCur = null;
+
+  function renderResizeHandles(b) {
+    const el = selection[0];
+    const guidesSvg = document.getElementById('guides-overlay');
+    if (!guidesSvg || !el || !RESIZABLE.has(el.tagName)) return;
+    const scale = currentScale();
+    const corners = { nw: [b.x, b.y], ne: [b.x + b.w, b.y], sw: [b.x, b.y + b.h], se: [b.x + b.w, b.y + b.h] };
+    for (const [key, [cx, cy]] of Object.entries(corners)) {
+      const p = toContainerOffset(cx, cy);
+      const h = document.createElementNS(SVGNS, 'rect');
+      const s = 8;
+      h.setAttribute('x', p.x - s / 2); h.setAttribute('y', p.y - s / 2);
+      h.setAttribute('width', s); h.setAttribute('height', s);
+      h.setAttribute('class', 'resize-handle');
+      h.setAttribute('data-corner', key);
+      guidesSvg.appendChild(h);
+    }
+    void scale;
+  }
+
+  function startResize(e, el) {
+    const corner = e.target.getAttribute('data-corner');
+    const type = el.tagName;
+    const num = a => parseFloat(el.getAttribute(a)) || 0;
+    const orig = { x: num('x'), y: num('y'), w: num('width'), h: num('height'), cx: num('cx'), cy: num('cy'), r: num('r'), rx: num('rx'), ry: num('ry') };
+    if (type === 'image') orig.aspect = orig.h / Math.max(orig.w, 0.001);
+    if (type === 'circle') { orig.x = orig.cx - orig.r; orig.y = orig.cy - orig.r; orig.w = orig.r * 2; orig.h = orig.r * 2; }
+    if (type === 'ellipse') { orig.x = orig.cx - orig.rx; orig.y = orig.cy - orig.ry; orig.w = orig.rx * 2; orig.h = orig.ry * 2; }
+    resizing = { el, corner, type, orig, start: getMousePos(e) };
+    resizeCur = resizing.start;
+    document.addEventListener('mousemove', onResizeMove);
+    document.addEventListener('mouseup', onResizeUp);
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  function onResizeMove(e) {
+    if (!resizing) return;
+    resizeCur = getMousePos(e);
+    const { el, corner, type, orig, start } = resizing;
+    const dx = resizeCur.x - start.x, dy = resizeCur.y - start.y;
+    const sxF = corner.includes('w') ? -1 : 1;
+    const syF = corner.includes('n') ? -1 : 1;
+    if (type === 'rect') {
+      const w = Math.max(2, orig.w + sxF * dx), h = Math.max(2, orig.h + syF * dy);
+      el.setAttribute('x', (orig.x + (sxF < 0 ? orig.w - w : 0)).toFixed(1));
+      el.setAttribute('y', (orig.y + (syF < 0 ? orig.h - h : 0)).toFixed(1));
+      el.setAttribute('width', w.toFixed(1));
+      el.setAttribute('height', h.toFixed(1));
+    } else if (type === 'image') {
+      const w = Math.max(4, orig.w + sxF * dx), h = w * orig.aspect;
+      el.setAttribute('x', (orig.x + (sxF < 0 ? orig.w - w : 0)).toFixed(1));
+      el.setAttribute('y', (orig.y + (syF < 0 ? orig.h - h : 0)).toFixed(1));
+      el.setAttribute('width', w.toFixed(1));
+      el.setAttribute('height', h.toFixed(1));
+    } else if (type === 'circle') {
+      const w = Math.max(2, orig.w + sxF * dx);
+      el.setAttribute('cx', (orig.x + (sxF < 0 ? orig.w - w : 0) + w / 2).toFixed(1));
+      el.setAttribute('cy', (orig.y + (syF < 0 ? orig.h - w : 0) + w / 2).toFixed(1));
+      el.setAttribute('r', (w / 2).toFixed(1));
+    } else if (type === 'ellipse') {
+      const w = Math.max(2, orig.w + sxF * dx), h = Math.max(2, orig.h + syF * dy);
+      el.setAttribute('cx', (orig.x + (sxF < 0 ? orig.w - w : 0) + w / 2).toFixed(1));
+      el.setAttribute('cy', (orig.y + (syF < 0 ? orig.h - h : 0) + h / 2).toFixed(1));
+      el.setAttribute('rx', (w / 2).toFixed(1));
+      el.setAttribute('ry', (h / 2).toFixed(1));
+    }
+    updateSelectionOverlay();
+  }
+
+  function onResizeUp() {
+    document.removeEventListener('mousemove', onResizeMove);
+    document.removeEventListener('mouseup', onResizeUp);
+    if (!resizing) return;
+    const { el, type, orig } = resizing;
+    const keys = type === 'circle' ? ['cx', 'cy', 'r'] : type === 'ellipse' ? ['cx', 'cy', 'rx', 'ry'] : ['x', 'y', 'width', 'height'];
+    const to = {};
+    keys.forEach(k => { to[k] = el.getAttribute(k); });
+    const changed = keys.some(k => String(orig[k]) !== String(to[k]));
+    if (changed && window.History) {
+      History.push({
+        undo: () => keys.forEach(k => el.setAttribute(k, String(orig[k]))),
+        redo: () => keys.forEach(k => el.setAttribute(k, to[k])),
+        label: 'Resize'
+      });
+    }
+    resizing = null;
+    resizeCur = null;
+    updateSelectionOverlay();
   }
 
   // ── Smart alignment guides ──
@@ -547,6 +643,14 @@ const Canvas = (function () {
     img.setAttribute('data-edit', 'true');
     img.setAttribute('href', dataURL);
     svgEl.appendChild(img);
+    // explicit height from the natural aspect ratio (missing height breaks
+    // rendering, bbox and rotate/crop math)
+    loadHTMLImage(dataURL).then(im => {
+      if (!img.isConnected) return;
+      const h = w * im.naturalHeight / Math.max(im.naturalWidth, 1);
+      img.setAttribute('height', h.toFixed(1));
+      updateSelectionOverlay();
+    }).catch(() => {});
     selectElement(img);
     if (window.History) {
       History.push({
@@ -558,12 +662,320 @@ const Canvas = (function () {
     return img;
   }
 
+  // ═══ Image tools: crop / rotate / flip / adjustments / replace ═══
+  // Raster imports become <image> elements — movable, resizable, and with
+  // these tools genuinely editable even when no vector source exists.
+  let adjSeq = 0;
+  let crop = null; // { img, rect:{x,y,w,h}, mode, handle }
+
+  function loadHTMLImage(src) {
+    return new Promise((resolve, reject) => {
+      const im = new Image();
+      im.crossOrigin = 'anonymous';
+      im.onload = () => resolve(im);
+      im.onerror = () => reject(new Error('图片解码失败'));
+      im.src = src;
+    });
+  }
+
+  function encodeCanvas(canvas) {
+    try { return canvas.toDataURL('image/png'); }
+    catch (e) { throw new Error('外部链接图片无法重新编码'); }
+  }
+
+  // ── Rotate / flip by pixel re-encode (keeps the attr model transform-free) ──
+  async function rotateImageElement(el, deg) {
+    const href = el.getAttribute('href');
+    const x = parseFloat(el.getAttribute('x')) || 0, y = parseFloat(el.getAttribute('y')) || 0;
+    const w = parseFloat(el.getAttribute('width')) || 1, h = parseFloat(el.getAttribute('height')) || 1;
+    const im = await loadHTMLImage(href);
+    const swap = Math.abs(deg) % 180 === 90;
+    const c = document.createElement('canvas');
+    c.width = swap ? im.naturalHeight : im.naturalWidth;
+    c.height = swap ? im.naturalWidth : im.naturalHeight;
+    const ctx = c.getContext('2d');
+    ctx.translate(c.width / 2, c.height / 2);
+    ctx.rotate(deg * Math.PI / 180);
+    ctx.drawImage(im, -im.naturalWidth / 2, -im.naturalHeight / 2);
+    const url = encodeCanvas(c);
+    const cx = x + w / 2, cy = y + h / 2;
+    const nw = swap ? h : w, nh = swap ? w : h;
+    const to = { href: url, x: cx - nw / 2, y: cy - nh / 2, width: nw, height: nh };
+    const from = { href, x, y, width: w, height: h };
+    ['href', 'x', 'y', 'width', 'height'].forEach(k => el.setAttribute(k, to[k]));
+    if (window.History) History.push({
+      undo: () => Object.entries(from).forEach(([k, v]) => el.setAttribute(k, v)),
+      redo: () => Object.entries(to).forEach(([k, v]) => el.setAttribute(k, v)),
+      label: 'Rotate'
+    });
+    updateSelectionOverlay();
+  }
+
+  async function flipImageElement(el, axis) {
+    const href = el.getAttribute('href');
+    const im = await loadHTMLImage(href);
+    const c = document.createElement('canvas');
+    c.width = im.naturalWidth; c.height = im.naturalHeight;
+    const ctx = c.getContext('2d');
+    ctx.translate(axis === 'h' ? c.width : 0, axis === 'v' ? c.height : 0);
+    ctx.scale(axis === 'h' ? -1 : 1, axis === 'v' ? -1 : 1);
+    ctx.drawImage(im, 0, 0);
+    const url = encodeCanvas(c);
+    const old = el.getAttribute('href');
+    el.setAttribute('href', url);
+    if (window.History) History.push({
+      undo: () => el.setAttribute('href', old),
+      redo: () => el.setAttribute('href', url),
+      label: 'Flip'
+    });
+  }
+
+  function replaceImageElement(el, dataURL) {
+    const old = el.getAttribute('href');
+    el.setAttribute('href', dataURL);
+    if (window.History) History.push({
+      undo: () => el.setAttribute('href', old),
+      redo: () => el.setAttribute('href', dataURL),
+      label: 'Replace Image'
+    });
+  }
+
+  // ── Tone adjustments via an SVG filter (editable + exported) ──
+  function ensureAdjFilter(img) {
+    const svg = img.ownerSVGElement;
+    let defs = svg.querySelector('defs');
+    if (!defs) { defs = document.createElementNS(SVGNS, 'defs'); svg.insertBefore(defs, svg.firstChild); }
+    const fid = img.getAttribute('filter');
+    let f = fid && svg.querySelector('#' + CSS.escape(fid.replace(/^url\(#/, '').replace(/\)$/, '')));
+    if (!f) {
+      const id = 'ff-adj-' + (++adjSeq);
+      f = document.createElementNS(SVGNS, 'filter');
+      f.setAttribute('id', id);
+      f.setAttribute('color-interpolation-filters', 'sRGB');
+      const comp = document.createElementNS(SVGNS, 'feComponentTransfer');
+      ['R', 'G', 'B'].forEach(ch => {
+        const fn = document.createElementNS(SVGNS, 'feFunc' + ch);
+        fn.setAttribute('type', 'linear');
+        fn.setAttribute('slope', '1');
+        fn.setAttribute('intercept', '0');
+        comp.appendChild(fn);
+      });
+      const sat = document.createElementNS(SVGNS, 'feColorMatrix');
+      sat.setAttribute('type', 'saturate');
+      sat.setAttribute('values', '1');
+      f.appendChild(comp);
+      f.appendChild(sat);
+      defs.appendChild(f);
+      img.setAttribute('filter', 'url(#' + id + ')');
+    }
+    return f;
+  }
+
+  function setImageAdjustments(img, adj) { // {b,c,s,gray,invert} defaults 1,1,1,false,false
+    const f = ensureAdjFilter(img);
+    const b = adj.b, c = adj.c, s = adj.gray ? 0 : adj.s;
+    const slope = c, intercept = (b - 1) + 0.5 * (1 - c);
+    ['R', 'G', 'B'].forEach(ch => {
+      const fn = f.querySelector('feFunc' + ch);
+      fn.setAttribute('slope', slope.toFixed(4));
+      fn.setAttribute('intercept', intercept.toFixed(4));
+    });
+    f.querySelector('feColorMatrix').setAttribute('values', s.toFixed(4));
+    let inv = f.querySelector('feComponentTransfer[invert]');
+    if (adj.invert && !inv) {
+      inv = document.createElementNS(SVGNS, 'feComponentTransfer');
+      inv.setAttribute('invert', '1');
+      ['R', 'G', 'B'].forEach(ch => {
+        const fn = document.createElementNS(SVGNS, 'feFunc' + ch);
+        fn.setAttribute('type', 'table');
+        fn.setAttribute('tableValues', '1 0');
+        inv.appendChild(fn);
+      });
+      f.appendChild(inv);
+    } else if (!adj.invert && inv) inv.remove();
+  }
+
+  function getImageAdjustments(img) {
+    const fid = img.getAttribute('filter');
+    if (!fid) return { b: 1, c: 1, s: 1, gray: false, invert: false };
+    const f = img.ownerSVGElement.querySelector('#' + CSS.escape(fid.replace(/^url\(#/, '').replace(/\)$/, '')));
+    if (!f) return { b: 1, c: 1, s: 1, gray: false, invert: false };
+    const fn = f.querySelector('feFuncR');
+    const slope = parseFloat(fn.getAttribute('slope')) || 1;
+    const intercept = parseFloat(fn.getAttribute('intercept')) || 0;
+    const c = slope, b = 1 + intercept - 0.5 * (1 - c);
+    const sv = f.querySelector('feColorMatrix').getAttribute('values');
+    const s = sv === null || sv === '' ? 1 : (parseFloat(sv) || 0);
+    return { b, c, s, gray: s <= 0, invert: !!f.querySelector('feComponentTransfer[invert]') };
+  }
+
+  function resetImageAdjustments(img) {
+    const fid = img.getAttribute('filter');
+    if (!fid) return;
+    const f = img.ownerSVGElement.querySelector('#' + CSS.escape(fid.replace(/^url\(#/, '').replace(/\)$/, '')));
+    if (f) f.remove();
+    const old = fid;
+    img.removeAttribute('filter');
+    if (window.History) History.push({
+      undo: () => img.setAttribute('filter', old),
+      redo: () => img.removeAttribute('filter'),
+      label: 'Reset Adjustments'
+    });
+  }
+
+  // ── Interactive crop ──
+  function startImageCrop(img) {
+    if (crop) endCrop();
+    const b = getWorldBBox(img);
+    if (!b.w || !b.h) return;
+    deselect(); // hide selection chrome while cropping
+    crop = { img, rect: { x: b.x, y: b.y, w: b.w, h: b.h } };
+    renderCropOverlay();
+    document.addEventListener('keydown', onCropKey, true);
+    document.addEventListener('mousemove', onCropMove);
+    document.addEventListener('mouseup', onCropUp);
+    if (window.Export) Export.toast('✂ 拖动边角或内部调整裁剪区域 — Enter 确认，Esc 取消');
+  }
+
+  function renderCropOverlay() {
+    const overlay = document.getElementById('guides-overlay');
+    if (!overlay) return;
+    overlay.querySelectorAll('.crop-shade,.crop-rect,.crop-handle').forEach(n => n.remove());
+    const scale = currentScale();
+    const r = crop.rect, img = getWorldBBox(crop.img);
+    const p = toContainerOffset(r.x, r.y);
+    const px = { x: p.x, y: p.y, w: r.w * scale.sx, h: r.h * scale.sy };
+    // dim everything outside the crop rect (4 shade strips, image-bounded)
+    const strips = [
+      [img.x, img.y, r.x - img.x + r.w, r.y - img.y], // top (full width)
+    ];
+    const dim = (bx, by, bw, bh) => {
+      if (bw <= 0 || bh <= 0) return;
+      const q = toContainerOffset(bx, by);
+      const t = document.createElementNS(SVGNS, 'rect');
+      t.setAttribute('x', q.x); t.setAttribute('y', q.y);
+      t.setAttribute('width', bw * scale.sx); t.setAttribute('height', bh * scale.sy);
+      t.setAttribute('class', 'crop-shade');
+      overlay.appendChild(t);
+    };
+    dim(img.x, img.y, img.w, r.y - img.y); // above
+    dim(img.x, r.y + r.h, img.w, img.y + img.h - (r.y + r.h)); // below
+    dim(img.x, r.y, r.x - img.x, r.h); // left
+    dim(r.x + r.w, r.y, img.x + img.w - (r.x + r.w), r.h); // right
+    const rect = document.createElementNS(SVGNS, 'rect');
+    rect.setAttribute('x', px.x); rect.setAttribute('y', px.y);
+    rect.setAttribute('width', px.w); rect.setAttribute('height', px.h);
+    rect.setAttribute('class', 'crop-rect');
+    overlay.appendChild(rect);
+    [['nw', r.x, r.y], ['ne', r.x + r.w, r.y], ['sw', r.x, r.y + r.h], ['se', r.x + r.w, r.y + r.h],
+     ['n', r.x + r.w / 2, r.y], ['s', r.x + r.w / 2, r.y + r.h], ['w', r.x, r.y + r.h / 2], ['e', r.x + r.w, r.y + r.h / 2]]
+      .forEach(([key, cx, cy]) => {
+        const q = toContainerOffset(cx, cy);
+        const hnd = document.createElementNS(SVGNS, 'rect');
+        const s = 8;
+        hnd.setAttribute('x', q.x - s / 2); hnd.setAttribute('y', q.y - s / 2);
+        hnd.setAttribute('width', s); hnd.setAttribute('height', s);
+        hnd.setAttribute('class', 'crop-handle');
+        hnd.setAttribute('data-crop-handle', key);
+        overlay.appendChild(hnd);
+      });
+    void strips;
+  }
+
+  function onCropKey(e) {
+    if (!crop) return;
+    if (e.key === 'Enter') { e.preventDefault(); commitCrop(); }
+    else if (e.key === 'Escape') { e.preventDefault(); endCrop(); }
+  }
+
+  function cropHitTest(e) {
+    const t = e.target;
+    if (t.classList && t.classList.contains('crop-handle')) return { part: 'handle', key: t.getAttribute('data-crop-handle') };
+    if (t.classList && t.classList.contains('crop-rect')) return { part: 'move' };
+    return null;
+  }
+
+  function onCropMove(e) {
+    if (!crop || !crop.drag) return;
+    const p = getMousePos(e);
+    const dx = p.x - crop.drag.sx, dy = p.y - crop.drag.sy;
+    const r = { ...crop.drag.start };
+    const MIN = 4;
+    const k = crop.drag.key;
+    if (k === 'move') { r.x += dx; r.y += dy; }
+    if (k.includes('w')) { r.x += dx; r.w -= dx; }
+    if (k.includes('e')) { r.w += dx; }
+    if (k.includes('n')) { r.y += dy; r.h -= dy; }
+    if (k.includes('s')) { r.h += dy; }
+    // clamp to image bounds and minimum size
+    const b = getWorldBBox(crop.img);
+    r.x = Math.max(b.x, Math.min(r.x, b.x + b.w - MIN));
+    r.y = Math.max(b.y, Math.min(r.y, b.y + b.h - MIN));
+    r.w = Math.max(MIN, Math.min(r.w, b.x + b.w - r.x));
+    r.h = Math.max(MIN, Math.min(r.h, b.y + b.h - r.y));
+    crop.rect = r;
+    renderCropOverlay();
+  }
+
+  function onCropUp() { if (crop) crop.drag = null; }
+
+  document.addEventListener('mousedown', (e) => {
+    if (!crop) return;
+    const hit = cropHitTest(e);
+    if (!hit) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const p = getMousePos(e);
+    crop.drag = { sx: p.x, sy: p.y, start: { ...crop.rect }, key: hit.part === 'move' ? 'move' : hit.key };
+  }, true);
+
+  async function commitCrop() {
+    const { img, rect } = crop;
+    endCrop();
+    const dispW = parseFloat(img.getAttribute('width')), dispH = parseFloat(img.getAttribute('height'));
+    const bx = parseFloat(img.getAttribute('x')) || 0, by = parseFloat(img.getAttribute('y')) || 0;
+    try {
+      const im = await loadHTMLImage(img.getAttribute('href'));
+      const natW = im.naturalWidth, natH = im.naturalHeight;
+      const sxp = (rect.x - bx) / dispW * natW, syp = (rect.y - by) / dispH * natH;
+      const swp = rect.w / dispW * natW, shp = rect.h / dispH * natH;
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(swp)); c.height = Math.max(1, Math.round(shp));
+      c.getContext('2d').drawImage(im, sxp, syp, swp, shp, 0, 0, c.width, c.height);
+      const url = encodeCanvas(c);
+      const from = { href: img.getAttribute('href'), x: bx, y: by, width: dispW, height: dispH };
+      const to = { href: url, x: rect.x, y: rect.y, width: rect.w, height: rect.h };
+      ['href', 'x', 'y', 'width', 'height'].forEach(k => img.setAttribute(k, to[k]));
+      if (window.History) History.push({
+        undo: () => Object.entries(from).forEach(([k, v]) => img.setAttribute(k, v)),
+        redo: () => Object.entries(to).forEach(([k, v]) => img.setAttribute(k, v)),
+        label: 'Crop'
+      });
+    } catch (err) {
+      if (window.Export) Export.toast('❌ ' + err.message);
+    }
+    selectElement(img);
+    updateSelectionOverlay();
+  }
+
+  function endCrop() {
+    crop = null;
+    const overlay = document.getElementById('guides-overlay');
+    if (overlay) overlay.querySelectorAll('.crop-shade,.crop-rect,.crop-handle').forEach(n => n.remove());
+    document.removeEventListener('keydown', onCropKey, true);
+    document.removeEventListener('mousemove', onCropMove);
+    document.removeEventListener('mouseup', onCropUp);
+  }
+
+  function isCropping() { return !!crop; }
+
   // ── Double-click: inline text edit ──
   function onCanvasDblClick(e) {
     const target = findEditableElement(e.target);
     if (!target) return;
     e.preventDefault();
     if (target.tagName === 'text') startTextEdit(target);
+    else if (target.tagName === 'image') startImageCrop(target);
     else if (target.tagName === 'g' && target.getAttribute('data-role') === 'group') ungroupSelection();
   }
 
@@ -707,11 +1119,48 @@ const Canvas = (function () {
     });
   }
 
+  // ── Series linkage: elements sharing data-series stay in sync ──
+  const DATA_ROLES = new Set(['bar', 'line', 'area', 'marker', 'series']);
+
+  // Push a fill/stroke change to every sibling of the same data-series whose
+  // corresponding attribute is currently "active" (so per-role styling —
+  // e.g. a dark box stroke — survives). Returns the changed peers for undo.
+  function propagateSeriesColor(el, attr, value) {
+    const idx = el.getAttribute('data-series');
+    if (idx === null || !svgEl) return [];
+    const changed = [];
+    svgEl.querySelectorAll('[data-edit="true"][data-series="' + idx + '"]').forEach(other => {
+      if (other === el) return;
+      const cur = other.getAttribute(attr);
+      const active = attr === 'fill'
+        ? (cur && cur !== 'none' && cur.toLowerCase() !== '#ffffff')
+        : (cur && cur !== 'none');
+      if (active) { changed.push({ el: other, old: cur }); other.setAttribute(attr, value); }
+    });
+    return changed;
+  }
+
+  function seriesPeerCount(el) {
+    const idx = el.getAttribute('data-series');
+    if (idx === null || !svgEl) return 0;
+    return svgEl.querySelectorAll('[data-edit="true"][data-series="' + idx + '"]').length - 1;
+  }
+
   // ── Delete / duplicate (multi) ──
   function deleteElement() {
     if (!selection.length) return;
     const els = selection.slice();
-    const records = els.map(el => ({ parent: el.parentNode, anchor: el.nextSibling, el }));
+    // series linkage: removing a data element takes its legend swatch with it
+    const linked = [];
+    els.forEach(el => {
+      const role = el.getAttribute('data-role') || '';
+      const idx = el.getAttribute('data-series');
+      if (idx === null || role === 'series' || !DATA_ROLES.has(role)) return;
+      svgEl.querySelectorAll('[data-edit="true"][data-role="series"][data-series="' + idx + '"]').forEach(sw => {
+        if (!els.includes(sw) && !linked.some(r => r.el === sw) && sw.isConnected) linked.push(sw);
+      });
+    });
+    const records = els.concat(linked).map(el => ({ parent: el.parentNode, anchor: el.nextSibling, el }));
     records.forEach(r => r.parent.removeChild(r.el));
     deselect();
     if (window.History) {
@@ -784,6 +1233,13 @@ const Canvas = (function () {
 
   function initStaticWiring() {
     wireTextEditor();
+    document.getElementById('guides-overlay')?.addEventListener('mousedown', (e) => {
+      const t = e.target;
+      if (t.classList && t.classList.contains('resize-handle') && selection.length === 1) {
+        const el = selection[0];
+        if (RESIZABLE.has(el.tagName)) startResize(e, el);
+      }
+    });
     document.addEventListener('mousedown', (e) => {
       const menu = document.getElementById('context-menu');
       if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target)) closeContextMenu();
@@ -799,6 +1255,10 @@ const Canvas = (function () {
     getWorldBBox, getElementPosition, setElementPosition, applyTranslate,
     groupSelection, ungroupSelection,
     insertText, insertImage,
+    startImageCrop, isCropping,
+    rotateImageElement, flipImageElement, replaceImageElement,
+    setImageAdjustments, getImageAdjustments, resetImageAdjustments,
+    propagateSeriesColor, seriesPeerCount,
     nudge, deleteElement, duplicateElement,
     toggleGrid, toggleSnap,
     zoomBy, setZoom, getZoom, fitToView,

@@ -5,6 +5,69 @@
  */
 
 const PALETTES = {
+  // ── Curated colour cards (world-famous data-viz palettes) ──
+  tableau10: {
+    name: "Tableau 10",
+    description: "The classic Tableau palette — rich, harmonious, professional",
+    colors: {
+      blue: "#4E79A7", orange: "#F28E2B", red: "#E15759", teal: "#76B7B2",
+      green: "#59A14F", yellow: "#EDC948", purple: "#B07AA1", pink: "#FF9DA7",
+      brown: "#9C755F", grey: "#BAB0AC",
+    },
+    defaultSequence: ["#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#EDC948", "#B07AA1", "#FF9DA7"],
+  },
+
+  tol_muted: {
+    name: "Tol Muted",
+    description: "Paul Tol's muted scheme — elegant, colour-blind safe",
+    colors: {
+      indigo: "#332288", cyan: "#88CCEE", teal: "#44AA99", green: "#117733",
+      olive: "#999933", sand: "#DDCC77", rose: "#CC6677", wine: "#882255",
+      purple: "#AA4499",
+    },
+    defaultSequence: ["#332288", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#CC6677", "#882255", "#AA4499"],
+  },
+
+  seaborn_deep: {
+    name: "Seaborn Deep",
+    description: "seaborn 'deep' — vivid yet balanced matplotlib classic",
+    colors: {
+      blue: "#4C72B0", orange: "#DD8452", green: "#55A868", red: "#C44E52",
+      purple: "#8172B3", brown: "#937860", pink: "#DA8BC3", grey: "#8C8C8C",
+    },
+    defaultSequence: ["#4C72B0", "#DD8452", "#55A868", "#C44E52", "#8172B3", "#937860", "#DA8BC3", "#8C8C8C"],
+  },
+
+  morandi: {
+    name: "Morandi 莫兰迪",
+    description: "Dusty Morandi tones — soft, understated, high-class feel",
+    colors: {
+      mistBlue: "#7C9EB8", dustRose: "#C9A7A7", sage: "#A3BFA0", lilac: "#B5A2C8",
+      mustard: "#D9C48A", jade: "#8FB3A9", terracotta: "#C98B7A", slate: "#8C93A8",
+    },
+    defaultSequence: ["#7C9EB8", "#C9A7A7", "#A3BFA0", "#B5A2C8", "#D9C48A", "#8FB3A9", "#C98B7A", "#8C93A8"],
+  },
+
+  economist: {
+    name: "Economist Style",
+    description: "The Economist chart palette — confident blues with red accent",
+    colors: {
+      blue: "#006BA2", cyan: "#3EBCD2", red: "#E3120B", teal: "#379A8B",
+      yellow: "#EBB434", olive: "#B4BA39", navy: "#104E8B",
+    },
+    defaultSequence: ["#006BA2", "#3EBCD2", "#E3120B", "#379A8B", "#EBB434", "#B4BA39"],
+  },
+
+  macaron: {
+    name: "Macaron 马卡龙",
+    description: "Pastel macaron card — airy and sweet, great for soft stories",
+    colors: {
+      sky: "#A8D8EA", wisteria: "#AA96DA", blush: "#FCBAD3", cream: "#F7EFC7",
+      steel: "#95ADBE", peach: "#F4E1D2", mint: "#B5EAD7", coral: "#FF9AA2",
+    },
+    defaultSequence: ["#A8D8EA", "#AA96DA", "#FCBAD3", "#95ADBE", "#B5EAD7", "#FF9AA2", "#F4E1D2", "#F7EFC7"],
+  },
+
   // ── Main palette — semantic colors for proposed method vs baselines ──
   classic: {
     name: "Classic Nature",

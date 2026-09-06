@@ -35,10 +35,22 @@ const Properties = (function () {
     if (tag === 'text') renderTextProps(el, content);
     else if (tag === 'rect') renderRectProps(el, content);
     else if (tag === 'circle') renderCircleProps(el, content);
+    else if (tag === 'image') renderImageProps(el, content);
     else if (tag === 'line') { if (role === 'axis') renderAxisProps(el, content); else renderLineProps(el, content); }
     else if (tag === 'polyline' || tag === 'polygon') renderPolyProps(el, content);
     else if (tag === 'path') renderPathProps(el, content);
     else renderGenericProps(el, content);
+
+    // series linkage hint: this element shares its colour with N peers
+    if (el.getAttribute('data-series') !== null && window.Canvas) {
+      const peers = Canvas.seriesPeerCount(el);
+      if (peers > 0) {
+        const hint = document.createElement('div');
+        hint.className = 'prop-row';
+        hint.innerHTML = '<span class="link-hint">🔗 同系列联动 ' + (peers + 1) + ' 处 — 改色将同步</span>';
+        content.appendChild(hint);
+      }
+    }
   }
 
   function renderMultiProps(c, count) {
@@ -148,16 +160,31 @@ const Properties = (function () {
   }
 
   function slider(label, min, max, step, value, onChange) {
+    // Filled-track slider + precise number input (currve-arrow pattern)
     const div = row(label, `
       <div class="prop-slider">
         <input type="range" min="${min}" max="${max}" step="${step}" value="${value}">
-        <span class="slider-value">${value}</span>
+        <input type="number" class="slider-num" min="${min}" max="${max}" step="any" value="${value}">
       </div>`);
     const range = div.querySelector('input[type="range"]');
-    const display = div.querySelector('.slider-value');
+    const num = div.querySelector('.slider-num');
+    const clamp = v => Math.min(max, Math.max(min, v));
+    const setFill = v => range.style.setProperty('--slider-fill', ((v - min) / (max - min) * 100) + '%');
+    setFill(clamp(parseFloat(value) || 0));
     range.addEventListener('input', e => {
-      display.textContent = e.target.value;
-      onChange(parseFloat(e.target.value));
+      const v = parseFloat(e.target.value);
+      num.value = v;
+      setFill(v);
+      onChange(v);
+    });
+    num.addEventListener('change', e => {
+      const v = parseFloat(e.target.value);
+      if (!Number.isFinite(v)) { num.value = range.value; return; }
+      const c = clamp(v);
+      range.value = c;
+      num.value = c;
+      setFill(c);
+      onChange(c);
     });
     return div;
   }
@@ -179,16 +206,6 @@ const Properties = (function () {
     return div;
   }
 
-  function pushHistory(attr, oldVal, newVal, el) {
-    if (window.History) {
-      History.push({
-        undo: () => { el.setAttribute(attr, oldVal); },
-        redo: () => { el.setAttribute(attr, newVal); },
-        label: `Change ${attr}`
-      });
-    }
-  }
-
   function getAttr(el, name, fallback = '') {
     return el.getAttribute(name) || fallback;
   }
@@ -196,7 +213,24 @@ const Properties = (function () {
   function setAttr(el, name, value) {
     const old = el.getAttribute(name);
     el.setAttribute(name, value);
-    pushHistory(name, old, value, el);
+    // series linkage: recoloring one element recolors its whole series
+    let linked = [];
+    if ((name === 'fill' || name === 'stroke') && el.getAttribute('data-series') !== null && window.Canvas) {
+      linked = Canvas.propagateSeriesColor(el, name, value);
+    }
+    if (window.History) {
+      History.push({
+        undo: () => {
+          if (old === null) el.removeAttribute(name); else el.setAttribute(name, old);
+          linked.forEach(c => c.el.setAttribute(name, c.old));
+        },
+        redo: () => {
+          el.setAttribute(name, value);
+          linked.forEach(c => c.el.setAttribute(name, value));
+        },
+        label: `Change ${name}` + (linked.length ? ` (+${linked.length} linked)` : '')
+      });
+    }
     if (window.Canvas) Canvas.updateSelectionOverlay();
   }
 
@@ -269,6 +303,98 @@ const Properties = (function () {
     c.appendChild(sectionHeader('描边'));
     c.appendChild(colorPicker('颜色', getAttr(el, 'stroke', 'none'), v => setAttr(el, 'stroke', v)));
     c.appendChild(slider('宽度', 0, 10, 0.5, parseFloat(getAttr(el, 'stroke-width', '0')), v => setAttr(el, 'stroke-width', v)));
+  }
+
+  function renderImageProps(el, c) {
+    c.appendChild(sectionHeader('位置与尺寸'));
+    c.appendChild(slider('X', 0, 800, 1, parseFloat(getAttr(el, 'x', '0')), v => setAttr(el, 'x', v)));
+    c.appendChild(slider('Y', 0, 600, 1, parseFloat(getAttr(el, 'y', '0')), v => setAttr(el, 'y', v)));
+    c.appendChild(slider('宽', 4, 800, 1, parseFloat(getAttr(el, 'width', '10')), v => setAttr(el, 'width', v)));
+    c.appendChild(slider('高', 4, 600, 1, parseFloat(getAttr(el, 'height', '10')), v => setAttr(el, 'height', v)));
+
+    c.appendChild(sectionHeader('裁剪与变换'));
+    const toolRow = (btns) => {
+      const div = document.createElement('div');
+      div.className = 'prop-row';
+      div.style.flexWrap = 'wrap';
+      div.style.gap = '4px';
+      btns.forEach(b => {
+        const btn = document.createElement('button');
+        btn.className = 'prop-btn';
+        btn.style.flex = 'none';
+        btn.style.minWidth = '52px';
+        btn.textContent = b.label;
+        btn.title = b.title || '';
+        btn.addEventListener('click', b.fn);
+        div.appendChild(btn);
+      });
+      return div;
+    };
+    c.appendChild(toolRow([
+      { label: '✂ 裁剪', title: '拖动调整裁剪区域，Enter 确认', fn: () => Canvas.startImageCrop(el) },
+      { label: '↻ 90°', title: '顺时针旋转 90 度', fn: () => Canvas.rotateImageElement(el, 90) },
+      { label: '↺ 90°', title: '逆时针旋转 90 度', fn: () => Canvas.rotateImageElement(el, -90) },
+      { label: '⇋ 翻转', title: '水平镜像', fn: () => Canvas.flipImageElement(el, 'h') },
+      { label: '⇅ 翻转', title: '垂直镜像', fn: () => Canvas.flipImageElement(el, 'v') },
+    ]));
+    c.appendChild(toolRow([
+      { label: '🖼 替换图片', title: '选择另一张图片替换（尺寸不变）', fn: () => {
+        const inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = '.png,.jpg,.jpeg,.webp,.gif,.tiff,.tif';
+        inp.addEventListener('change', () => {
+          const f = inp.files[0];
+          if (!f) return;
+          const r = new FileReader();
+          r.onload = ev => Canvas.replaceImageElement(el, ev.target.result);
+          r.readAsDataURL(f);
+        });
+        inp.click();
+      } },
+    ]));
+
+    c.appendChild(sectionHeader('色调调整'));
+    const adj = Canvas.getImageAdjustments(el);
+    const pushAdj = (patch) => {
+      const next = { ...Canvas.getImageAdjustments(el), ...patch };
+      Canvas.setImageAdjustments(el, next);
+      if (window.History) History.push({
+        undo: () => Canvas.setImageAdjustments(el, adj),
+        redo: () => Canvas.setImageAdjustments(el, next),
+        label: 'Adjust Image'
+      });
+    };
+    c.appendChild(slider('亮度', 0, 2, 0.05, adj.b, v => pushAdj({ b: v })));
+    c.appendChild(slider('对比度', 0, 2, 0.05, adj.c, v => pushAdj({ c: v })));
+    c.appendChild(slider('饱和度', 0, 2, 0.05, adj.gray ? 0 : adj.s, v => pushAdj({ s: v, gray: false })));
+    const checkRow = (labelText, checked, fn) => {
+      const div = document.createElement('div');
+      div.className = 'prop-row';
+      const lab = document.createElement('label');
+      lab.className = 'check-label';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = checked;
+      input.addEventListener('change', () => fn(input.checked));
+      lab.appendChild(input);
+      lab.appendChild(document.createTextNode(labelText));
+      div.appendChild(lab);
+      const spacer = document.createElement('div');
+      div.appendChild(spacer);
+      return div;
+    };
+    c.appendChild(checkRow('灰度', adj.gray || adj.s === 0, v => pushAdj({ gray: v, s: v ? 0 : 1 })));
+    c.appendChild(checkRow('反相', adj.invert, v => pushAdj({ invert: v })));
+    const resetRow = document.createElement('div');
+    resetRow.className = 'prop-row';
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'prop-btn';
+    resetBtn.textContent = '↺ 重置色调';
+    resetBtn.addEventListener('click', () => Canvas.resetImageAdjustments(el));
+    resetRow.appendChild(resetBtn);
+    c.appendChild(resetRow);
+    c.appendChild(sectionHeader('提示'));
+    c.appendChild(input('提示', '双击图片也可进入裁剪；角点缩放保持比例', () => {}));
   }
 
   function renderLineProps(el, c) {
