@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths: ['figureforge/**', 'scripts/**', '.github/workflows/**']
+  pull_request:
+    branches: [main]
+    paths: ['figureforge/**', 'scripts/**', '.github/workflows/**']
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check all editor JS
+        run: |
+          for f in figureforge/js/*.js; do
+            node --check "$f"
+          done
+      - name: Template & palette integrity
+        run: node scripts/check-templates.js
