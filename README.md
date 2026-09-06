@@ -36,6 +36,12 @@
   <img src="assets/showcase-pro.svg" alt="FigureForge 复杂图形：雷达图、GO 富集气泡图、曼哈顿图、山脊图、桑基图、甘特时间轴" width="100%" />
 </div>
 
+**生物信息图鉴**——簇状点阵热图、相关性矩阵、环形热图、Mantel 检验、GSEA、PCA 置信椭圆、边际密度散点等生信高频图型，NPG 风格配色：
+
+<div align="center">
+  <img src="assets/showcase-bio.svg" alt="FigureForge 生信图鉴：点阵热图+聚类树、相关性热图+显著性、corrplot 圆饼矩阵、环形热图、Mantel 组合图、GSEA 富集曲线、PCA 置信椭圆、边际密度散点、柱+半小提琴、箱线+显著性、玫瑰图" width="100%" />
+</div>
+
 ## 🧪 FigureForge — 不写代码的出图方式
 
 **在线打开（无需安装）**：[jing1312.github.io/nature-figure-skill/figureforge/](https://jing1312.github.io/nature-figure-skill/figureforge/)
