@@ -1,434 +1,404 @@
 #!/usr/bin/env node
-/**
- * build-showcase.js — 生成 assets/showcase.svg（Chart atlas 图鉴风格）
- *
- * 排版对标《Chart atlas 03 | Heatmaps》：
- *   白底 + 大留白 / 粗体字母标签在图外 / 面板小标题居中 / 面板无边框
- *   柔和低饱和配色 / 无图表垃圾（仅浅网格 + 细坐标轴）
- *   柱状图采用 Nature 式「浅灰柱 + 单色高亮 + 显著性括号」
- * 纯手绘生成，不依赖 templates.js。改配色或数据后 `node build-showcase.js` 重跑。
- */
+/* Chart atlas (v2): 12 ggplot-grade panels — white bg, fine axes, dense seeded
+ * data, NPG pastels, alpha blending. Same visual language as build-showcase-bio. */
 'use strict';
 const fs = require('fs');
 const path = require('path');
 
-// ── 基础工具 ──────────────────────────────────────────────
-function mulberry32(seed) {
-  let a = seed >>> 0;
-  return function () {
-    a |= 0; a = (a + 0x6D2B79F5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+let seed = 20260908;
+const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+const rr = (a, b) => a + rnd() * (b - a);
+const N = (m, s) => m + (rnd() + rnd() + rnd() + rnd() - 2) * 1.414 * s;
+
+function h2r(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function r2h(r) { return '#' + r.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join(''); }
+function mix(a, b, t) { const A = h2r(a), B = h2r(b); return r2h(A.map((v, i) => v + (B[i] - v) * t)); }
+
+// NPG palette
+const C = { red: '#E64B35', blue: '#4DBBD5', teal: '#00A087', navy: '#3C5488', salmon: '#F39B7F', grayblue: '#8491B4', mint: '#91D1C2', darkred: '#DC0000', brown: '#7E6148', gray: '#BFBFBF' };
+
+const f1 = v => (Math.round(v * 10) / 10);
+const txt = (x, y, t, size = 7, fill = '#333', anchor = 'middle', w = 'normal', extra = '') =>
+  `<text x="${f1(x)}" y="${f1(y)}" font-size="${size}" fill="${fill}" text-anchor="${anchor}" font-weight="${w}" ${extra}>${t}</text>`;
+const ln = (x1, y1, x2, y2, st = '#333', sw = 0.8, dash = '') =>
+  `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${st}" stroke-width="${sw}" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
+const rrect = (x, y, w, h, r, fill, stroke = 'none', sw = 0, op = 1) =>
+  `<rect x="${f1(x)}" y="${f1(y)}" width="${f1(w)}" height="${f1(h)}" rx="${r}" fill="${fill}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}"/>`;
+const circle = (cx, cy, r, fill, stroke = 'none', sw = 0, op = 1) =>
+  `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(r)}" fill="${fill}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}"/>`;
+const poly = (pts, fill, stroke = 'none', sw = 0, op = 1, dash = '') =>
+  `<polygon points="${pts.map(p => `${f1(p[0])},${f1(p[1])}`).join(' ')}" fill="${fill}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
+const pline = (pts, st, sw = 1, dash = '') =>
+  `<polyline points="${pts.map(p => `${f1(p[0])},${f1(p[1])}`).join(' ')}" fill="none" stroke="${st}" stroke-width="${sw}" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
+
+// ── ggplot-style frame: panel origin = bottom-left ──
+function frame(S, x, y, w, h, xt, yt, xlab, ylab) {
+  xt.forEach(t => S.push(ln(x + w * t, y - h, x + w * t, y, '#E8E8E8', 0.6)));
+  yt.forEach(t => S.push(ln(x, y - h * t, x + w, y - h * t, '#E8E8E8', 0.6)));
+  S.push(ln(x, y, x + w, y, '#4D4D4D', 0.9));
+  S.push(ln(x, y, x, y - h, '#4D4D4D', 0.9));
+  xt.forEach(t => S.push(ln(x + w * t, y, x + w * t, y + 2.4, '#4D4D4D', 0.8)));
+  yt.forEach(t => S.push(ln(x, y - h * t, x - 2.4, y - h * t, '#4D4D4D', 0.8)));
+  xt.forEach((t, i) => S.push(txt(x + w * t, y + 9, xlab[i], 6.3, '#555')));
+  yt.forEach((t, i) => S.push(txt(x - 4.5, y - h * t + 2, ylab[i], 6.3, '#555', 'end')));
+}
+
+const PW = 550, PH = 285, COLX = [40, 630], ROWY = r => 62 + r * 301;
+const S = [];
+S.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1880" font-family="Helvetica, Arial, sans-serif">`);
+S.push(rrect(0, 0, 1200, 1880, 0, '#FFFFFF'));
+S.push(txt(40, 34, 'FigureForge · Chart atlas — publication-grade charts', 16, '#1a1a1a', 'start', 'bold'));
+S.push(txt(1160, 34, '12 chart archetypes · NPG-style palettes', 9, '#888', 'end'));
+
+function frame2(ox, oy, letter, title) {
+  S.push(txt(ox - 8, oy - 7, letter, 14, '#111', 'start', 'bold'));
+  S.push(txt(ox + PW / 2, oy - 6, title, 9, '#555', 'middle', 'bold'));
+}
+function kde(arr, bw2, grid) {
+  return grid.map(v => arr.reduce((s, p) => s + Math.exp(-((v - p) ** 2) / (2 * bw2)), 0) / (arr.length * bw2 * 2.5066));
+}
+
+/* ═══ a · histogram + KDE ═══ */
+(function () {
+  const ox = COLX[0], oy = ROWY(0);
+  frame2(ox, oy, 'a', 'Distribution · histogram with kernel density');
+  const X = ox + 55, Y = oy + 195, W = 400, H = 175;
+  const g1 = Array.from({ length: 70 }, () => N(24, 5.5));
+  const g2 = Array.from({ length: 70 }, () => N(34, 4.2));
+  const bins = (arr) => { const b = Array(12).fill(0); arr.forEach(v => { const i = Math.floor((v - 8) / 40 * 12); if (i >= 0 && i < 12) b[i]++; }); return b; };
+  const b1 = bins(g1), b2 = bins(g2), mx = 22;
+  const bw = W / 12;
+  b1.forEach((v, i) => S.push(rrect(X + i * bw + 1.2, Y - v / mx * H, bw - 2.4, v / mx * H, 1.2, C.navy, 'none', 0, 0.5)));
+  b2.forEach((v, i) => S.push(rrect(X + i * bw + 1.2, Y - v / mx * H, bw - 2.4, v / mx * H, 1.2, C.red, 'none', 0, 0.5)));
+  const grid = Array.from({ length: 60 }, (_, i) => 8 + i / 59 * 40);
+  const d1 = kde(g1, 2.6, grid), d2 = kde(g2, 2.6, grid);
+  const dmax = Math.max(...d1, ...d2);
+  const scale = d => d.map((v, i) => [X + i / (grid.length - 1) * W, Y - v / dmax * 60]);
+  S.push(pline(scale(d1), C.navy, 1.6));
+  S.push(pline(scale(d2), C.red, 1.6));
+  g1.slice(0, 40).forEach(v => S.push(ln(X + (v - 8) / 40 * W, Y + 2, X + (v - 8) / 40 * W, Y + 5.5, C.navy, 0.5, '')));
+  g2.slice(0, 40).forEach(v => S.push(ln(X + (v - 8) / 40 * W, Y + 6.5, X + (v - 8) / 40 * W, Y + 10, C.red, 0.5, '')));
+  frame(S, X, Y, W, H, [0, .25, .5, .75, 1], [0, .5, 1], ['8', '18', '28', '38', '48'], ['0', '11', '22']);
+  S.push(txt(ox + 255, oy + 232, 'Expression level (TPM)', 7.5, '#333'));
+  S.push(txt(ox + 18, Y - H / 2, 'Count', 7.5, '#333', 'middle', 'normal', 'transform="rotate(-90 ' + f1(ox + 18) + ' ' + f1(Y - H / 2) + ')"'));
+  S.push(rrect(ox + 392, oy + 28, 9, 9, 1, C.navy, 'none', 0, 0.6)); S.push(txt(ox + 406, oy + 35.5, 'Control', 7, '#333', 'start'));
+  S.push(rrect(ox + 392, oy + 43, 9, 9, 1, C.red, 'none', 0, 0.6)); S.push(txt(ox + 406, oy + 50.5, 'Treated', 7, '#333', 'start'));
+})();
+
+/* ═══ b · raincloud: half-violin + box + jitter ═══ */
+(function () {
+  const ox = COLX[1], oy = ROWY(0);
+  frame2(ox, oy, 'b', 'Raincloud · half-violin, box and raw points');
+  const X = ox + 70, Y = oy + 200, W = 380, H = 180;
+  const groups = ['WT', 'HET', 'KO'];
+  const cols = [C.grayblue, C.teal, C.salmon];
+  const data = groups.map((g, gi) => Array.from({ length: 46 }, () => N(28 - gi * 6.5, 4.5 + gi * 1.3)).map(v => Math.max(6, Math.min(50, v))));
+  const Yv = v => Y - (v - 5) / 45 * H;
+  const gw = W / 3;
+  data.forEach((arr, gi) => {
+    const cx = X + gw * gi + gw / 2;
+    const grid = Array.from({ length: 40 }, (_, i) => 5 + i / 39 * 45);
+    const dd = kde(arr, 2.8, grid); const dmax = Math.max(...dd);
+    const vs = grid.map((v, i) => [cx - 3 - dd[i] / dmax * 26, Yv(v)]);
+    S.push(poly([[cx - 3, Yv(5)], ...vs, [cx - 3, Yv(50)]], cols[gi], 'none', 0, 0.45));
+    S.push(pline(vs, cols[gi], 1));
+    const srt = [...arr].sort((a, b) => a - b);
+    const q = p => srt[Math.floor(p * (srt.length - 1))];
+    const bx = cx - 1, bwid = 11;
+    S.push(ln(bx, Yv(q(.02)), bx, Yv(q(.98)), '#555', 0.9));
+    S.push(rrect(bx - bwid / 2, Yv(q(.75)), bwid, Yv(q(.25)) - Yv(q(.75)), 1.5, '#FFFFFF', cols[gi], 1.4));
+    S.push(ln(bx - bwid / 2, Yv(q(.5)), bx + bwid / 2, Yv(q(.5)), cols[gi], 1.8));
+    arr.forEach(v => S.push(circle(cx + 7 + rnd() * 22, Yv(v) + rr(-1, 1), 1.6, cols[gi], 'none', 0, 0.55)));
+  });
+  frame(S, X, Y, W, H, [0, 1, 2], [0, .5, 1], groups, ['10', '27', '45']);
+  S.push(txt(ox + 260, oy + 236, 'Plasma cytokine (pg/mL)', 7.5, '#333'));
+  S.push(txt(ox + 16, Y - H / 2, 'Concentration', 7.5, '#333', 'middle', 'normal', 'transform="rotate(-90 ' + f1(ox + 16) + ' ' + f1(Y - H / 2) + ')"'));
+})();
+
+/* ═══ c · bars + error bars + sig brackets + points ═══ */
+(function () {
+  const ox = COLX[0], oy = ROWY(1);
+  frame2(ox, oy, 'c', 'Bar chart · error bars, replicates and brackets');
+  const X = ox + 55, Y = oy + 200, W = 400, H = 180;
+  const groups = ['Vehicle', 'Low', 'Mid', 'High'];
+  const mus = [100, 78, 52, 41], cols = [C.gray, C.blue, C.teal, C.navy];
+  const bw = W / 4 * 0.52;
+  const pts = mus.map((m, i) => Array.from({ length: 8 }, () => N(m, 6 + i)));
+  const mx = 138;
+  pts.forEach((arr, i) => {
+    const cx = X + W / 4 * i + W / 8;
+    const mean = arr.reduce((a, b) => a + b) / arr.length;
+    const sd = Math.sqrt(arr.reduce((s, v) => s + (v - mean) ** 2, 0) / arr.length);
+    S.push(rrect(cx - bw / 2, Y - mean / mx * H, bw, mean / mx * H, 1.5, cols[i], 'none', 0, 0.88));
+    const e = sd / Math.sqrt(arr.length) * 1.4;
+    S.push(ln(cx, Y - (mean + e) / mx * H, cx, Y - (mean - e) / mx * H, '#333', 1));
+    S.push(ln(cx - 4, Y - (mean + e) / mx * H, cx + 4, Y - (mean + e) / mx * H, '#333', 1));
+    S.push(ln(cx - 4, Y - (mean - e) / mx * H, cx + 4, Y - (mean - e) / mx * H, '#333', 1));
+    arr.forEach(v => S.push(circle(cx + bw / 2 + 5 + rnd() * 16, Y - v / mx * H + rr(-1, 1), 1.5, '#555', 'none', 0, 0.5)));
+  });
+  const br = (x1, x2, yy, label) => {
+    S.push(ln(x1, yy, x1, yy - 4, '#333', 0.9)); S.push(ln(x1, yy, x2, yy, '#333', 0.9)); S.push(ln(x2, yy, x2, yy - 4, '#333', 0.9));
+    S.push(txt((x1 + x2) / 2, yy - 4, label, 7.5, '#111', 'middle', 'bold'));
   };
-}
-function lerp(a, b, t) { return a + (b - a) * t; }
-function hex2rgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
-function mix(c1, c2, t) {
-  const a = hex2rgb(c1), b = hex2rgb(c2);
-  return '#' + [0, 1, 2].map(i => Math.round(lerp(a[i], b[i], t)).toString(16).padStart(2, '0')).join('');
-}
-function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  const cx4 = i => X + W / 4 * i + W / 8;
+  br(cx4(0), cx4(1), Y - 108 / mx * H - 14, '**');
+  br(cx4(0), cx4(3), Y - 118 / mx * H - 26, 'p = 2.1e-5');
+  frame(S, X, Y, W, H, [0, 1, 2, 3], [0, .5, 1], groups, ['0', '62', '125']);
+  S.push(txt(ox + 255, oy + 236, 'Dose group', 7.5, '#333'));
+  S.push(txt(ox + 16, Y - H / 2, 'Tumor volume (mm³)', 7.5, '#333', 'middle', 'normal', 'transform="rotate(-90 ' + f1(ox + 16) + ' ' + f1(Y - H / 2) + ')"'));
+})();
 
-// ── 全局样式常量 ─────────────────────────────────────────
-const INK = '#1A1A1A';
-const MUTE = '#6B6B6B';
-const TICK = '#8A8A8A';
-const AXIS = '#B9B9B9';
-const GRID = '#EBEBEB';
-const GRAY_BAR = '#D8DCE1';
-const GRAY_BAR_DK = '#C4C9D0';
-const FONT = "Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif";
-
-const C = {
-  rose:  { m: '#D98A94', d: '#C06B76', l: '#F2C9CD' },
-  blue:  { m: '#7FA6C9', d: '#5F87AD', l: '#C2D5E4' },
-  green: { m: '#7FAF8E', d: '#5E9270', l: '#C4DAC9' },
-  violet:{ m: '#9C8BC4', d: '#7E6AA9', l: '#D5CCE6' },
-  teal:  { m: '#6B9E9C', d: '#4F8280', l: '#C0D8D7' },
-  slate: { m: '#8CA0B3', d: '#69809A', l: '#CCD6DF' },
-};
-const DIVERGE_NEG = '#7FA3C8', DIVERGE_POS = '#CE8B8B', DIVERGE_MID = '#F7F4F1';
-const SEQ_LO = '#E3ECDF', SEQ_HI = '#4E8062';
-
-// ── 版面 ─────────────────────────────────────────────────
-const W = 1120, H = 880;
-const MX = 34;
-const COLS = 4, GAPX = 26, GAPY = 34;
-const PW = (W - MX * 2 - GAPX * (COLS - 1)) / COLS;
-const HEAD_H = 96;
-const TITLE_H = 22;
-const CH = 196;
-const ROW_H = TITLE_H + CH + GAPY;
-
-const panels = [];
-
-function panelXY(row, col) {
-  const x = MX + col * (PW + GAPX);
-  const y = HEAD_H + row * ROW_H;
-  return { x, y };
-}
-function plotArea(x, y) {
-  return { px: x + 36, py: y + TITLE_H + 8, pw: PW - 44, ph: CH - 26 };
-}
-function scaleY(p, vmax, v) { return p.py + p.ph - (v / vmax) * p.ph; }
-
-function axes(p, vmax, ngrid, opts = {}) {
-  let s = '';
-  for (let i = 0; i <= ngrid; i++) {
-    const v = (vmax / ngrid) * i;
-    const yy = scaleY(p, vmax, v);
-    if (i > 0) s += `<line x1="${p.px}" y1="${yy.toFixed(1)}" x2="${(p.px + p.pw).toFixed(1)}" y2="${yy.toFixed(1)}" stroke="${GRID}" stroke-width="0.8"/>`;
-    s += `<text x="${p.px - 5}" y="${(yy + 2.6).toFixed(1)}" font-size="8" fill="${TICK}" text-anchor="end">${opts.yFmt ? opts.yFmt(v) : v}</text>`;
-  }
-  s += `<line x1="${p.px}" y1="${p.py}" x2="${p.px}" y2="${(p.py + p.ph).toFixed(1)}" stroke="${AXIS}" stroke-width="1"/>`;
-  s += `<line x1="${p.px}" y1="${(p.py + p.ph).toFixed(1)}" x2="${(p.px + p.pw).toFixed(1)}" y2="${(p.py + p.ph).toFixed(1)}" stroke="${AXIS}" stroke-width="1"/>`;
-  return s;
-}
-function xticks(p, labels, centers) {
-  return labels.map((lb, i) =>
-    `<text x="${centers[i].toFixed(1)}" y="${p.py + p.ph + 12}" font-size="8" fill="${TICK}" text-anchor="middle">${esc(lb)}</text>`
-  ).join('');
-}
-function xTitle(p, txt) {
-  return `<text x="${(p.px + p.pw / 2).toFixed(1)}" y="${p.py + p.ph + 23}" font-size="8.5" fill="${MUTE}" text-anchor="middle">${esc(txt)}</text>`;
-}
-function errBar(cx, yTop, yBot, w = 4) {
-  return `<line x1="${cx.toFixed(1)}" y1="${yTop.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${yBot.toFixed(1)}" stroke="#4A4A4A" stroke-width="1"/>` +
-    `<line x1="${(cx - w / 2).toFixed(1)}" y1="${yTop.toFixed(1)}" x2="${(cx + w / 2).toFixed(1)}" y2="${yTop.toFixed(1)}" stroke="#4A4A4A" stroke-width="1"/>` +
-    `<line x1="${(cx - w / 2).toFixed(1)}" y1="${yBot.toFixed(1)}" x2="${(cx + w / 2).toFixed(1)}" y2="${yBot.toFixed(1)}" stroke="#4A4A4A" stroke-width="1"/>`;
-}
-function sigBracket(x1, x2, yv, label) {
-  return `<path d="M ${x1.toFixed(1)} ${(yv - 4).toFixed(1)} V ${yv.toFixed(1)} H ${x2.toFixed(1)} V ${(yv - 4).toFixed(1)}" fill="none" stroke="#3A3A3A" stroke-width="1"/>` +
-    `<text x="${((x1 + x2) / 2).toFixed(1)}" y="${(yv - 4).toFixed(1)}" font-size="9" fill="#3A3A3A" text-anchor="middle" font-weight="600">${label}</text>`;
-}
-function panelHead(x, y, letter, title) {
-  return `<text x="${x}" y="${y + 14}" font-size="13" font-weight="700" fill="${INK}">${letter}</text>` +
-    `<text x="${(x + PW / 2 + 8).toFixed(1)}" y="${y + 13}" font-size="10.5" fill="${MUTE}" text-anchor="middle">${esc(title)}</text>`;
-}
-
-// ══ 面板绘制器 ════════════════════════════════════════════
-
-function drawHighlightBar(row, col, letter, title, hl, seed, sig) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y);
-  const rnd = mulberry32(seed);
-  const labels = ['Ctrl', 'Low', 'Mid', 'High', 'Combo'];
-  const vals = [46, 58, 82, 52, 64];
-  const errs = [7, 8, 6, 8, 7];
-  const bw = p.pw / 5 * 0.52;
-  const step = p.pw / 5;
-  let s = panelHead(x, y, letter, title) + axes(p, 100, 4);
-  s += xticks(p, labels, labels.map((_, i) => p.px + step * i + step / 2));
-  s += xTitle(p, '剂量组');
-  vals.forEach((v, i) => {
-    const cx = p.px + step * i + step / 2;
-    const yy = scaleY(p, 100, v);
-    const isHl = i === 2;
-    s += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${yy.toFixed(1)}" width="${bw.toFixed(1)}" height="${(p.py + p.ph - yy).toFixed(1)}" fill="${isHl ? hl.m : GRAY_BAR}" stroke="${isHl ? hl.d : GRAY_BAR_DK}" stroke-width="0.8"/>`;
-    s += errBar(cx, scaleY(p, 100, v + errs[i]), scaleY(p, 100, v - errs[i]));
-    for (let k = 0; k < 6; k++) {
-      const jx = cx + (rnd() - 0.5) * bw * 0.85;
-      const jy = scaleY(p, 100, v + (rnd() - 0.5) * 22);
-      s += `<circle cx="${jx.toFixed(1)}" cy="${jy.toFixed(1)}" r="1.4" fill="${isHl ? hl.d : '#8A8F96'}" opacity="0.55"/>`;
+/* ═══ d · scatter + fits + CI ═══ */
+(function () {
+  const ox = COLX[1], oy = ROWY(1);
+  frame2(ox, oy, 'd', 'Correlation · scatter with fitted CI bands');
+  const X = ox + 55, Y = oy + 200, W = 400, H = 180;
+  const mk = (n, f) => Array.from({ length: n }, () => { const xx = rr(10, 90); return [xx, Math.max(5, Math.min(95, f(xx) + N(0, 9)))]; });
+  const A = mk(46, x => 20 + x * 0.62), B = mk(46, x => 55 - x * 0.5);
+  const Xv = v => X + v / 100 * W, Yv = v => Y - v / 100 * H;
+  const band = (slope, icept, col) => {
+    const lo = [], hi = [];
+    for (let xv = 12; xv <= 88; xv += 4) {
+      const yh = icept + slope * xv, se = 4.5 + Math.abs(xv - 50) * 0.12;
+      lo.push([Xv(xv), Yv(Math.max(0, yh - se))]); hi.push([Xv(xv), Yv(Math.min(100, yh + se))]);
     }
-  });
-  if (sig) {
-    const cx1 = p.px + step * 1 + step / 2, cx2 = p.px + step * 2 + step / 2;
-    s += sigBracket(cx1, cx2, scaleY(p, 100, 97), '**');
-  }
-  panels.push(s);
-}
-
-function drawGroupedBar(row, col, letter, title, main) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y);
-  const groups = ['G1', 'G2', 'G3', 'G4'];
-  const a = [62, 78, 55, 84], b = [48, 60, 70, 58];
-  const step = p.pw / 4, bw = step * 0.28;
-  let s = panelHead(x, y, letter, title) + axes(p, 100, 4);
-  s += xticks(p, groups, groups.map((_, i) => p.px + step * i + step / 2));
-  s += xTitle(p, '分组');
-  groups.forEach((_, i) => {
-    const cx = p.px + step * i + step / 2;
-    [[a[i], main.m, main.d], [b[i], GRAY_BAR, GRAY_BAR_DK]].forEach(([v, f, st], k) => {
-      const xx = cx + (k === 0 ? -bw - 1.5 : 1.5);
-      const yy = scaleY(p, 100, v);
-      s += `<rect x="${xx.toFixed(1)}" y="${yy.toFixed(1)}" width="${bw.toFixed(1)}" height="${(p.py + p.ph - yy).toFixed(1)}" fill="${f}" stroke="${st}" stroke-width="0.8"/>`;
-      s += errBar(xx + bw / 2, scaleY(p, 100, v + 6), scaleY(p, 100, v - 6), 3.2);
-    });
-  });
-  s += `<rect x="${p.px + p.pw - 66}" y="${p.py + 2}" width="7" height="7" fill="${main.m}" stroke="${main.d}" stroke-width="0.6"/>` +
-    `<text x="${p.px + p.pw - 55}" y="${p.py + 8.5}" font-size="7.5" fill="${MUTE}">处理组</text>` +
-    `<rect x="${p.px + p.pw - 66}" y="${p.py + 13}" width="7" height="7" fill="${GRAY_BAR}" stroke="${GRAY_BAR_DK}" stroke-width="0.6"/>` +
-    `<text x="${p.px + p.pw - 55}" y="${p.py + 19.5}" font-size="7.5" fill="${MUTE}">对照</text>`;
-  panels.push(s);
-}
-
-function drawViolin(row, col, letter, title, vc, seed) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y);
-  const rnd = mulberry32(seed);
-  const groups = ['WT', 'Het', 'KO'];
-  const mus = [38, 55, 72], sds = [10, 13, 9];
-  const step = p.pw / 3;
-  let s = panelHead(x, y, letter, title) + axes(p, 100, 4);
-  s += xticks(p, groups, groups.map((_, i) => p.px + step * i + step / 2));
-  s += xTitle(p, '基因型');
-  groups.forEach((_, gi) => {
-    const cx = p.px + step * gi + step / 2;
-    const maxW = step * 0.36;
-    const N = 26;
-    const left = [], right = [];
-    for (let k = 0; k <= N; k++) {
-      const t = k / N;
-      const v = 14 + t * 78;
-      const g = Math.exp(-((v - mus[gi]) ** 2) / (2 * sds[gi] ** 2));
-      const bw2 = Math.max(0.06, g) * maxW + (rnd() - 0.5) * 1.2;
-      const yy = scaleY(p, 100, v);
-      left.push([cx - bw2, yy]); right.push([cx + bw2, yy]);
-    }
-    const d = 'M ' + left.map(pt => pt[0].toFixed(1) + ' ' + pt[1].toFixed(1)).join(' L ')
-      + ' L ' + right.reverse().map(pt => pt[0].toFixed(1) + ' ' + pt[1].toFixed(1)).join(' L ') + ' Z';
-    s += `<path d="${d}" fill="${vc.l}" fill-opacity="0.85" stroke="${vc.m}" stroke-width="1.1"/>`;
-    const q1 = scaleY(p, 100, mus[gi] - sds[gi]), q3 = scaleY(p, 100, mus[gi] + sds[gi]);
-    const med = scaleY(p, 100, mus[gi]);
-    s += `<rect x="${(cx - 4).toFixed(1)}" y="${q3.toFixed(1)}" width="8" height="${(q1 - q3).toFixed(1)}" fill="#FFFFFF" stroke="${vc.d}" stroke-width="1"/>` +
-      `<line x1="${cx}" y1="${med.toFixed(1)}" x2="${cx + 4}" y2="${med.toFixed(1)}" stroke="${vc.d}" stroke-width="1.4"/>` +
-      `<line x1="${cx}" y1="${q3.toFixed(1)}" x2="${cx}" y2="${scaleY(p, 100, mus[gi] + sds[gi] * 1.7).toFixed(1)}" stroke="${vc.d}" stroke-width="1"/>` +
-      `<line x1="${cx}" y1="${q1.toFixed(1)}" x2="${cx}" y2="${scaleY(p, 100, mus[gi] - sds[gi] * 1.7).toFixed(1)}" stroke="${vc.d}" stroke-width="1"/>`;
-    for (let k = 0; k < 9; k++) {
-      const jx = cx + (rnd() - 0.5) * maxW * 1.5;
-      const jy = scaleY(p, 100, mus[gi] + (rnd() + rnd() - 1) * sds[gi] * 2);
-      s += `<circle cx="${jx.toFixed(1)}" cy="${jy.toFixed(1)}" r="1.3" fill="${vc.d}" opacity="0.5"/>`;
-    }
-  });
-  panels.push(s);
-}
-
-function drawBox(row, col, letter, title, bc, seed) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y);
-  const rnd = mulberry32(seed);
-  const labels = ['D0', 'D3', 'D7', 'D14'];
-  const med = [42, 55, 48, 68], iqr = [9, 11, 8, 10];
-  const step = p.pw / 4, bw = step * 0.4;
-  let s = panelHead(x, y, letter, title) + axes(p, 100, 4);
-  s += xticks(p, labels, labels.map((_, i) => p.px + step * i + step / 2));
-  s += xTitle(p, '时间（天）');
-  labels.forEach((_, i) => {
-    const cx = p.px + step * i + step / 2;
-    const q1 = scaleY(p, 100, med[i] - iqr[i]), q3 = scaleY(p, 100, med[i] + iqr[i]);
-    const mm = scaleY(p, 100, med[i]);
-    const wHi = scaleY(p, 100, med[i] + iqr[i] * 1.8), wLo = scaleY(p, 100, med[i] - iqr[i] * 1.8);
-    s += `<line x1="${cx.toFixed(1)}" y1="${wHi.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${wLo.toFixed(1)}" stroke="${bc.d}" stroke-width="1"/>`;
-    s += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${q3.toFixed(1)}" width="${bw.toFixed(1)}" height="${(q1 - q3).toFixed(1)}" fill="${bc.l}" stroke="${bc.d}" stroke-width="1.1"/>`;
-    s += `<line x1="${(cx - bw / 2).toFixed(1)}" y1="${mm.toFixed(1)}" x2="${(cx + bw / 2).toFixed(1)}" y2="${mm.toFixed(1)}" stroke="${bc.d}" stroke-width="1.6"/>`;
-    for (let k = 0; k < 2; k++) {
-      s += `<circle cx="${cx.toFixed(1)}" cy="${scaleY(p, 100, med[i] + (rnd() > 0.5 ? 1 : -1) * iqr[i] * (2 + rnd())).toFixed(1)}" r="1.2" fill="none" stroke="${bc.d}" stroke-width="0.8"/>`;
-    }
-  });
-  panels.push(s);
-}
-
-function drawLines(row, col, letter, title) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y);
-  let s = panelHead(x, y, letter, title) + axes(p, 100, 4);
-  s += xticks(p, ['0', '2', '4', '6', '8'], [0, 1, 2, 3, 4].map(i => p.px + (p.pw / 4) * i));
-  s += xTitle(p, '时间（周）');
-  const X = i => p.px + (p.pw / 4) * i;
-  const series = [
-    { c: C.rose, vs: [30, 44, 60, 72, 85], band: 7, dash: '', label: '处理组' },
-    { c: C.blue, vs: [28, 34, 42, 50, 58], band: 5, dash: '', label: '对照组' },
-    { c: '#9AA5AE', vs: [30, 31, 33, 32, 34], band: 0, dash: '3 3', label: '基线' },
-  ];
-  series.forEach(sr => {
-    if (sr.band) {
-      const up = sr.vs.map((v, i) => X(i).toFixed(1) + ' ' + scaleY(p, 100, v + sr.band).toFixed(1)).join(' L ');
-      const dn = sr.vs.slice().reverse().map((v, i) => X(4 - i).toFixed(1) + ' ' + scaleY(p, 100, v - sr.band).toFixed(1)).join(' L ');
-      s += `<path d="M ${up} L ${dn} Z" fill="${sr.c.l}" opacity="0.45"/>`;
-    }
-    const d = sr.vs.map((v, i) => (i ? 'L' : 'M') + ' ' + X(i).toFixed(1) + ' ' + scaleY(p, 100, v).toFixed(1)).join(' ');
-    s += `<path d="${d}" fill="none" stroke="${sr.c.m}" stroke-width="1.8" ${sr.dash ? `stroke-dasharray="${sr.dash}"` : ''}/>`;
-    const ex = X(4), ey = scaleY(p, 100, sr.vs[4]);
-    s += `<text x="${(ex + 4).toFixed(1)}" y="${(ey + 2.5).toFixed(1)}" font-size="7.5" fill="${sr.c.d}">${sr.label}</text>`;
-  });
-  panels.push(s);
-}
-
-function drawKM(row, col, letter, title) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y);
-  let s = panelHead(x, y, letter, title) + axes(p, 100, 4);
-  s += xticks(p, ['0', '10', '20', '30'], [0, 1, 2, 3].map(i => p.px + (p.pw / 3) * i));
-  s += xTitle(p, '时间（月）');
-  const X = i => p.px + (p.pw * 0.86 / 3) * i;
-  const curve = (dropPts) => {
-    let v = 100; const segs = [];
-    for (let i = 0; i <= 9; i++) {
-      const xx = X(i / 3);
-      if (dropPts.includes(i)) { const v2 = v - (14 + (i % 3) * 5); segs.push([xx, scaleY(p, 100, v)], [xx, scaleY(p, 100, v2)]); v = v2; }
-      else segs.push([xx, scaleY(p, 100, v)]);
-    }
-    return segs;
+    S.push(poly([...lo, ...hi.reverse()], col, 'none', 0, 0.16));
   };
-  [[curve([2, 5, 7, 9]), C.blue, '实验组'], [curve([3, 6, 8]), C.rose, '对照']].forEach(([segs, cc, lb]) => {
-    const d = segs.map((pt, i) => (i ? 'L' : 'M') + ' ' + pt[0].toFixed(1) + ' ' + pt[1].toFixed(1)).join(' ');
-    s += `<path d="${d}" fill="none" stroke="${cc.m}" stroke-width="1.8"/>`;
-    s += `<text x="${(segs[segs.length - 1][0] + 3).toFixed(1)}" y="${(segs[segs.length - 1][1] + 2.5).toFixed(1)}" font-size="7.5" fill="${cc.d}">${lb}</text>`;
-    segs.forEach((pt, i) => {
-      if (i % 3 === 1) s += `<line x1="${(pt[0] - 2).toFixed(1)}" y1="${(pt[1] - 2).toFixed(1)}" x2="${(pt[0] + 2).toFixed(1)}" y2="${(pt[1] + 2).toFixed(1)}" stroke="${cc.d}" stroke-width="0.9"/>`;
-    });
-  });
-  panels.push(s);
-}
+  band(0.62, 20, C.blue); band(-0.5, 55, C.red);
+  const fit = (arr, slope, icept, col) => {
+    arr.forEach(p => S.push(circle(Xv(p[0]), Yv(p[1]), 1.8, col, 'none', 0, 0.5)));
+    S.push(ln(Xv(10), Yv(icept + slope * 10), Xv(90), Yv(icept + slope * 90), col, 1.6));
+  };
+  fit(A, 0.62, 20, C.blue); fit(B, -0.5, 55, C.red);
+  frame(S, X, Y, W, H, [0, .25, .5, .75, 1], [0, .5, 1], ['0', '25', '50', '75', '100'], ['0', '50', '100']);
+  S.push(txt(ox + 255, oy + 236, 'Radiographic score', 7.5, '#333'));
+  S.push(txt(ox + 16, Y - H / 2, 'Biomarker (ng/mL)', 7.5, '#333', 'middle', 'normal', 'transform="rotate(-90 ' + f1(ox + 16) + ' ' + f1(Y - H / 2) + ')"'));
+  S.push(rrect(ox + 360, oy + 28, 9, 9, 1, C.blue, 'none', 0, 0.6)); S.push(txt(ox + 374, oy + 35.5, 'Responder (r = 0.81)', 7, '#333', 'start'));
+  S.push(rrect(ox + 360, oy + 43, 9, 9, 1, C.red, 'none', 0, 0.6)); S.push(txt(ox + 374, oy + 50.5, 'Non-responder (r = -0.66)', 7, '#333', 'start'));
+})();
 
-function drawHeatmapDiv(row, col, letter, title, seed) {
-  const { x, y } = panelXY(row, col);
-  const rowsN = 6, colsN = 7;
-  const px0 = x + 46, py0 = y + TITLE_H + 16;
-  const cw = (PW - 60) / colsN, chh = (CH - 46) / rowsN;
-  const rnd = mulberry32(seed);
-  const rowLab = ['A', 'B', 'C', 'D', 'E', 'F'];
-  const colLab = ['1', '2', '3', '4', '5', '6', '7'];
-  let s = panelHead(x, y, letter, title);
-  for (let r = 0; r < rowsN; r++) {
-    for (let c = 0; c < colsN; c++) {
-      const base = Math.sin(r * 1.7 + seed) * 0.8 + (rnd() - 0.5) * 1.6;
-      const v = Math.max(-2.2, Math.min(2.2, base));
-      const fill = v >= 0 ? mix(DIVERGE_MID, DIVERGE_POS, v / 2.2) : mix(DIVERGE_MID, DIVERGE_NEG, -v / 2.2);
-      s += `<rect x="${(px0 + c * cw).toFixed(1)}" y="${(py0 + r * chh).toFixed(1)}" width="${(cw - 2).toFixed(1)}" height="${(chh - 2).toFixed(1)}" fill="${fill}"/>`;
+/* ═══ e · KM survival + censor ═══ */
+(function () {
+  const ox = COLX[0], oy = ROWY(2);
+  frame2(ox, oy, 'e', 'Survival · Kaplan–Meier with censoring marks');
+  const X = ox + 55, Y = oy + 175, W = 400, H = 155;
+  const Xv = m => X + m / 36 * W, Yv = s => Y - s / 100 * H;
+  const step = (drops, col) => {
+    let s = 100; const pts = [[Xv(0), Yv(100)]];
+    for (let m = 0; m <= 36; m += 3) {
+      if (drops.includes(m)) { const d = 8 + rnd() * 9; pts.push([Xv(m), Yv(s - d)]); s -= d; }
+      else pts.push([Xv(m), Yv(s)]);
+      if (drops.includes(m) && rnd() > .4) {
+        S.push(ln(Xv(m) - 2, Yv(s) - 2, Xv(m) + 2, Yv(s) + 2, col, 0.9), ln(Xv(m) - 2, Yv(s) + 2, Xv(m) + 2, Yv(s) - 2, col, 0.9));
+      }
     }
-  }
-  rowLab.forEach((lb, r) => {
-    s += `<text x="${(px0 - 5).toFixed(1)}" y="${(py0 + r * chh + chh / 2 + 2.6).toFixed(1)}" font-size="7.5" fill="${TICK}" text-anchor="end">${lb}</text>`;
-  });
-  colLab.forEach((lb, c) => {
-    s += `<text x="${(px0 + c * cw + (cw - 2) / 2).toFixed(1)}" y="${(py0 + rowsN * chh + 9).toFixed(1)}" font-size="7.5" fill="${TICK}" text-anchor="middle">${lb}</text>`;
-  });
-  s += `<text x="${(px0 + colsN * cw / 2).toFixed(1)}" y="${(py0 + rowsN * chh + 21).toFixed(1)}" font-size="8" fill="${MUTE}" text-anchor="middle">样本 × 基因（z-score）</text>`;
-  panels.push(s);
-}
+    S.push(pline(pts, col, 1.8));
+    const lo = pts.map(p => [p[0], Math.min(Yv(0), p[1] + 14)]);
+    S.push(poly([...pts, ...lo.reverse()], col, 'none', 0, 0.12));
+  };
+  step([3, 9, 15, 21, 30], C.teal);
+  step([6, 12, 18, 24], C.navy);
+  frame(S, X, Y, W, H, [0, 1 / 3, 2 / 3, 1], [0, .5, 1], ['0', '12', '24', '36'], ['0', '50', '100']);
+  S.push(txt(ox + 255, oy + 212, 'Months from randomization', 7.5, '#333'));
+  S.push(txt(ox + 16, Y - H / 2, 'Overall survival (%)', 7.5, '#333', 'middle', 'normal', 'transform="rotate(-90 ' + f1(ox + 16) + ' ' + f1(Y - H / 2) + ')"'));
+  S.push(ln(ox + 380, oy + 30, ox + 404, oy + 30, C.teal, 1.8)); S.push(txt(ox + 409, oy + 33, 'Combo (n = 54)', 7, '#333', 'start'));
+  S.push(ln(ox + 380, oy + 45, ox + 404, oy + 45, C.navy, 1.8)); S.push(txt(ox + 409, oy + 48, 'Mono (n = 52)', 7, '#333', 'start'));
+  S.push(txt(ox + 409, oy + 66, 'log-rank p = 0.008', 7, '#555', 'start'));
+})();
 
-function drawHeatmapAnno(row, col, letter, title, seed) {
-  const { x, y } = panelXY(row, col);
-  const rowsN = 5, colsN = 5;
-  const px0 = x + 50, py0 = y + TITLE_H + 16;
-  const cw = (PW - 100) / colsN, chh = (CH - 46) / rowsN;
-  const rnd = mulberry32(seed);
-  let s = panelHead(x, y, letter, title);
-  for (let r = 0; r < rowsN; r++) {
-    for (let c = 0; c < colsN; c++) {
-      const v = Math.max(-0.9, Math.min(2.1, Math.sin(r * 2.1 + c * 1.3 + seed) * 1.3 + (rnd() - 0.5)));
-      const t = Math.max(0, Math.min(1, v / 2.1));
-      const fill = v < 0 ? mix(SEQ_LO, DIVERGE_NEG, Math.min(1, -v)) : mix(SEQ_LO, SEQ_HI, t);
-      const txtFill = t > 0.55 ? '#FFFFFF' : '#3A4A42';
-      s += `<rect x="${(px0 + c * cw).toFixed(1)}" y="${(py0 + r * chh).toFixed(1)}" width="${(cw - 2).toFixed(1)}" height="${(chh - 2).toFixed(1)}" fill="${fill}"/>`;
-      s += `<text x="${(px0 + c * cw + (cw - 2) / 2).toFixed(1)}" y="${(py0 + r * chh + chh / 2 + 2.6).toFixed(1)}" font-size="7" fill="${txtFill}" text-anchor="middle" font-weight="600">${v.toFixed(1)}</text>`;
-    }
+/* ═══ f · volcano ═══ */
+(function () {
+  const ox = COLX[1], oy = ROWY(2);
+  frame2(ox, oy, 'f', 'Volcano plot · differential expression');
+  const X = ox + 55, Y = oy + 200, W = 400, H = 180;
+  const Xv = v => X + (v + 5) / 10 * W, Yv = v => Y - v / 9 * H;
+  for (let i = 0; i < 340; i++) {
+    const fc = Math.abs(N(0, 1.7));
+    const pv = Math.max(0, -Math.log10(rnd()) * 1.75 - Math.abs(fc) * 0.42);
+    const up = rnd() > .5;
+    const sig = pv > 2.2 && fc > 1;
+    const col = sig ? (up ? C.red : C.teal) : '#C9CDD4';
+    S.push(circle(Xv(up ? fc : -fc), Yv(Math.min(8.8, pv)), sig ? 2 : 1.5, col, 'none', 0, sig ? 0.85 : 0.6));
   }
-  const bx = px0 + colsN * cw + 12, by = py0, bh = chh * rowsN, bw2 = 8;
-  const grad = `<defs><linearGradient id="gseq${letter}" x1="0" y1="1" x2="0" y2="0">` +
-    `<stop offset="0" stop-color="${SEQ_LO}"/><stop offset="1" stop-color="${SEQ_HI}"/></linearGradient></defs>`;
-  s += grad + `<rect x="${bx}" y="${by}" width="${bw2}" height="${bh}" fill="url(#gseq${letter})" stroke="#CCCCCC" stroke-width="0.5"/>`;
-  [0, 1, 2].forEach(tick => {
-    const yy = by + bh - (bh * tick / 2);
-    s += `<text x="${bx + bw2 + 3}" y="${(yy + 2.5).toFixed(1)}" font-size="7" fill="${TICK}">${tick}</text>`;
-  });
-  s += `<text x="${(px0 + colsN * cw / 2).toFixed(1)}" y="${(py0 + rowsN * chh + 21).toFixed(1)}" font-size="8" fill="${MUTE}" text-anchor="middle">表达量（log₂CPM）</text>`;
-  panels.push(s);
-}
+  S.push(ln(X, Yv(2.2), X + W, Yv(2.2), '#999', 0.8, '3 3'));
+  S.push(ln(Xv(1), Y, Xv(1), Y - H, '#999', 0.8, '3 3'));
+  S.push(ln(Xv(-1), Y, Xv(-1), Y - H, '#999', 0.8, '3 3'));
+  [['S100A9', 2.6, 6.6], ['IL1B', -3.2, 5.9], ['NFKBIA', 2.1, 4.8], ['CXCL8', -2.4, 4.4], ['TGFBR1', 1.4, 3.4]].forEach(([g, x, y]) =>
+    S.push(txt(Xv(x), Yv(y) - 3, g, 5.8, '#333', 'middle', 'bold')));
+  frame(S, X, Y, W, H, [0, .5, 1], [0, .5, 1], ['-5', '0', '5'], ['0', '4.5', '9']);
+  S.push(txt(ox + 255, oy + 236, 'log₂ fold change', 7.5, '#333'));
+  S.push(txt(ox + 16, Y - H / 2, '-log₁₀ (adj. P)', 7.5, '#333', 'middle', 'normal', 'transform="rotate(-90 ' + f1(ox + 16) + ' ' + f1(Y - H / 2) + ')"'));
+  S.push(circle(ox + 408, oy + 30, 2, C.red)); S.push(txt(ox + 415, oy + 33, 'Up (142)', 7, '#333', 'start'));
+  S.push(circle(ox + 408, oy + 45, 2, C.teal)); S.push(txt(ox + 415, oy + 48, 'Down (96)', 7, '#333', 'start'));
+  S.push(circle(ox + 408, oy + 60, 2, '#C9CDD4')); S.push(txt(ox + 415, oy + 63, 'NS', 7, '#333', 'start'));
+})();
 
-function drawVolcano(row, col, letter, title, seed) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y);
-  const rnd = mulberry32(seed);
-  let s = panelHead(x, y, letter, title);
-  s += `<line x1="${p.px}" y1="${p.py}" x2="${p.px}" y2="${(p.py + p.ph).toFixed(1)}" stroke="${AXIS}" stroke-width="1"/>`;
-  s += `<line x1="${p.px}" y1="${(p.py + p.ph).toFixed(1)}" x2="${(p.px + p.pw).toFixed(1)}" y2="${(p.py + p.ph).toFixed(1)}" stroke="${AXIS}" stroke-width="1"/>`;
-  const cxm = p.px + p.pw / 2;
-  const thrY = scaleY(p, 5, 1.3);
-  s += `<line x1="${p.px}" y1="${thrY.toFixed(1)}" x2="${(p.px + p.pw).toFixed(1)}" y2="${thrY.toFixed(1)}" stroke="#C9C9C9" stroke-width="0.8" stroke-dasharray="3 3"/>`;
-  [cxm - p.pw * 0.22, cxm + p.pw * 0.22].forEach(tx => {
-    s += `<line x1="${tx.toFixed(1)}" y1="${p.py}" x2="${tx.toFixed(1)}" y2="${(p.py + p.ph).toFixed(1)}" stroke="#C9C9C9" stroke-width="0.8" stroke-dasharray="3 3"/>`;
-  });
-  const N = 90;
-  for (let i = 0; i < N; i++) {
-    const u = rnd();
-    let dx, dy;
-    if (u < 0.72) { dx = (rnd() - 0.5) * p.pw * 0.7; dy = 0.15 + rnd() * 0.95; }
-    else { const side = rnd() < 0.5 ? -1 : 1; dx = side * (p.pw * 0.24 + rnd() * p.pw * 0.2); dy = 1.0 + Math.sqrt(rnd()) * 3.9; }
-    const sig = Math.abs(dx / p.pw) > 0.23 && dy > 1.3;
-    const fill = sig ? (dx < 0 ? C.blue.d : C.rose.d) : '#C4C9CE';
-    s += `<circle cx="${(cxm + dx).toFixed(1)}" cy="${scaleY(p, 5, dy).toFixed(1)}" r="${sig ? 2 : 1.5}" fill="${fill}" opacity="${sig ? 0.9 : 0.55}"/>`;
-  }
-  s += `<text x="${cxm}" y="${p.py + p.ph + 12}" font-size="8" fill="${TICK}" text-anchor="middle">log₂ 倍数变化</text>`;
-  s += `<text x="${p.px - 5}" y="${p.py + 8}" font-size="8" fill="${TICK}" text-anchor="end">-log₁₀P</text>`;
-  s += `<text x="${(p.px + p.pw - 4).toFixed(1)}" y="${p.py + 8}" font-size="7.5" fill="${C.rose.d}" text-anchor="end">上调</text>`;
-  panels.push(s);
-}
-
-function drawForest(row, col, letter, title) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y);
-  let s = panelHead(x, y, letter, title);
-  const rows = [
-    { n: 'Stage I', es: 0.82, lo: 0.55, hi: 1.21 },
-    { n: 'Stage II', es: 1.34, lo: 1.02, hi: 1.76 },
-    { n: 'Stage III', es: 1.86, lo: 1.38, hi: 2.51 },
-    { n: 'Stage IV', es: 2.42, lo: 1.70, hi: 3.44 },
-    { n: '年龄 ≥ 60', es: 1.21, lo: 0.94, hi: 1.56 },
-  ];
-  const X = v => p.px + ((v - 0.3) / (3.6 - 0.3)) * p.pw * 0.58;
-  const valX = p.px + p.pw - 2;   // 右对齐的 HR 数值列
-  const y0 = p.py + 12, dy = (CH - 52) / rows.length;
-  s += `<line x1="${X(1).toFixed(1)}" y1="${y0 - 6}" x2="${X(1).toFixed(1)}" y2="${y0 + dy * rows.length + 6}" stroke="#B5B5B5" stroke-width="0.9" stroke-dasharray="3 3"/>`;
-  s += `<text x="${X(1).toFixed(1)}" y="${y0 - 9}" font-size="7" fill="${TICK}" text-anchor="middle">HR=1</text>`;
+/* ═══ g · forest ═══ */
+(function () {
+  const ox = COLX[0], oy = ROWY(3);
+  frame2(ox, oy, 'g', 'Forest plot · subgroup hazard ratios');
+  const X = ox + 150, Y = oy + 190, W = 270, H = 160;
+  const Xv = v => X + (Math.log10(v) + 1.1) / 2.2 * W;
+  S.push(ln(Xv(1), Y + 4, Xv(1), Y - H, '#999', 0.9, '4 3'));
+  const rows = ['Age ≥ 65', 'Age &lt; 65', 'Male', 'Female', 'EGFR mut', 'EGFR wt', 'Stage III', 'Stage IV'];
+  const hrs = [[0.62, 0.41, 0.94], [0.58, 0.36, 0.9], [0.71, 0.5, 1.02], [0.55, 0.38, 0.81], [0.42, 0.27, 0.66], [0.78, 0.55, 1.1], [0.69, 0.44, 1.05], [0.61, 0.45, 0.83]];
+  const rh = H / 9;
   rows.forEach((r, i) => {
-    const yy = y0 + dy * i + dy / 2;
-    const wt = 1 - Math.abs(r.hi - r.lo) / 5;
-    const sz = 3 + wt * 3.5;
-    s += `<text x="${p.px - 4}" y="${yy + 2.6}" font-size="8" fill="${MUTE}" text-anchor="end">${r.n}</text>`;
-    s += `<line x1="${X(r.lo).toFixed(1)}" y1="${yy.toFixed(1)}" x2="${X(r.hi).toFixed(1)}" y2="${yy.toFixed(1)}" stroke="${C.teal.d}" stroke-width="1.2"/>`;
-    s += `<line x1="${X(r.lo).toFixed(1)}" y1="${(yy - 2.5).toFixed(1)}" x2="${X(r.lo).toFixed(1)}" y2="${(yy + 2.5).toFixed(1)}" stroke="${C.teal.d}" stroke-width="1.2"/>`;
-    s += `<line x1="${X(r.hi).toFixed(1)}" y1="${(yy - 2.5).toFixed(1)}" x2="${X(r.hi).toFixed(1)}" y2="${(yy + 2.5).toFixed(1)}" stroke="${C.teal.d}" stroke-width="1.2"/>`;
-    s += `<rect x="${(X(r.es) - sz / 2).toFixed(1)}" y="${(yy - sz / 2).toFixed(1)}" width="${sz.toFixed(1)}" height="${sz.toFixed(1)}" fill="${C.teal.m}" stroke="${C.teal.d}" stroke-width="0.8" transform="rotate(45 ${X(r.es).toFixed(1)} ${yy.toFixed(1)})"/>`;
-    s += `<text x="${valX.toFixed(1)}" y="${yy + 2.6}" text-anchor="end" font-size="7.5" fill="${TICK}">${r.es.toFixed(2)} (${r.lo.toFixed(2)}–${r.hi.toFixed(2)})</text>`;
+    const yy = Y - H + rh * (i + 0.6);
+    S.push(txt(ox + 10, yy + 2, r, 6.8, '#333', 'start'));
+    const [m, lo, hi] = hrs[i];
+    S.push(ln(Xv(lo), yy, Xv(hi), yy, '#4D4D4D', 1));
+    S.push(ln(Xv(lo), yy - 2.5, Xv(lo), yy + 2.5, '#4D4D4D', 1));
+    S.push(ln(Xv(hi), yy - 2.5, Xv(hi), yy + 2.5, '#4D4D4D', 1));
+    S.push(circle(Xv(m), yy, 3, C.teal, '#FFFFFF', 0.8));
+    S.push(txt(ox + 435, yy + 2, `${m.toFixed(2)} (${lo.toFixed(2)}–${hi.toFixed(2)})`, 6, '#444', 'start'));
   });
-  const py2 = y0 + dy * rows.length + 10;
-  const pd = { es: 1.52, lo: 1.24, hi: 1.87 };
-  s += `<path d="M ${X(pd.es).toFixed(1)} ${(py2 - 5).toFixed(1)} L ${X(pd.hi).toFixed(1)} ${py2.toFixed(1)} L ${X(pd.es).toFixed(1)} ${(py2 + 5).toFixed(1)} L ${X(pd.lo).toFixed(1)} ${py2.toFixed(1)} Z" fill="${C.rose.m}" stroke="${C.rose.d}" stroke-width="0.8"/>`;
-  s += `<text x="${p.px - 4}" y="${py2 + 3}" font-size="8" fill="${INK}" text-anchor="end" font-weight="600">合并</text>`;
-  s += `<text x="${valX.toFixed(1)}" y="${py2 + 3}" text-anchor="end" font-size="7.5" fill="${TICK}">${pd.es.toFixed(2)} (${pd.lo.toFixed(2)}–${pd.hi.toFixed(2)})</text>`;
-  panels.push(s);
-}
+  const dy = Y - H - 14;
+  S.push(poly([[Xv(0.62), dy], [Xv(0.66), dy + 4], [Xv(0.62), dy + 8], [Xv(0.58), dy + 4]], C.navy));
+  S.push(txt(ox + 10, dy + 5, 'Overall', 7, '#111', 'start', 'bold'));
+  S.push(txt(ox + 435, dy + 5, '0.62 (0.55–0.70)', 6, '#111', 'start', 'bold'));
+  S.push(ln(X - 20, Y + 2, X + W + 40, Y + 2, '#4D4D4D', 0.9));
+  [0.1, 0.25, 0.5, 1, 2, 4, 10].forEach(v => {
+    S.push(ln(Xv(v), Y + 2, Xv(v), Y + 5.5, '#4D4D4D', 0.8));
+    S.push(txt(Xv(v), Y + 13, String(v), 6.3, '#555'));
+  });
+  S.push(txt(X + W / 2 - 20, Y + 26, 'HR (95% CI), log scale', 7, '#333'));
+  S.push(txt(ox + 437, oy + 28, 'Favors', 6.3, '#555', 'start')); S.push(txt(ox + 437, oy + 37, 'treatment', 6.3, '#555', 'start'));
+})();
 
-// ══ 组装 12 格 ════════════════════════════════════════════
-drawHighlightBar(0, 0, 'a', '剂量响应 · 高亮柱 + 原始点', C.rose, 11, true);
-drawGroupedBar(0, 1, 'b', '分组柱状图', C.blue);
-drawHighlightBar(0, 2, 'c', '剂量响应 · 高亮 + 显著性', C.green, 13, true);
-drawGroupedBar(0, 3, 'd', '分组柱状图 · 紫罗兰', C.violet);
+/* ═══ h · ROC ═══ */
+(function () {
+  const ox = COLX[1], oy = ROWY(3);
+  frame2(ox, oy, 'h', 'ROC curves · diagnostic performance');
+  const X = ox + 55, Y = oy + 200, W = 400, H = 180;
+  const Xv = v => X + v * W, Yv = v => Y - v * H;
+  S.push(ln(X, Y, X + W, Y - H, '#BBB', 0.9, '4 3'));
+  const curve = (a, k, col) => {
+    const pts = [];
+    for (let i = 0; i <= 40; i++) { const f = i / 40; pts.push([Xv(f), Yv(Math.min(1, Math.pow(1 - Math.pow(1 - f, k), 1 / a)))]); }
+    S.push(pline(pts, col, 1.8));
+  };
+  curve(1.9, 1.15, C.red); curve(1.45, 1.2, C.teal); curve(1.15, 1.3, C.navy); curve(1.02, 1.4, C.salmon);
+  frame(S, X, Y, W, H, [0, .25, .5, .75, 1], [0, .25, .5, .75, 1], ['0.0', '0.25', '0.50', '0.75', '1.0'], ['0.0', '0.25', '0.50', '0.75', '1.0']);
+  S.push(txt(ox + 255, oy + 236, 'False positive rate', 7.5, '#333'));
+  S.push(txt(ox + 16, Y - H / 2, 'True positive rate', 7.5, '#333', 'middle', 'normal', 'transform="rotate(-90 ' + f1(ox + 16) + ' ' + f1(Y - H / 2) + ')"'));
+  const leg = [['Panel-4 (AUC 0.94)', C.red], ['CTNNB1 (AUC 0.86)', C.teal], ['AFP (AUC 0.78)', C.navy], ['DCP (AUC 0.71)', C.salmon]];
+  leg.forEach(([t, c], i) => { S.push(ln(ox + 370, oy + 28 + i * 14, ox + 394, oy + 28 + i * 14, c, 1.8)); S.push(txt(ox + 399, oy + 31 + i * 14, t, 6.8, '#333', 'start')); });
+})();
 
-drawViolin(1, 0, 'e', '小提琴图 + 内嵌箱线', C.green, 21);
-drawBox(1, 1, 'f', '箱线图', C.slate, 22);
-drawLines(1, 2, 'g', '多折线 + 置信带');
-drawKM(1, 3, 'h', '生存曲线（KM）');
+/* ═══ i · lines + CI bands ═══ */
+(function () {
+  const ox = COLX[0], oy = ROWY(4);
+  frame2(ox, oy, 'i', 'Longitudinal · trajectories with confidence bands');
+  const X = ox + 55, Y = oy + 200, W = 400, H = 180;
+  const series = [[C.teal, 30, 0.9, 'Sham'], [C.navy, 38, -0.7, 'Sham+drug'], [C.red, 46, -1.6, 'MI model']];
+  const Xv = w => X + w / 12 * W, Yv = v => Y - v / 70 * H;
+  series.forEach(([col, y0, slope, name]) => {
+    const rib = [], rib2 = [];
+    for (let w = 0; w <= 12; w++) {
+      const m = y0 + slope * w + (name === 'MI model' ? -w * w * 0.06 : 0);
+      rib.push([Xv(w), Yv(m + 3.4)]); rib2.push([Xv(w), Yv(m - 3.4)]);
+    }
+    S.push(poly([...rib, ...rib2.reverse()], col, 'none', 0, 0.14));
+    S.push(pline(rib.map((p, i) => [p[0], (p[1] + rib2[i][1]) / 2]), col, 1.8));
+    for (let w = 0; w <= 12; w += 2) {
+      const m = y0 + slope * w + (name === 'MI model' ? -w * w * 0.06 : 0);
+      S.push(circle(Xv(w), Yv(m + N(0, 1.4)), 1.7, col, '#FFFFFF', 0.5));
+    }
+  });
+  frame(S, X, Y, W, H, [0, 1 / 6, 1 / 3, .5, 2 / 3, 5 / 6, 1], [0, .5, 1], ['0', '2', '4', '6', '8', '10', '12'], ['0', '35', '70']);
+  S.push(txt(ox + 255, oy + 236, 'Weeks post-surgery', 7.5, '#333'));
+  S.push(txt(ox + 16, Y - H / 2, 'LVEF (%)', 7.5, '#333', 'middle', 'normal', 'transform="rotate(-90 ' + f1(ox + 16) + ' ' + f1(Y - H / 2) + ')"'));
+  series.forEach(([col, , , name], i) => { S.push(ln(ox + 370, oy + 28 + i * 14, ox + 394, oy + 28 + i * 14, col, 1.8)); S.push(txt(ox + 399, oy + 31 + i * 14, name, 6.8, '#333', 'start')); });
+})();
 
-drawHeatmapDiv(2, 0, 'i', '热图 · z-score 发散', 31);
-drawHeatmapAnno(2, 1, 'j', '热图 · 数值注释 + 色标', 32);
-drawVolcano(2, 2, 'k', '火山图', 33);
-drawForest(2, 3, 'l', '森林图（HR 合并）');
+/* ═══ j · box + jitter + brackets ═══ */
+(function () {
+  const ox = COLX[1], oy = ROWY(4);
+  frame2(ox, oy, 'j', 'Box plots · group comparison with p-values');
+  const X = ox + 55, Y = oy + 200, W = 400, H = 180;
+  const groups = ['D0', 'D3', 'D7', 'D14', 'D28'];
+  const mus = [20, 30, 41, 47, 44], cols = [C.grayblue, C.teal, C.blue, C.salmon, C.red];
+  const gw = W / 5;
+  const Yv = v => Y - v / 72 * H;
+  groups.forEach((g, gi) => {
+    const arr = Array.from({ length: 22 }, () => Math.max(4, Math.min(72, N(mus[gi], 6.5))));
+    const cx = X + gw * gi + gw / 2;
+    const srt = [...arr].sort((a, b) => a - b);
+    const q = p => srt[Math.floor(p * (srt.length - 1))];
+    S.push(ln(cx, Yv(q(.02)), cx, Yv(q(.98)), '#555', 0.9));
+    S.push(rrect(cx - gw * 0.18, Yv(q(.75)), gw * 0.36, Yv(q(.25)) - Yv(q(.75)), 2, '#FFFFFF', cols[gi], 1.5));
+    S.push(ln(cx - gw * 0.18, Yv(q(.5)), cx + gw * 0.18, Yv(q(.5)), cols[gi], 2));
+    arr.forEach(v => S.push(circle(cx + rr(-gw * 0.3, gw * 0.3), Yv(v), 1.5, cols[gi], 'none', 0, 0.55)));
+  });
+  const br = (i1, i2, yy, label) => {
+    const x1 = X + gw * i1 + gw / 2, x2 = X + gw * i2 + gw / 2;
+    S.push(ln(x1, yy, x1, yy - 4, '#333', 0.9), ln(x1, yy, x2, yy, '#333', 0.9), ln(x2, yy, x2, yy - 4, '#333', 0.9));
+    S.push(txt((x1 + x2) / 2, yy - 4.5, label, 6.8, '#111', 'middle', 'bold'));
+  };
+  br(0, 1, Yv(48) - 8, '***'); br(0, 4, Yv(60) - 12, 'p = 6.8e-9'); br(3, 4, Yv(55) - 8, 'ns');
+  frame(S, X, Y, W, H, [0, 1, 2, 3, 4], [0, .5, 1], groups, ['0', '36', '72']);
+  S.push(txt(ox + 255, oy + 236, 'Days after transplant', 7.5, '#333'));
+  S.push(txt(ox + 16, Y - H / 2, 'Serum creatinine (µmol/L)', 7.5, '#333', 'middle', 'normal', 'transform="rotate(-90 ' + f1(ox + 16) + ' ' + f1(Y - H / 2) + ')"'));
+})();
 
-// ── 输出 ─────────────────────────────────────────────────
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="${FONT}">
-<rect width="${W}" height="${H}" fill="#FFFFFF"/>
-<text x="${MX}" y="44" font-size="22" font-weight="800" fill="${INK}">Chart atlas | 出版级模板图鉴</text>
-<text x="${MX}" y="68" font-size="12.5" fill="${MUTE}">柱状图 / 分布 / 时序 / 矩阵 —— 每一格都是 FigureForge 可直接生成的出版级样式</text>
-<text x="${W - MX}" y="44" font-size="11" fill="${MUTE}" text-anchor="end">22 模板 · 16 色卡 · SVG/PDF/PNG/TIFF/PPTX</text>
-${panels.join('\n')}
-</svg>`;
-const out = path.join(__dirname, '..', '..', 'assets', 'showcase.svg');
-fs.mkdirSync(path.dirname(out), { recursive: true });
-fs.writeFileSync(out, svg);
-console.log('written', out, svg.length, 'bytes');
+/* ═══ k · heatmap + row colors ═══ */
+(function () {
+  const ox = COLX[0], oy = ROWY(5);
+  frame2(ox, oy, 'k', 'Expression matrix · heatmap with annotations');
+  const X = ox + 78, Y = oy + 34, gw = 34, gh = 22, n = 9;
+  const ramp = t => t < .5 ? mix('#3E6FA8', '#F5F3EE', t * 2) : mix('#F5F3EE', '#C9366B', (t - .5) * 2);
+  const genes = ['CDH1', 'VIM', 'MMP9', 'TWIST1', 'CDH2', 'SNAI1', 'KRT19', 'FN1', 'ZEB1'];
+  const conds = ['Ctrl', 'TGF-b 2h', 'TGF-b 8h', 'TGF-b 24h', 'TGF-b 48h', 'ECT', 'ECT+inh', 'KD-SNAI1', 'Rescue'];
+  const condCols = ['#BFBFBF', '#E64B35', '#E64B35', '#E64B35', '#E64B35', '#4DBBD5', '#4DBBD5', '#00A087', '#00A087'];
+  for (let r = 0; r < n; r++) {
+    S.push(rrect(X - 8, Y + r * gh + 2, 5, gh - 4, 0, r < 3 ? '#8491B4' : r < 6 ? '#E64B35' : '#00A087'));
+    for (let c = 0; c < n; c++) {
+      const base = r < 3 ? 0.25 : 0.75 - c * 0.05;
+      const v = Math.max(0, Math.min(1, base + N(0, 0.16)));
+      S.push(rrect(X + c * gw + 0.6, Y + r * gh + 0.6, gw - 1.2, gh - 1.2, 1, ramp(v)));
+      if (v > 0.72) S.push(txt(X + c * gw + gw / 2, Y + r * gh + gh / 2 + 2.2, v.toFixed(2), 5.2, '#FFFFFF', 'middle'));
+    }
+    S.push(txt(X + n * gw + 5, Y + r * gh + gh / 2 + 2, genes[r], 6.3, '#444', 'start'));
+  }
+  conds.forEach((t, c) => {
+    S.push(rrect(X + c * gw + 2, Y - 8, gw - 4, 4.5, 1, condCols[c]));
+    S.push(`<text x="${f1(X + c * gw + gw / 2)}" y="${f1(Y + n * gh + 7)}" font-size="5.8" fill="#444" text-anchor="end" transform="rotate(-45 ${f1(X + c * gw + gw / 2)} ${f1(Y + n * gh + 7)})">${t}</text>`);
+  });
+  for (let i = 0; i < 70; i += 2) S.push(rrect(ox + 470, oy + 40 + i, 9, 2, 0, ramp(1 - i / 70)));
+  S.push(`<rect x="${f1(ox + 470)}" y="${f1(oy + 40)}" width="9" height="70" fill="none" stroke="#999" stroke-width="0.5"/>`);
+  S.push(txt(ox + 483, oy + 47, '2', 6, '#555', 'start')); S.push(txt(ox + 483, oy + 113, '-2', 6, '#555', 'start'));
+  S.push(txt(ox + 474.5, oy + 33, 'Z', 7, '#333', 'middle', 'bold'));
+  S.push(txt(ox + 40, oy + 148, 'Row side color:', 6.5, '#555', 'start'));
+  S.push(rrect(ox + 105, oy + 142, 8, 8, 1, '#8491B4')); S.push(txt(ox + 117, oy + 149, 'Epithelial', 6.3, '#444', 'start'));
+  S.push(rrect(ox + 165, oy + 142, 8, 8, 1, '#E64B35')); S.push(txt(ox + 177, oy + 149, 'Mesenchymal', 6.3, '#444', 'start'));
+  S.push(rrect(ox + 248, oy + 142, 8, 8, 1, '#00A087')); S.push(txt(ox + 260, oy + 149, 'Hybrid', 6.3, '#444', 'start'));
+})();
+
+/* ═══ l · dumbbell ═══ */
+(function () {
+  const ox = COLX[1], oy = ROWY(5);
+  frame2(ox, oy, 'l', 'Dumbbell · paired change across cohorts');
+  const X = ox + 95, Y = oy + 200, W = 360, H = 160;
+  const items = ['CD8A', 'GZMB', 'PRF1', 'CXCL9', 'IDO1', 'LAG3', 'TIGIT', 'PDCD1'];
+  const vals = items.map(() => [rr(8, 30), rr(45, 88)]);
+  const Xv = v => X + v / 100 * W;
+  const rh = H / 8;
+  items.forEach((g, i) => {
+    const yy = Y - rh * (i + 0.5);
+    const [a, b] = vals[i];
+    S.push(ln(Xv(a), yy, Xv(b), yy, '#C9CDD4', 2.4));
+    S.push(circle(Xv(a), yy, 3.4, C.grayblue, '#FFFFFF', 0.7));
+    S.push(circle(Xv(b), yy, 3.4, C.red, '#FFFFFF', 0.7));
+    S.push(txt(ox + 12, yy + 2, g, 6.8, '#333', 'start'));
+    S.push(txt(Xv(b) + 6, yy + 2, '+' + Math.round(b - a) + '%', 5.8, C.red, 'start', 'bold'));
+  });
+  frame(S, X, Y, W, H, [0, .5, 1], [], ['0', '50', '100'], []);
+  S.push(txt(ox + 275, oy + 236, 'T cell exhaustion score', 7.5, '#333'));
+  S.push(circle(ox + 360, oy + 28, 3.4, C.grayblue, '#FFFFFF', 0.7)); S.push(txt(ox + 369, oy + 31, 'Pre-therapy', 7, '#333', 'start'));
+  S.push(circle(ox + 360, oy + 43, 3.4, C.red, '#FFFFFF', 0.7)); S.push(txt(ox + 369, oy + 46, 'Post-therapy', 7, '#333', 'start'));
+})();
+
+S.push('</svg>');
+fs.writeFileSync(path.join(__dirname, '../../assets/showcase.svg'), S.join('\n'));
+console.log('showcase.svg written,', S.join('').length, 'bytes');

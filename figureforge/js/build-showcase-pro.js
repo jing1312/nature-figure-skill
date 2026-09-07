@@ -1,323 +1,263 @@
 #!/usr/bin/env node
-/**
- * build-showcase-pro.js — 生成 assets/showcase-pro.svg（Chart atlas Pro）
- *
- * 6 种复杂图型 × 图鉴排版（与 showcase.svg 同风格）：
- *   雷达图 / GO 富集气泡图 / 曼哈顿图 / 山脊图 / 桑基图 / 甘特时间轴
- * 纯手绘矢量。`node build-showcase-pro.js` 重跑。
- */
+/* Chart atlas Pro (v2): 6 advanced panels in the same ggplot-grade language —
+ * white bg, fine axes, NPG pastels, dense seeded data. */
 'use strict';
 const fs = require('fs');
 const path = require('path');
 
-function mulberry32(seed) {
-  let a = seed >>> 0;
-  return function () {
-    a |= 0; a = (a + 0x6D2B79F5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-function lerp(a, b, t) { return a + (b - a) * t; }
-function hex2rgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
-function mix(c1, c2, t) {
-  const a = hex2rgb(c1), b = hex2rgb(c2);
-  return '#' + [0, 1, 2].map(i => Math.round(lerp(a[i], b[i], t)).toString(16).padStart(2, '0')).join('');
-}
-function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+let seed = 20260909;
+const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+const rr = (a, b) => a + rnd() * (b - a);
+const N = (m, s) => m + (rnd() + rnd() + rnd() + rnd() - 2) * 1.414 * s;
 
-const INK = '#1A1A1A', MUTE = '#6B6B6B', TICK = '#8A8A8A', AXIS = '#B9B9B9', GRID = '#EBEBEB';
-const FONT = "Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif";
-const C = {
-  rose:  { m: '#D98A94', d: '#C06B76', l: '#F2C9CD' },
-  blue:  { m: '#7FA6C9', d: '#5F87AD', l: '#C2D5E4' },
-  green: { m: '#7FAF8E', d: '#5E9270', l: '#C4DAC9' },
-  violet:{ m: '#9C8BC4', d: '#7E6AA9', l: '#D5CCE6' },
-  teal:  { m: '#6B9E9C', d: '#4F8280', l: '#C0D8D7' },
-  slate: { m: '#8CA0B3', d: '#69809A', l: '#CCD6DF' },
-};
-
-// 版面：3 列 × 2 行
-const W = 1120, MX = 34, COLS = 3, GAPX = 30, GAPY = 36;
-const PW = (W - MX * 2 - GAPX * (COLS - 1)) / COLS;   // ≈ 330
-const HEAD_H = 96, TITLE_H = 22, CH = 300, ROW_H = TITLE_H + CH + GAPY;
-const H = HEAD_H + 2 * ROW_H + 10;
-
-const panels = [];
-function panelXY(row, col) {
-  return { x: MX + col * (PW + GAPX), y: HEAD_H + row * ROW_H };
-}
-function plotArea(x, y, padL = 36) {
-  return { px: x + padL, py: y + TITLE_H + 12, pw: PW - padL - 14, ph: CH - 42 };
-}
-function panelHead(x, y, letter, title) {
-  return `<text x="${x}" y="${y + 14}" font-size="13" font-weight="700" fill="${INK}">${letter}</text>` +
-    `<text x="${(x + PW / 2 + 8).toFixed(1)}" y="${y + 13}" font-size="10.5" fill="${MUTE}" text-anchor="middle">${esc(title)}</text>`;
+function h2r(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function r2h(r) { return '#' + r.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join(''); }
+function mix(a, b, t) { const A = h2r(a), B = h2r(b); return r2h(A.map((v, i) => v + (B[i] - v) * t)); }
+function kde(arr, bw2, grid) {
+  return grid.map(v => arr.reduce((s, p) => s + Math.exp(-((v - p) ** 2) / (2 * bw2)), 0) / (arr.length * bw2 * 2.5066));
 }
 
-// ══ a 雷达图 ═════════════════════════════════════════════
-function drawRadar(row, col, letter, title) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y, 20);
-  const cx = p.px + p.pw / 2, cy = p.py + p.ph / 2 + 6;
-  const R = Math.min(p.pw, p.ph) / 2 - 34;
-  const dims = ['干性', '增殖', '侵袭', '凋亡', '代谢', '免疫'];
-  const N = dims.length;
-  const pt = (i, r) => {
-    const ang = -Math.PI / 2 + (2 * Math.PI * i) / N;
-    return [cx + Math.cos(ang) * r, cy + Math.sin(ang) * r];
-  };
-  let s = panelHead(x, y, letter, title);
-  // 网格环
-  [0.25, 0.5, 0.75, 1].forEach(f => {
-    const pts = dims.map((_, i) => pt(i, R * f).map(v => v.toFixed(1)).join(',')).join(' ');
-    s += `<polygon points="${pts}" fill="${f === 1 ? '#FBFBFB' : 'none'}" stroke="${GRID}" stroke-width="0.9"/>`;
+const C = { red: '#E64B35', blue: '#4DBBD5', teal: '#00A087', navy: '#3C5488', salmon: '#F39B7F', grayblue: '#8491B4', mint: '#91D1C2', purple: '#8E7CC3', amber: '#F2C14E' };
+
+const f1 = v => (Math.round(v * 10) / 10);
+const txt = (x, y, t, size = 7, fill = '#333', anchor = 'middle', w = 'normal', extra = '') =>
+  `<text x="${f1(x)}" y="${f1(y)}" font-size="${size}" fill="${fill}" text-anchor="${anchor}" font-weight="${w}" ${extra}>${t}</text>`;
+const ln = (x1, y1, x2, y2, st = '#333', sw = 0.8, dash = '') =>
+  `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${st}" stroke-width="${sw}" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
+const rrect = (x, y, w, h, r, fill, stroke = 'none', sw = 0, op = 1) =>
+  `<rect x="${f1(x)}" y="${f1(y)}" width="${f1(w)}" height="${f1(h)}" rx="${r}" fill="${fill}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}"/>`;
+const circle = (cx, cy, r, fill, stroke = 'none', sw = 0, op = 1) =>
+  `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(r)}" fill="${fill}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}"/>`;
+const poly = (pts, fill, stroke = 'none', sw = 0, op = 1) =>
+  `<polygon points="${pts.map(p => `${f1(p[0])},${f1(p[1])}`).join(' ')}" fill="${fill}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}"/>`;
+const pline = (pts, st, sw = 1, dash = '') =>
+  `<polyline points="${pts.map(p => `${f1(p[0])},${f1(p[1])}`).join(' ')}" fill="none" stroke="${st}" stroke-width="${sw}" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
+const pathd = (d, fill, stroke = 'none', sw = 0, op = 1) =>
+  `<path d="${d}" fill="${fill}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}"/>`;
+
+function frame(S, x, y, w, h, xt, yt, xlab, ylab) {
+  xt.forEach(t => S.push(ln(x + w * t, y - h, x + w * t, y, '#E8E8E8', 0.6)));
+  yt.forEach(t => S.push(ln(x, y - h * t, x + w, y - h * t, '#E8E8E8', 0.6)));
+  S.push(ln(x, y, x + w, y, '#4D4D4D', 0.9));
+  S.push(ln(x, y, x, y - h, '#4D4D4D', 0.9));
+  xt.forEach(t => S.push(ln(x + w * t, y, x + w * t, y + 2.4, '#4D4D4D', 0.8)));
+  yt.forEach(t => S.push(ln(x, y - h * t, x - 2.4, y - h * t, '#4D4D4D', 0.8)));
+  xt.forEach((t, i) => S.push(txt(x + w * t, y + 9, xlab[i], 6.3, '#555')));
+  yt.forEach((t, i) => S.push(txt(x - 4.5, y - h * t + 2, ylab[i], 6.3, '#555', 'end')));
+}
+
+const PW = 550, COLX = [40, 630], ROWY = r => 62 + r * 320;
+const S = [];
+S.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1030" font-family="Helvetica, Arial, sans-serif">`);
+S.push(rrect(0, 0, 1200, 1030, 0, '#FFFFFF'));
+S.push(txt(40, 34, 'FigureForge · Chart atlas Pro — advanced figures', 16, '#1a1a1a', 'start', 'bold'));
+S.push(txt(1160, 34, '6 advanced archetypes · NPG-style palettes', 9, '#888', 'end'));
+
+function frame2(ox, oy, letter, title) {
+  S.push(txt(ox - 8, oy - 7, letter, 14, '#111', 'start', 'bold'));
+  S.push(txt(ox + PW / 2, oy - 6, title, 9, '#555', 'middle', 'bold'));
+}
+
+/* ═══ a · radar ═══ */
+(function () {
+  const ox = COLX[0], oy = ROWY(0);
+  frame2(ox, oy, 'a', 'Radar · immune signature profiling');
+  const cx = ox + 210, cy = oy + 152, R = 108, n = 8;
+  const axesL = ['CD8A', 'IFNG', 'GZMB', 'PRF1', 'CXCL9', 'CXCL10', 'IDO1', 'LAG3'];
+  const polar = (r, i) => { const a = (i / n * 360 - 90) * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
+  for (let ring = 1; ring <= 4; ring++) {
+    const pts = []; for (let i = 0; i < n; i++) pts.push(polar(R * ring / 4, i));
+    S.push(poly(pts, 'none', '#DDD', 0.7));
+  }
+  for (let i = 0; i < n; i++) { const p = polar(R, i); S.push(ln(cx, cy, p[0], p[1], '#DDD', 0.7)); }
+  const series = [[C.red, [3.4, 3.1, 2.8, 2.9, 3.5, 3.2, 1.8, 1.5], 'Responder'], [C.blue, [1.9, 1.6, 1.4, 1.7, 2.2, 2.0, 3.2, 3.4], 'Non-responder']];
+  series.forEach(([col, vals, name]) => {
+    const pts = vals.map((v, i) => polar(v / 4 * R, i));
+    S.push(poly(pts, col, col, 1.6, 0.16));
+    pts.forEach(p => S.push(circle(p[0], p[1], 2, col, '#FFFFFF', 0.6)));
   });
-  dims.forEach((_, i) => {
-    const [ax, ay] = pt(i, R);
-    s += `<line x1="${cx}" y1="${cy}" x2="${ax.toFixed(1)}" y2="${ay.toFixed(1)}" stroke="${GRID}" stroke-width="0.9"/>`;
-    const [lx, ly] = pt(i, R + 14);
-    s += `<text x="${lx.toFixed(1)}" y="${(ly + 3).toFixed(1)}" font-size="8.5" fill="${MUTE}" text-anchor="middle">${dims[i]}</text>`;
-  });
-  const series = [
-    { c: C.rose, vs: [82, 62, 74, 50, 66, 78], lb: '肿瘤组' },
-    { c: C.blue, vs: [58, 76, 48, 72, 44, 56], lb: '对照' },
-  ];
-  series.forEach(sr => {
-    const pts = sr.vs.map((v, i) => pt(i, (R * v) / 100));
-    const poly = pts.map(pt2 => pt2.map(v => v.toFixed(1)).join(',')).join(' ');
-    s += `<polygon points="${poly}" fill="${sr.c.m}" fill-opacity="0.22" stroke="${sr.c.d}" stroke-width="1.6"/>`;
-    pts.forEach(pt2 => {
-      s += `<circle cx="${pt2[0].toFixed(1)}" cy="${pt2[1].toFixed(1)}" r="2" fill="${sr.c.d}"/>`;
-    });
-  });
-  s += `<rect x="${p.px + 6}" y="${p.py + 4}" width="7" height="7" fill="${C.rose.m}" fill-opacity="0.35" stroke="${C.rose.d}"/>` +
-    `<text x="${p.px + 17}" y="${p.py + 10.5}" font-size="7.5" fill="${MUTE}">肿瘤组</text>` +
-    `<rect x="${p.px + 6}" y="${p.py + 15}" width="7" height="7" fill="${C.blue.m}" fill-opacity="0.35" stroke="${C.blue.d}"/>` +
-    `<text x="${p.px + 17}" y="${p.py + 21.5}" font-size="7.5" fill="${MUTE}">对照</text>`;
-  s += `<text x="${cx}" y="${p.py + p.ph + 8}" font-size="8" fill="${MUTE}" text-anchor="middle">六个维度标准化得分（0–100）</text>`;
-  panels.push(s);
-}
+  axesL.forEach((t, i) => { const p = polar(R + 16, i); S.push(txt(p[0], p[1] + 2, t, 6.8, '#333')); });
+  // ring scale labels
+  [1, 2, 3, 4].forEach(r => S.push(txt(cx + 4, cy - R * r / 4 + 2, String(r), 5.5, '#999', 'start')));
+  S.push(circle(ox + 400, oy + 60, 3, C.red, '#FFFFFF', 0.6)); S.push(txt(ox + 409, oy + 63, 'Responder', 7, '#333', 'start'));
+  S.push(circle(ox + 400, oy + 78, 3, C.blue, '#FFFFFF', 0.6)); S.push(txt(ox + 409, oy + 81, 'Non-responder', 7, '#333', 'start'));
+  S.push(txt(ox + 400, oy + 108, 'Signature score (0–4)', 6.3, '#888', 'start'));
+})();
 
-// ══ b GO 富集气泡图 ═══════════════════════════════════════
-function drawBubble(row, col, letter, title) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y, 74);
-  let s = panelHead(x, y, letter, title);
+/* ═══ b · GO bubble ═══ */
+(function () {
+  const ox = COLX[1], oy = ROWY(0);
+  frame2(ox, oy, 'b', 'GO enrichment · bubble plot');
+  const X = ox + 120, Y = oy + 210, W = 330, H = 185;
   const terms = [
-    { n: '金属离子响应', p2: 8.6, g: 42, f: 5.2 },
-    { n: '氧化应激反应', p2: 7.2, g: 58, f: 4.1 },
-    { n: '凋亡过程调控', p2: 6.4, g: 35, f: 3.4 },
-    { n: '线粒体电子传递', p2: 5.8, g: 28, f: 2.9 },
-    { n: '内质网应激', p2: 5.1, g: 22, f: 2.5 },
-    { n: '离子通道活性', p2: 4.3, g: 18, f: 1.8 },
-    { n: '心肌收缩调节', p2: 3.6, g: 15, f: 1.4 },
-    { n: '脂质代谢过程', p2: 2.8, g: 12, f: 1.1 },
+    ['Extracellular matrix organization', 5.8, 12.4, 58],
+    ['Collagen fibril organization', 6.9, 10.8, 41],
+    ['Angiogenesis', 4.2, 9.6, 66],
+    ['Leukocyte migration', 3.6, 8.9, 49],
+    ['T cell activation', 3.1, 7.2, 88],
+    ['Apoptotic process', 2.4, 5.8, 120],
+    ['Cell cycle arrest', 3.9, 5.2, 72],
+    ['DNA repair', 2.0, 4.1, 95],
+    ['Lipid metabolic process', 1.6, 3.2, 84],
+    ['Ion transport', 1.2, 2.4, 110],
   ];
-  const X = v => p.px + ((v - 2) / (9 - 2)) * p.pw * 0.94;
-  const Y = i => p.py + 46 + i * ((p.ph - 68) / (terms.length - 1));
-  const rOf = g => 3 + (g - 10) / 50 * 7;
-  // x 网格
-  [2, 4, 6, 8].forEach(v => {
-    const xx = X(v);
-    s += `<line x1="${xx.toFixed(1)}" y1="${p.py}" x2="${xx.toFixed(1)}" y2="${(p.py + p.ph - 24).toFixed(1)}" stroke="${GRID}" stroke-width="0.8"/>` +
-      `<text x="${xx.toFixed(1)}" y="${p.py + p.ph - 12}" font-size="8" fill="${TICK}" text-anchor="middle">${v}</text>`;
+  const Xv = v => X + (v - 0.8) / (7.4 - 0.8) * W;
+  const Yv = v => Y - v / 13.5 * H;
+  const rOf = c => 2.4 + Math.sqrt(c) * 0.62;
+  const ramp = t => mix('#4DBBD5', '#E64B35', t);
+  // gene-ratio gridlines
+  [2, 4, 6].forEach(v => S.push(ln(Xv(v), Y - H, Xv(v), Y, '#E8E8E8', 0.6)));
+  [5, 10].forEach(v => S.push(ln(X, Yv(v), X + W, Yv(v), '#E8E8E8', 0.6)));
+  terms.forEach(([name, gr, pv, cnt]) => {
+    S.push(circle(Xv(gr), Yv(pv), rOf(cnt), ramp((gr - 1) / 6), '#FFFFFF', 0.5, 0.85));
+    S.push(txt(X - 6, Yv(pv) + 2, name.length > 24 ? name.slice(0, 23) + '…' : name, 5.9, '#444', 'end'));
   });
-  terms.forEach((t, i) => {
-    const yy = Y(i);
-    const col2 = mix(C.blue.m, C.rose.m, Math.min(1, (t.f - 1) / 4.2));
-    s += `<text x="${p.px - 6}" y="${yy + 2.6}" font-size="7.5" fill="${MUTE}" text-anchor="end">${t.n}</text>`;
-    s += `<circle cx="${X(t.p2).toFixed(1)}" cy="${yy.toFixed(1)}" r="${rOf(t.g).toFixed(1)}" fill="${col2}" fill-opacity="0.75" stroke="${mix(C.blue.d, C.rose.d, Math.min(1, (t.f - 1) / 4.2))}" stroke-width="1"/>`;
-    s += `<text x="${(X(t.p2) + rOf(t.g) + 4).toFixed(1)}" y="${yy + 2.6}" font-size="7" fill="${TICK}">${t.g}</text>`;
-  });
-  s += `<line x1="${p.px}" y1="${(p.py + p.ph - 24).toFixed(1)}" x2="${(p.px + p.pw * 0.94).toFixed(1)}" y2="${(p.py + p.ph - 24).toFixed(1)}" stroke="${AXIS}" stroke-width="1"/>`;
-  s += `<text x="${(p.px + p.pw * 0.47).toFixed(1)}" y="${p.py + p.ph + 2}" font-size="8.5" fill="${MUTE}" text-anchor="middle">-log₁₀（P 值）</text>`;
-  // 尺寸图例（左上，数据在右下方向不会撞）
-  [12, 35, 58].forEach((g, i) => {
-    s += `<circle cx="${p.px + 10 + i * 15}" cy="${p.py + 6}" r="${rOf(g).toFixed(1)}" fill="${C.slate.l}" stroke="${C.slate.d}" stroke-width="0.8"/>`;
-  });
-  s += `<text x="${p.px + 4}" y="${p.py + 26}" font-size="7" fill="${TICK}">基因数 12 / 35 / 58</text>`;
-  s += `<text x="${p.px + 4}" y="${p.py + 37}" font-size="7" fill="${C.rose.d}">颜色越暖 = 富集倍数越高</text>`;
-  panels.push(s);
-}
+  frame(S, X, Y, W, H, [0, 1 / 3, 2 / 3, 1], [0, .5, 1], ['2', '4', '6', ''], ['0', '6.75', '13.5']);
+  S.push(txt(ox + 285, oy + 246, 'Gene ratio', 7.5, '#333'));
+  S.push(txt(ox + 16, Y - H / 2, '-log₁₀ (FDR)', 7.5, '#333', 'middle', 'normal', 'transform="rotate(-90 ' + f1(ox + 16) + ' ' + f1(Y - H / 2) + ')"'));
+  // size + color legends
+  [30, 70, 120].forEach((c, i) => S.push(circle(ox + 420 + i * 22, oy + 42, rOf(c), '#D8DBE0', '#999', 0.5)));
+  S.push(txt(ox + 422, oy + 66, '30 · 70 · 120 genes', 6, '#555', 'middle'));
+  for (let i = 0; i < 46; i += 2) S.push(rrect(ox + 408 + i, oy + 84, 2, 7, 0, ramp(i / 46)));
+  S.push(txt(ox + 408, oy + 100, 'low', 5.8, '#555', 'start')); S.push(txt(ox + 454, oy + 100, 'high ratio', 5.8, '#555', 'end'));
+})();
 
-// ══ c 曼哈顿图 ═══════════════════════════════════════════
-function drawManhattan(row, col, letter, title) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y, 40);
-  const rnd = mulberry32(77);
-  let s = panelHead(x, y, letter, title);
-  const vmax = 9;
-  const Y = v => p.py + p.ph - (v / vmax) * p.ph;
-  [0, 3, 6, 9].forEach(v => {
-    const yy = Y(v);
-    if (v > 0) s += `<line x1="${p.px}" y1="${yy.toFixed(1)}" x2="${(p.px + p.pw).toFixed(1)}" y2="${yy.toFixed(1)}" stroke="${GRID}" stroke-width="0.8"/>`;
-    s += `<text x="${p.px - 5}" y="${(yy + 2.6).toFixed(1)}" font-size="8" fill="${TICK}" text-anchor="end">${v}</text>`;
-  });
-  // 显著性与建议线
-  s += `<line x1="${p.px}" y1="${Y(6.5).toFixed(1)}" x2="${(p.px + p.pw).toFixed(1)}" y2="${Y(6.5).toFixed(1)}" stroke="#C9C9C9" stroke-width="0.9" stroke-dasharray="4 3"/>`;
-  s += `<text x="${(p.px + p.pw - 3).toFixed(1)}" y="${(Y(6.5) - 3).toFixed(1)}" font-size="7" fill="${TICK}" text-anchor="end">显著阈值</text>`;
-  let ox = p.px + 2;
-  const totalW = p.pw - 8;
-  const peaks = { 7: 8.2, 12: 7.1 };
-  for (let c = 1; c <= 22; c++) {
-    const n = 16 + (c % 4) * 5;
-    const cw = (totalW / 22);
-    for (let k = 0; k < n; k++) {
-      let v = -Math.log10(rnd()) * 1.9;
-      if (peaks[c] && k === Math.floor(n / 2)) v = peaks[c] - rnd() * 0.35;
-      v = Math.min(vmax - 0.1, v);
-      const xx = ox + (k + 0.5) * (cw / n);
-      const isPeak = peaks[c] && k === Math.floor(n / 2) && v > 6.8;
-      if (isPeak) {
-        s += `<rect x="${(xx - 2.6).toFixed(1)}" y="${(Y(v) - 2.6).toFixed(1)}" width="5.2" height="5.2" fill="${C.rose.d}" transform="rotate(45 ${xx.toFixed(1)} ${Y(v).toFixed(1)})"/>`;
-        s += `<text x="${xx.toFixed(1)}" y="${(Y(v) - 6).toFixed(1)}" font-size="7" fill="${C.rose.d}" text-anchor="middle">rs1294${40 + c}</text>`;
-      } else {
-        s += `<circle cx="${xx.toFixed(1)}" cy="${Y(v).toFixed(1)}" r="1.3" fill="${c % 2 ? '#8CA0B3' : '#7FA6C9'}" opacity="0.85"/>`;
-      }
+/* ═══ c · manhattan ═══ */
+(function () {
+  const ox = COLX[0], oy = ROWY(1);
+  frame2(ox, oy, 'c', 'Manhattan plot · GWAS associations');
+  const X = ox + 50, Y = oy + 205, W = 440, H = 180;
+  const Xv = t => X + t * W, Yv = v => Y - v / 10 * H;
+  const chrCols = ['#8491B4', '#C9CDD4'];
+  const chrLen = [0.055, 0.052, 0.045, 0.042, 0.038, 0.036, 0.034, 0.031, 0.03, 0.028, 0.027, 0.026, 0.024, 0.022, 0.021, 0.02, 0.018, 0.017, 0.015, 0.013, 0.011, 0.009];
+  const TT = chrLen.reduce((a, b) => a + b, 0);
+  let cum = 0; const chrEdges = [];
+  chrLen.forEach((len, ci) => {
+    for (let i = 0; i < Math.floor(len * 950); i++) {
+      const frac = rnd(), tl = cum + frac * len, t = tl / TT;
+      let pv = -Math.log10(rnd()) * 1.75;
+      if (ci === 5 && frac > 0.55 && frac < 0.72) pv = 6.2 + rnd() * 3.4;
+      if (ci === 11 && frac > 0.3 && frac < 0.42) pv = 5.6 + rnd() * 2.4;
+      const sig = pv > 7.3;
+      S.push(circle(Xv(t), Yv(Math.min(9.7, pv)), sig ? 1.9 : 1.3, sig ? C.red : chrCols[ci % 2], 'none', 0, sig ? 0.9 : 0.7));
     }
-    ox += cw;
-  }
-  s += `<line x1="${p.px}" y1="${p.py}" x2="${p.px}" y2="${(p.py + p.ph).toFixed(1)}" stroke="${AXIS}" stroke-width="1"/>`;
-  s += `<line x1="${p.px}" y1="${(p.py + p.ph).toFixed(1)}" x2="${(p.px + p.pw).toFixed(1)}" y2="${(p.py + p.ph).toFixed(1)}" stroke="${AXIS}" stroke-width="1"/>`;
-  [1, 6, 12, 18, 22].forEach(c => {
-    const xx = p.px + 2 + (totalW / 22) * (c - 0.5);
-    s += `<text x="${xx.toFixed(1)}" y="${(p.py + p.ph + 12).toFixed(1)}" font-size="8" fill="${TICK}" text-anchor="middle">${c}</text>`;
+    cum += len; chrEdges.push(cum / TT);
   });
-  s += `<text x="${(p.px + p.pw / 2).toFixed(1)}" y="${(p.py + p.ph + 24).toFixed(1)}" font-size="8.5" fill="${MUTE}" text-anchor="middle">染色体</text>`;
-  s += `<text x="${p.px - 12}" y="${p.py + 8}" font-size="8.5" fill="${MUTE}" text-anchor="middle" transform="rotate(-90 ${p.px - 12} ${p.py + 8})">-log₁₀（P 值）</text>`;
-  panels.push(s);
-}
-
-// ══ d 山脊图 ═════════════════════════════════════════════
-function drawRidgeline(row, col, letter, title) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y, 44);
-  let s = panelHead(x, y, letter, title);
-  const groups = ['Wk 0', 'Wk 2', 'Wk 4', 'Wk 6', 'Wk 8'];
-  const rowH = (p.ph - 16) / groups.length;
-  const baseY = i => p.py + 8 + i * rowH + rowH - 10;
-  // 从最下层往上画，上层覆盖下层
-  for (let i = groups.length - 1; i >= 0; i--) {
-    const mu = 0.38 + i * 0.115, sd = 0.11 - i * 0.008;
-    const col2 = mix(C.slate.m, C.blue.d, i / (groups.length - 1));
-    let d = '';
-    for (let k = 0; k <= 60; k++) {
-      const t = k / 60;
-      const xx = p.px + t * p.pw;
-      const h = Math.exp(-(((t - mu) ** 2) / (2 * sd * sd))) * (rowH * 0.92);
-      d += (k ? 'L' : 'M') + ' ' + xx.toFixed(1) + ' ' + (baseY(i) - h).toFixed(1) + ' ';
-    }
-    d += 'L ' + (p.px + p.pw).toFixed(1) + ' ' + baseY(i).toFixed(1) + ' L ' + p.px.toFixed(1) + ' ' + baseY(i).toFixed(1) + ' Z';
-    s += `<path d="${d}" fill="${mix('#F2F4F6', col2, 0.55)}" stroke="${col2}" stroke-width="1.1"/>`;
-    s += `<text x="${p.px - 6}" y="${(baseY(i) - 2).toFixed(1)}" font-size="7.5" fill="${MUTE}" text-anchor="end">${groups[i]}</text>`;
-  }
-  s += `<line x1="${p.px}" y1="${(p.py + p.ph).toFixed(1)}" x2="${(p.px + p.pw).toFixed(1)}" y2="${(p.py + p.ph).toFixed(1)}" stroke="${AXIS}" stroke-width="1"/>`;
-  s += `<text x="${(p.px + p.pw / 2).toFixed(1)}" y="${(p.py + p.ph + 14).toFixed(1)}" font-size="8.5" fill="${MUTE}" text-anchor="middle">生物标志物水平（标准化）→ 随周次右移升高</text>`;
-  panels.push(s);
-}
-
-// ══ e 桑基图 ═════════════════════════════════════════════
-function drawSankey(row, col, letter, title) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y, 24);
-  let s = panelHead(x, y, letter, title);
-  const k = 1.15;                       // px / %
-  const nx0 = p.px + 34, nx1 = p.px + p.pw * 0.5, nx2 = p.px + p.pw - 40;
-  const nw = 9;
-  // 节点
-  const A = { yy: p.py + 36, h: 100 * k };
-  const B1 = { yy: p.py + 24, h: 70 * k };   // 应答
-  const B2 = { yy: B1.yy + B1.h + 18, h: 30 * k }; // 无应答
-  const C1 = { yy: p.py + 16, h: 40 * k };   // CR
-  const C2 = { yy: C1.yy + C1.h + 12, h: 30 * k }; // PR
-  const C3 = { yy: C2.yy + C2.h + 12, h: 30 * k }; // PD
-  const node = (nx, nd, cc, lb, lp) => {
-    let t = `<rect x="${nx}" y="${nd.yy.toFixed(1)}" width="${nw}" height="${nd.h.toFixed(1)}" fill="${cc.d}" stroke="none"/>`;
-    t += `<text x="${nx + nw / 2}" y="${(nd.yy + nd.h / 2 + 2.6).toFixed(1)}" font-size="7.5" fill="#FFFFFF" text-anchor="middle" font-weight="600">${lb}</text>`;
-    if (lp) t += `<text x="${(nx + nw + 4).toFixed(1)}" y="${(nd.yy + nd.h / 2 + 2.6).toFixed(1)}" font-size="7.5" fill="${MUTE}">${lp}</text>`;
-    return t;
-  };
-  // 缎带
-  const ribbon = (x0, y0, x1, y1, w, cc) => {
-    const mx = (x0 + x1) / 2;
-    return `<path d="M ${x0} ${y0.toFixed(1)} C ${mx} ${y0.toFixed(1)}, ${mx} ${y1.toFixed(1)}, ${x1} ${y1.toFixed(1)} L ${x1} ${(y1 + w).toFixed(1)} C ${mx} ${(y1 + w).toFixed(1)}, ${mx} ${(y0 + w).toFixed(1)}, ${x0} ${(y0 + w).toFixed(1)} Z" fill="${cc.m}" fill-opacity="0.4" stroke="none"/>`;
-  };
-  let sy = A.yy;
-  s += ribbon(nx0 + nw, sy, nx1, B1.yy, B1.h, C.rose); sy += 70 * k;
-  s += ribbon(nx0 + nw, sy, nx1, B2.yy, B2.h, C.slate);
-  let ty = B1.yy;
-  s += ribbon(nx1 + nw, ty, nx2, C1.yy, C1.h, C.green); ty += 40 * k;
-  s += ribbon(nx1 + nw, ty, nx2, C2.yy, C2.h, C.blue);
-  s += ribbon(nx1 + nw, B2.yy, nx2, C3.yy, C3.h, C.slate);
-  s += node(nx0, A, C.slate, '', '100%');
-  s += node(nx1, B1, C.rose, '应答', '70%');
-  s += node(nx1, B2, C.slate, '无应答', '30%');
-  s += node(nx2, C1, C.green, 'CR', '40%');
-  s += node(nx2, C2, C.blue, 'PR', '30%');
-  s += node(nx2, C3, C.slate, 'PD', '30%');
-  [['给药前', nx0 + nw / 2], ['第 4 周', nx1 + nw / 2], ['第 12 周', nx2 + nw / 2]].forEach(([lb, xx]) => {
-    s += `<text x="${xx.toFixed(1)}" y="${p.py + 12}" font-size="8.5" fill="${MUTE}" text-anchor="middle">${lb}</text>`;
+  S.push(ln(X, Yv(7.3), X + W, Yv(7.3), C.red, 0.8, '3 3'));
+  S.push(txt(X + W - 2, Yv(7.3) - 2.5, '5e-8', 5.8, C.red, 'end'));
+  S.push(ln(X, Yv(5.5), X + W, Yv(5.5), '#999', 0.7, '2 4'));
+  S.push(txt(X + 3, Yv(5.5) - 2.5, '1e-6', 5.8, '#888', 'start'));
+  const snpPos = [chrLen.slice(0, 6).reduce((a, b) => a + b, 0) + 0.030, chrLen.slice(0, 12).reduce((a, b) => a + b, 0) - 0.030, chrLen.slice(0, 6).reduce((a, b) => a + b, 0) + 0.040];
+  ['RS7274591', 'RS1298277', 'RS438921'].forEach((g, i) => {
+    S.push(txt(Xv(snpPos[i] / TT), Yv([9.4, 7.9, 7.5][i]) - 3, g, 5.6, '#111', 'middle', 'bold'));
   });
-  panels.push(s);
-}
+  frame(S, X, Y, W, H, [0, .25, .5, .75, 1], [0, .5, 1], ['', '', '', '', ''], ['0', '5', '10']);
+  chrEdges.slice(0, 21).forEach(e => S.push(txt(Xv(e), Y + 8.5, String(Math.round(e * 22)), 4.8, '#999')));
+  S.push(txt(ox + 270, oy + 242, 'Chromosome', 7.5, '#333'));
+  S.push(txt(ox + 14, Y - H / 2, '-log₁₀(P)', 7.5, '#333', 'middle', 'normal', 'transform="rotate(-90 ' + f1(ox + 14) + ' ' + f1(Y - H / 2) + ')"'));
+})();
 
-// ══ f 甘特时间轴 ═════════════════════════════════════════
-function drawGantt(row, col, letter, title) {
-  const { x, y } = panelXY(row, col);
-  const p = plotArea(x, y, 70);
-  let s = panelHead(x, y, letter, title);
-  const months = ['9月', '10月', '11月', '12月', '1月', '2月', '3月'];
-  const X = m => p.px + (m / (months.length - 1 + 0.35)) * p.pw * (months.length - 0.65) / months.length;
-  const xw = p.pw / (months.length - 1 + 0.35);
-  const Xm = m => p.px + m * xw;
+/* ═══ d · ridgeline ═══ */
+(function () {
+  const ox = COLX[1], oy = ROWY(1);
+  frame2(ox, oy, 'd', 'Ridgeline · distribution by condition');
+  const X = ox + 85, Y = oy + 235, W = 400;
+  const conds = ['Monocyte', 'Macrophage M1', 'Macrophage M2', 'Dendritic', 'NK cell', 'T CD4+', 'T CD8+', 'B cell'];
+  const rows = 8, rh = 23;
+  conds.forEach((name, gi) => {
+    const base = Y - gi * rh * 1.12;
+    const g = Array.from({ length: 90 }, () => N(24 + (gi % 3) * 6, 4 + (gi % 4)));
+    const grid = Array.from({ length: 50 }, (_, i) => 5 + i / 49 * 40);
+    const dd = kde(g, 2.4, grid); const dmax = Math.max(...dd);
+    const pts = grid.map((v, i) => [X + i / 49 * W, base - dd[i] / dmax * 24]);
+    const fillC = mix('#4DBBD5', '#E64B35', gi / 7);
+    S.push(pathd(`M${f1(X)} ${f1(base)}L${pts.map(p => `${f1(p[0])} ${f1(p[1])}`).join('L')}L${f1(X + W)} ${f1(base)}Z`, fillC, '#FFFFFF', 0, 0.55));
+    S.push(pline(pts, mix(fillC, '#222222', 0.25), 1));
+    S.push(txt(X - 6, base - 3, name, 6.3, '#444', 'end'));
+  });
+  frame(S, X, Y, W, 8, [0, .5, 1], [], ['10', '25', '45'], []);
+  S.push(txt(ox + 285, oy + 254, 'Expression (log₁₀ TPM)', 7.5, '#333'));
+})();
+
+/* ═══ e · sankey / alluvial ═══ */
+(function () {
+  const ox = COLX[0], oy = ROWY(2);
+  frame2(ox, oy, 'e', 'Alluvial · cohort flow through treatment lines');
+  const X = ox + 80, W = 340;
+  const top = oy + 26, bot = oy + 218;
+  const nx = [X, X + 155, X + 310];
+  const nw = 26;
+  const node = (x, y0, y1, col, label, pct) => {
+    S.push(rrect(x, y0, nw, y1 - y0, 2, col, 'none', 0, 0.9));
+    S.push(txt(x + nw + 5, (y0 + y1) / 2 + 2, label, 6.8, '#333', 'start'));
+    if (pct) S.push(txt(x + nw / 2, y0 - 3.5, pct, 6, '#555', 'middle', 'bold'));
+  };
+  const ribbon = (x0, a0, a1, x1, b0, b1, col, op) => {
+    const mid = (x0 + x1) / 2;
+    S.push(pathd(`M${f1(x0)} ${f1(a0)}C${f1(mid)} ${f1(a0)},${f1(mid)} ${f1(b0)},${f1(x1)} ${f1(b0)}L${f1(x1)} ${f1(b1)}C${f1(mid)} ${f1(b1)},${f1(mid)} ${f1(a1)},${f1(x0)} ${f1(a1)}Z`, col, 'none', 0, op));
+  };
+  const span = (y0, frac) => y0 + frac * (bot - top);
+  // stage 1: all patients
+  const A = { y0: top, y1: bot };
+  node(nx[0], A.y0, A.y1, C.navy, 'n = 240', '100%');
+  // stage 2: responders 70 / non 30
+  const B1 = { y0: top, y1: top + 0.68 * (bot - top) }, B2 = { y0: B1.y1 + 14, y1: bot };
+  ribbon(nx[0] + nw, A.y0, span(A.y0, 0.68), nx[1], B1.y0, B1.y1, C.teal, 0.4);
+  ribbon(nx[0] + nw, span(A.y0, 0.68), A.y1, nx[1], B2.y0, B2.y1, C.grayblue, 0.4);
+  node(nx[1], B1.y0, B1.y1, C.teal, 'Response', '68%');
+  node(nx[1], B2.y0, B2.y1, C.grayblue, 'No response', '32%');
+  // stage 3: CR 36 / PR 25 / SD 17 / PD 22
+  const h = bot - top;
+  const C1 = { y0: top, y1: top + 0.36 * h };
+  const C2 = { y0: C1.y1 + 14, y1: C1.y1 + 14 + 0.25 * h };
+  const C3 = { y0: C2.y1 + 14, y1: C2.y1 + 14 + 0.17 * h };
+  const C4 = { y0: C3.y1 + 14, y1: bot };
+  ribbon(nx[1] + nw, B1.y0, B1.y0 + 0.53 * (B1.y1 - B1.y0), nx[2], C1.y0, C1.y1, C.teal, 0.45);
+  ribbon(nx[1] + nw, B1.y0 + 0.53 * (B1.y1 - B1.y0), B1.y0 + 0.90 * (B1.y1 - B1.y0), nx[2], C2.y0, C2.y1, C.blue, 0.45);
+  ribbon(nx[1] + nw, B1.y0 + 0.90 * (B1.y1 - B1.y0), B1.y1, nx[2], C3.y0, C3.y1, C.salmon, 0.45);
+  ribbon(nx[1] + nw, B2.y0, B2.y1, nx[2], C4.y0, C4.y1, C.grayblue, 0.45);
+  node(nx[2], C1.y0, C1.y1, C.teal, 'Complete response', '36%');
+  node(nx[2], C2.y0, C2.y1, C.blue, 'Partial response', '25%');
+  node(nx[2], C3.y0, C3.y1, C.salmon, 'Stable disease', '17%');
+  node(nx[2], C4.y0, C4.y1, C.grayblue, 'Progression', '22%');
+  ['Line 1', 'Line 2', 'Outcome'].forEach((t, i) => S.push(txt(nx[i] + nw / 2, bot + 16, t, 7, '#555')));
+})();
+
+/* ═══ f · gantt ═══ */
+(function () {
+  const ox = COLX[1], oy = ROWY(2);
+  frame2(ox, oy, 'f', 'Gantt · study timeline and milestones');
+  const X = ox + 100, Y = oy + 205, W = 370;
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const Xv = m => X + m / 12 * W;
+  for (let m = 0; m <= 12; m += 1) S.push(ln(Xv(m), Y - 150, Xv(m), Y, '#EEE', 0.6));
+  months.forEach((t, i) => S.push(txt(Xv(i + 0.5), Y + 9, t, 6.2, '#555')));
   const tasks = [
-    { n: '方案设计', s: 0, e: 1.5, c: C.rose },
-    { n: '入组给药', s: 1, e: 3.5, c: C.blue },
-    { n: '随访采样', s: 2, e: 5.5, c: C.green },
-    { n: '测序建库', s: 3.5, e: 5, c: C.violet },
-    { n: '生信分析', s: 4.5, e: 6, c: C.teal },
-    { n: '论文撰写', s: 5.5, e: 7.2, c: C.slate },
+    ['Protocol &amp; IRB', 0, 1.5, C.navy],
+    ['Site initiation', 1, 2.5, C.grayblue],
+    ['Enrollment', 2, 6.5, C.teal],
+    ['Intervention', 2.5, 9, C.blue],
+    ['Follow-up', 4, 11, C.mint],
+    ['Data cleaning', 9, 11.5, C.amber],
+    ['Analysis', 10.5, 12, C.red],
   ];
-  const rowH = (p.ph - 26) / tasks.length;
-  // 月份网格
-  months.forEach((m, i) => {
-    const xx = Xm(i);
-    s += `<line x1="${xx.toFixed(1)}" y1="${p.py}" x2="${xx.toFixed(1)}" y2="${(p.py + p.ph - 18).toFixed(1)}" stroke="${GRID}" stroke-width="0.8"/>`;
-    s += `<text x="${xx.toFixed(1)}" y="${(p.py + p.ph - 6).toFixed(1)}" font-size="8" fill="${TICK}" text-anchor="middle">${m}</text>`;
+  tasks.forEach(([name, s, e, col], i) => {
+    const yy = Y - 150 + i * 21 + 4;
+    S.push(txt(X - 6, yy + 8.5, name, 6.6, '#333', 'end'));
+    S.push(rrect(Xv(s), yy, Xv(e) - Xv(s), 11, 5, col, 'none', 0, 0.88));
   });
-  tasks.forEach((t, i) => {
-    const yy = p.py + 6 + i * rowH + rowH * 0.22;
-    const hh = rowH * 0.5;
-    s += `<text x="${p.px - 6}" y="${(yy + hh / 2 + 2.6).toFixed(1)}" font-size="7.5" fill="${MUTE}" text-anchor="end">${t.n}</text>`;
-    s += `<rect x="${Xm(t.s).toFixed(1)}" y="${yy.toFixed(1)}" width="${(Xm(t.e) - Xm(t.s)).toFixed(1)}" height="${hh.toFixed(1)}" rx="3" fill="${t.c.m}" fill-opacity="0.8" stroke="${t.c.d}" stroke-width="0.8"/>`;
+  // milestones
+  [[2, 'FPI'], [6.5, 'LPI'], [11, 'LPI+6mo']].forEach(([m, label]) => {
+    const d = `M${f1(Xv(m))} ${f1(Y - 158)}l4 6l-4 6l-4 -6Z`;
+    S.push(pathd(d, C.red));
+    S.push(txt(Xv(m), Y - 162, label, 5.8, C.red, 'middle', 'bold'));
+    S.push(ln(Xv(m), Y - 146, Xv(m), Y, C.red, 0.6, '2 3'));
   });
-  // 里程碑 + 今天线
-  const mX = Xm(3.5), mY = p.py + 6 + 3 * rowH + rowH * 0.47;
-  s += `<path d="M ${mX.toFixed(1)} ${(mY - 6).toFixed(1)} L ${(mX + 5).toFixed(1)} ${mY.toFixed(1)} L ${mX.toFixed(1)} ${(mY + 6).toFixed(1)} L ${(mX - 5).toFixed(1)} ${mY.toFixed(1)} Z" fill="${C.rose.d}"/>`;
-  s += `<text x="${mX.toFixed(1)}" y="${(mY - 9).toFixed(1)}" font-size="7" fill="${C.rose.d}" text-anchor="middle">中期分析</text>`;
-  const tX = Xm(4.3);
-  s += `<line x1="${tX.toFixed(1)}" y1="${p.py - 2}" x2="${tX.toFixed(1)}" y2="${(p.py + p.ph - 18).toFixed(1)}" stroke="${C.rose.d}" stroke-width="1" stroke-dasharray="3 3"/>`;
-  s += `<text x="${tX.toFixed(1)}" y="${p.py - 6}" font-size="7" fill="${C.rose.d}" text-anchor="middle">今天</text>`;
-  panels.push(s);
-}
+  S.push(ln(X, Y, X + W, Y, '#4D4D4D', 0.9));
+  S.push(ln(X, Y - 150, X, Y, '#4D4D4D', 0.9));
+  S.push(txt(ox + 285, oy + 236, '2026', 7.5, '#333'));
+})();
 
-// ══ 组装 ═════════════════════════════════════════════════
-drawRadar(0, 0, 'a', '雷达图 · 多维比较');
-drawBubble(0, 1, 'b', 'GO 富集气泡图');
-drawManhattan(0, 2, 'c', '曼哈顿图（GWAS）');
-drawRidgeline(1, 0, 'd', '山脊图 · 纵向分布');
-drawSankey(1, 1, 'e', '桑基图 · 队列流向');
-drawGantt(1, 2, 'f', '甘特图 · 项目时间轴');
-
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="${FONT}">
-<rect width="${W}" height="${H}" fill="#FFFFFF"/>
-<text x="${MX}" y="44" font-size="22" font-weight="800" fill="${INK}">Chart atlas Pro | 复杂图形版</text>
-<text x="${MX}" y="68" font-size="12.5" fill="${MUTE}">雷达 / 气泡 / 曼哈顿 / 山脊 / 桑基 / 甘特 —— 组学、队列与项目管理级别的图形，全部矢量手绘</text>
-<text x="${W - MX}" y="44" font-size="11" fill="${MUTE}" text-anchor="end">16 色卡 · SVG/PDF/PNG/TIFF/PPTX</text>
-${panels.join('\n')}
-</svg>`;
-const out = path.join(__dirname, '..', '..', 'assets', 'showcase-pro.svg');
-fs.writeFileSync(out, svg);
-console.log('written', out, svg.length, 'bytes');
+S.push('</svg>');
+fs.writeFileSync(path.join(__dirname, '..', '..', 'assets', 'showcase-pro.svg'), S.join('\n'));
+console.log('showcase-pro.svg written,', S.join('').length, 'bytes');
