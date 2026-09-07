@@ -1,263 +1,180 @@
 #!/usr/bin/env node
-/* Chart atlas Pro (v2): 6 advanced panels in the same ggplot-grade language —
- * white bg, fine axes, NPG pastels, dense seeded data. */
+/* Chart atlas Pro v3 — advanced panels in the exact reference style:
+ * radar, polar bars, polar density, bubble quadrant, volcano, z-score heatmap.
+ * L-spines / circle frames, outward ticks, muted palette, no clutter. */
 'use strict';
 const fs = require('fs');
-const path = require('path');
 
 let seed = 20260909;
 const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
-const rr = (a, b) => a + rnd() * (b - a);
 const N = (m, s) => m + (rnd() + rnd() + rnd() + rnd() - 2) * 1.414 * s;
 
-function h2r(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
-function r2h(r) { return '#' + r.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join(''); }
-function mix(a, b, t) { const A = h2r(a), B = h2r(b); return r2h(A.map((v, i) => v + (B[i] - v) * t)); }
-function kde(arr, bw2, grid) {
-  return grid.map(v => arr.reduce((s, p) => s + Math.exp(-((v - p) ** 2) / (2 * bw2)), 0) / (arr.length * bw2 * 2.5066));
+const C = {
+  blue: '#4878A8', teal: '#79A79E', mauve: '#B0779F', red: '#BF5B5B',
+  gray: '#8C8C8C', lgray: '#D9D9D9', ink: '#333333', tick: '#444444',
+  purple: '#8878B8', yellow: '#E3C44E', green: '#7CB86A'
+};
+
+const f1 = v => Math.round(v * 10) / 10;
+const txt = (x, y, t, size = 8, fill = C.tick, anchor = 'middle', w = 'normal') =>
+  `<text x="${f1(x)}" y="${f1(y)}" font-size="${size}" fill="${fill}" text-anchor="${anchor}" font-weight="${w}" font-family="Helvetica,Arial,sans-serif">${t}</text>`;
+const ln = (x1, y1, x2, y2, st = C.ink, sw = 0.8, dash = '') =>
+  `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${st}" stroke-width="${sw}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`;
+const rect = (x, y, w, h, fill, op = 1) =>
+  `<rect x="${f1(x)}" y="${f1(y)}" width="${f1(Math.max(0.5, w))}" height="${f1(Math.max(0, h))}" fill="${fill}" fill-opacity="${op}"/>`;
+const circle = (cx, cy, r, fill, op = 1) =>
+  `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(r)}" fill="${fill}" fill-opacity="${op}"/>`;
+const pth = (d, fill, op = 1, st = 'none', sw = 0) =>
+  `<path d="${d}" fill="${fill}" fill-opacity="${op}" stroke="${st}" stroke-width="${sw}"/>`;
+
+function head(S, letter, title, x, y, w) {
+  S.push(txt(x - 12, y, letter, 10, '#111', 'start', 'bold'));
+  S.push(txt(x + w / 2, y, title, 10.5, C.ink, 'middle'));
 }
-
-const C = { red: '#E64B35', blue: '#4DBBD5', teal: '#00A087', navy: '#3C5488', salmon: '#F39B7F', grayblue: '#8491B4', mint: '#91D1C2', purple: '#8E7CC3', amber: '#F2C14E' };
-
-const f1 = v => (Math.round(v * 10) / 10);
-const txt = (x, y, t, size = 7, fill = '#333', anchor = 'middle', w = 'normal', extra = '') =>
-  `<text x="${f1(x)}" y="${f1(y)}" font-size="${size}" fill="${fill}" text-anchor="${anchor}" font-weight="${w}" ${extra}>${t}</text>`;
-const ln = (x1, y1, x2, y2, st = '#333', sw = 0.8, dash = '') =>
-  `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${st}" stroke-width="${sw}" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
-const rrect = (x, y, w, h, r, fill, stroke = 'none', sw = 0, op = 1) =>
-  `<rect x="${f1(x)}" y="${f1(y)}" width="${f1(w)}" height="${f1(h)}" rx="${r}" fill="${fill}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}"/>`;
-const circle = (cx, cy, r, fill, stroke = 'none', sw = 0, op = 1) =>
-  `<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(r)}" fill="${fill}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}"/>`;
-const poly = (pts, fill, stroke = 'none', sw = 0, op = 1) =>
-  `<polygon points="${pts.map(p => `${f1(p[0])},${f1(p[1])}`).join(' ')}" fill="${fill}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}"/>`;
-const pline = (pts, st, sw = 1, dash = '') =>
-  `<polyline points="${pts.map(p => `${f1(p[0])},${f1(p[1])}`).join(' ')}" fill="none" stroke="${st}" stroke-width="${sw}" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
-const pathd = (d, fill, stroke = 'none', sw = 0, op = 1) =>
-  `<path d="${d}" fill="${fill}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}"/>`;
-
-function frame(S, x, y, w, h, xt, yt, xlab, ylab) {
-  xt.forEach(t => S.push(ln(x + w * t, y - h, x + w * t, y, '#E8E8E8', 0.6)));
-  yt.forEach(t => S.push(ln(x, y - h * t, x + w, y - h * t, '#E8E8E8', 0.6)));
-  S.push(ln(x, y, x + w, y, '#4D4D4D', 0.9));
-  S.push(ln(x, y, x, y - h, '#4D4D4D', 0.9));
-  xt.forEach(t => S.push(ln(x + w * t, y, x + w * t, y + 2.4, '#4D4D4D', 0.8)));
-  yt.forEach(t => S.push(ln(x, y - h * t, x - 2.4, y - h * t, '#4D4D4D', 0.8)));
-  xt.forEach((t, i) => S.push(txt(x + w * t, y + 9, xlab[i], 6.3, '#555')));
-  yt.forEach((t, i) => S.push(txt(x - 4.5, y - h * t + 2, ylab[i], 6.3, '#555', 'end')));
+function axes(S, x, y, w, h, xt, yt, xf, yf) {
+  S.push(ln(x, y, x, y + h, C.ink, 1));
+  S.push(ln(x, y + h, x + w, y + h, C.ink, 1));
+  xt.forEach(t => {
+    const tx = x + t * w;
+    S.push(ln(tx, y + h, tx, y + h + 3, C.ink, 0.8));
+    if (xf) if (xf) S.push(txt(tx, y + h + 11.5, xf(t), 8, C.tick));
+  });
+  yt.forEach(t => {
+    const ty = y + h - t * h;
+    S.push(ln(x - 3, ty, x, ty, C.ink, 0.8));
+    if (yf) if (yf) S.push(txt(x - 5.5, ty + 2.5, yf(t), 8, C.tick, 'end'));
+  });
 }
-
-const PW = 550, COLX = [40, 630], ROWY = r => 62 + r * 320;
-const S = [];
-S.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1030" font-family="Helvetica, Arial, sans-serif">`);
-S.push(rrect(0, 0, 1200, 1030, 0, '#FFFFFF'));
-S.push(txt(40, 34, 'FigureForge · Chart atlas Pro — advanced figures', 16, '#1a1a1a', 'start', 'bold'));
-S.push(txt(1160, 34, '6 advanced archetypes · NPG-style palettes', 9, '#888', 'end'));
-
-function frame2(ox, oy, letter, title) {
-  S.push(txt(ox - 8, oy - 7, letter, 14, '#111', 'start', 'bold'));
-  S.push(txt(ox + PW / 2, oy - 6, title, 9, '#555', 'middle', 'bold'));
-}
-
-/* ═══ a · radar ═══ */
-(function () {
-  const ox = COLX[0], oy = ROWY(0);
-  frame2(ox, oy, 'a', 'Radar · immune signature profiling');
-  const cx = ox + 210, cy = oy + 152, R = 108, n = 8;
-  const axesL = ['CD8A', 'IFNG', 'GZMB', 'PRF1', 'CXCL9', 'CXCL10', 'IDO1', 'LAG3'];
-  const polar = (r, i) => { const a = (i / n * 360 - 90) * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
-  for (let ring = 1; ring <= 4; ring++) {
-    const pts = []; for (let i = 0; i < n; i++) pts.push(polar(R * ring / 4, i));
-    S.push(poly(pts, 'none', '#DDD', 0.7));
+/* polar frame: outer circle + light rings + spokes */
+function polarFrame(S, cx, cy, R, rings, spokes) {
+  for (let i = 1; i <= rings; i++)
+    S.push(`<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(R * i / rings)}" fill="none" stroke="#D5D5D5" stroke-width="0.7"/>`);
+  for (let k = 0; k < spokes; k++) {
+    const a = k * 360 / spokes - 90, rad = a * Math.PI / 180;
+    S.push(ln(cx, cy, cx + R * Math.cos(rad), cy + R * Math.sin(rad), '#D5D5D5', 0.7));
   }
-  for (let i = 0; i < n; i++) { const p = polar(R, i); S.push(ln(cx, cy, p[0], p[1], '#DDD', 0.7)); }
-  const series = [[C.red, [3.4, 3.1, 2.8, 2.9, 3.5, 3.2, 1.8, 1.5], 'Responder'], [C.blue, [1.9, 1.6, 1.4, 1.7, 2.2, 2.0, 3.2, 3.4], 'Non-responder']];
-  series.forEach(([col, vals, name]) => {
-    const pts = vals.map((v, i) => polar(v / 4 * R, i));
-    S.push(poly(pts, col, col, 1.6, 0.16));
-    pts.forEach(p => S.push(circle(p[0], p[1], 2, col, '#FFFFFF', 0.6)));
-  });
-  axesL.forEach((t, i) => { const p = polar(R + 16, i); S.push(txt(p[0], p[1] + 2, t, 6.8, '#333')); });
-  // ring scale labels
-  [1, 2, 3, 4].forEach(r => S.push(txt(cx + 4, cy - R * r / 4 + 2, String(r), 5.5, '#999', 'start')));
-  S.push(circle(ox + 400, oy + 60, 3, C.red, '#FFFFFF', 0.6)); S.push(txt(ox + 409, oy + 63, 'Responder', 7, '#333', 'start'));
-  S.push(circle(ox + 400, oy + 78, 3, C.blue, '#FFFFFF', 0.6)); S.push(txt(ox + 409, oy + 81, 'Non-responder', 7, '#333', 'start'));
-  S.push(txt(ox + 400, oy + 108, 'Signature score (0–4)', 6.3, '#888', 'start'));
-})();
+  S.push(`<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(R)}" fill="none" stroke="#888" stroke-width="1"/>`);
+}
+const mix = (a, b, t) => {
+  const A = [1, 3, 5].map(i => parseInt(a.substr(i, 2), 16));
+  const B = [1, 3, 5].map(i => parseInt(b.substr(i, 2), 16));
+  return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join('');
+};
 
-/* ═══ b · GO bubble ═══ */
-(function () {
-  const ox = COLX[1], oy = ROWY(0);
-  frame2(ox, oy, 'b', 'GO enrichment · bubble plot');
-  const X = ox + 120, Y = oy + 210, W = 330, H = 185;
-  const terms = [
-    ['Extracellular matrix organization', 5.8, 12.4, 58],
-    ['Collagen fibril organization', 6.9, 10.8, 41],
-    ['Angiogenesis', 4.2, 9.6, 66],
-    ['Leukocyte migration', 3.6, 8.9, 49],
-    ['T cell activation', 3.1, 7.2, 88],
-    ['Apoptotic process', 2.4, 5.8, 120],
-    ['Cell cycle arrest', 3.9, 5.2, 72],
-    ['DNA repair', 2.0, 4.1, 95],
-    ['Lipid metabolic process', 1.6, 3.2, 84],
-    ['Ion transport', 1.2, 2.4, 110],
-  ];
-  const Xv = v => X + (v - 0.8) / (7.4 - 0.8) * W;
-  const Yv = v => Y - v / 13.5 * H;
-  const rOf = c => 2.4 + Math.sqrt(c) * 0.62;
-  const ramp = t => mix('#4DBBD5', '#E64B35', t);
-  // gene-ratio gridlines
-  [2, 4, 6].forEach(v => S.push(ln(Xv(v), Y - H, Xv(v), Y, '#E8E8E8', 0.6)));
-  [5, 10].forEach(v => S.push(ln(X, Yv(v), X + W, Yv(v), '#E8E8E8', 0.6)));
-  terms.forEach(([name, gr, pv, cnt]) => {
-    S.push(circle(Xv(gr), Yv(pv), rOf(cnt), ramp((gr - 1) / 6), '#FFFFFF', 0.5, 0.85));
-    S.push(txt(X - 6, Yv(pv) + 2, name.length > 24 ? name.slice(0, 23) + '…' : name, 5.9, '#444', 'end'));
-  });
-  frame(S, X, Y, W, H, [0, 1 / 3, 2 / 3, 1], [0, .5, 1], ['2', '4', '6', ''], ['0', '6.75', '13.5']);
-  S.push(txt(ox + 285, oy + 246, 'Gene ratio', 7.5, '#333'));
-  S.push(txt(ox + 16, Y - H / 2, '-log₁₀ (FDR)', 7.5, '#333', 'middle', 'normal', 'transform="rotate(-90 ' + f1(ox + 16) + ' ' + f1(Y - H / 2) + ')"'));
-  // size + color legends
-  [30, 70, 120].forEach((c, i) => S.push(circle(ox + 420 + i * 22, oy + 42, rOf(c), '#D8DBE0', '#999', 0.5)));
-  S.push(txt(ox + 422, oy + 66, '30 · 70 · 120 genes', 6, '#555', 'middle'));
-  for (let i = 0; i < 46; i += 2) S.push(rrect(ox + 408 + i, oy + 84, 2, 7, 0, ramp(i / 46)));
-  S.push(txt(ox + 408, oy + 100, 'low', 5.8, '#555', 'start')); S.push(txt(ox + 454, oy + 100, 'high ratio', 5.8, '#555', 'end'));
-})();
+// ── layout: 3 cols x 2 rows ──
+const W = 1080, COLW = 355, PW = 315, PH = 218;
+const ROWY = r => 74 + r * 292;
+const X0 = col => 30 + col * COLW;
+const S = [];
 
-/* ═══ c · manhattan ═══ */
-(function () {
-  const ox = COLX[0], oy = ROWY(1);
-  frame2(ox, oy, 'c', 'Manhattan plot · GWAS associations');
-  const X = ox + 50, Y = oy + 205, W = 440, H = 180;
-  const Xv = t => X + t * W, Yv = v => Y - v / 10 * H;
-  const chrCols = ['#8491B4', '#C9CDD4'];
-  const chrLen = [0.055, 0.052, 0.045, 0.042, 0.038, 0.036, 0.034, 0.031, 0.03, 0.028, 0.027, 0.026, 0.024, 0.022, 0.021, 0.02, 0.018, 0.017, 0.015, 0.013, 0.011, 0.009];
-  const TT = chrLen.reduce((a, b) => a + b, 0);
-  let cum = 0; const chrEdges = [];
-  chrLen.forEach((len, ci) => {
-    for (let i = 0; i < Math.floor(len * 950); i++) {
-      const frac = rnd(), tl = cum + frac * len, t = tl / TT;
-      let pv = -Math.log10(rnd()) * 1.75;
-      if (ci === 5 && frac > 0.55 && frac < 0.72) pv = 6.2 + rnd() * 3.4;
-      if (ci === 11 && frac > 0.3 && frac < 0.42) pv = 5.6 + rnd() * 2.4;
-      const sig = pv > 7.3;
-      S.push(circle(Xv(t), Yv(Math.min(9.7, pv)), sig ? 1.9 : 1.3, sig ? C.red : chrCols[ci % 2], 'none', 0, sig ? 0.9 : 0.7));
-    }
-    cum += len; chrEdges.push(cum / TT);
-  });
-  S.push(ln(X, Yv(7.3), X + W, Yv(7.3), C.red, 0.8, '3 3'));
-  S.push(txt(X + W - 2, Yv(7.3) - 2.5, '5e-8', 5.8, C.red, 'end'));
-  S.push(ln(X, Yv(5.5), X + W, Yv(5.5), '#999', 0.7, '2 4'));
-  S.push(txt(X + 3, Yv(5.5) - 2.5, '1e-6', 5.8, '#888', 'start'));
-  const snpPos = [chrLen.slice(0, 6).reduce((a, b) => a + b, 0) + 0.030, chrLen.slice(0, 12).reduce((a, b) => a + b, 0) - 0.030, chrLen.slice(0, 6).reduce((a, b) => a + b, 0) + 0.040];
-  ['RS7274591', 'RS1298277', 'RS438921'].forEach((g, i) => {
-    S.push(txt(Xv(snpPos[i] / TT), Yv([9.4, 7.9, 7.5][i]) - 3, g, 5.6, '#111', 'middle', 'bold'));
-  });
-  frame(S, X, Y, W, H, [0, .25, .5, .75, 1], [0, .5, 1], ['', '', '', '', ''], ['0', '5', '10']);
-  chrEdges.slice(0, 21).forEach(e => S.push(txt(Xv(e), Y + 8.5, String(Math.round(e * 22)), 4.8, '#999')));
-  S.push(txt(ox + 270, oy + 242, 'Chromosome', 7.5, '#333'));
-  S.push(txt(ox + 14, Y - H / 2, '-log₁₀(P)', 7.5, '#333', 'middle', 'normal', 'transform="rotate(-90 ' + f1(ox + 14) + ' ' + f1(Y - H / 2) + ')"'));
-})();
+S.push(txt(16, 26, 'FigureForge chart atlas · pro', 17, '#111', 'start', 'bold'));
+S.push(txt(16, 44, 'Radial, bubble, volcano and matrix panels in the reference style.', 10.5, '#777', 'start'));
 
-/* ═══ d · ridgeline ═══ */
-(function () {
-  const ox = COLX[1], oy = ROWY(1);
-  frame2(ox, oy, 'd', 'Ridgeline · distribution by condition');
-  const X = ox + 85, Y = oy + 235, W = 400;
-  const conds = ['Monocyte', 'Macrophage M1', 'Macrophage M2', 'Dendritic', 'NK cell', 'T CD4+', 'T CD8+', 'B cell'];
-  const rows = 8, rh = 23;
-  conds.forEach((name, gi) => {
-    const base = Y - gi * rh * 1.12;
-    const g = Array.from({ length: 90 }, () => N(24 + (gi % 3) * 6, 4 + (gi % 4)));
-    const grid = Array.from({ length: 50 }, (_, i) => 5 + i / 49 * 40);
-    const dd = kde(g, 2.4, grid); const dmax = Math.max(...dd);
-    const pts = grid.map((v, i) => [X + i / 49 * W, base - dd[i] / dmax * 24]);
-    const fillC = mix('#4DBBD5', '#E64B35', gi / 7);
-    S.push(pathd(`M${f1(X)} ${f1(base)}L${pts.map(p => `${f1(p[0])} ${f1(p[1])}`).join('L')}L${f1(X + W)} ${f1(base)}Z`, fillC, '#FFFFFF', 0, 0.55));
-    S.push(pline(pts, mix(fillC, '#222222', 0.25), 1));
-    S.push(txt(X - 6, base - 3, name, 6.3, '#444', 'end'));
+/* ── a | radar ────────────────────────────────── */
+{
+  const cx = X0(0) + PW / 2, cy = ROWY(0) + PH / 2 + 4, R = 92;
+  head(S, 'a', 'radar', X0(0), ROWY(0), PW);
+  polarFrame(S, cx, cy, R, 3, 6);
+  const axes6 = 6;
+  const series = [[C.blue, [0.75, 0.5, 0.62, 0.45, 0.7, 0.55]],
+                  [C.teal, [0.55, 0.72, 0.5, 0.6, 0.48, 0.68]],
+                  [C.mauve, [0.6, 0.45, 0.7, 0.52, 0.62, 0.42]]];
+  series.forEach(([col, vs]) => {
+    let p = '';
+    vs.forEach((v, k) => {
+      const a = (k * 360 / axes6 - 90) * Math.PI / 180;
+      p += `${k ? 'L' : 'M'}${f1(cx + v * R * Math.cos(a))} ${f1(cy + v * R * Math.sin(a))}`;
+    });
+    S.push(pth(p + 'Z', col, 0.07, col, 1.3));
   });
-  frame(S, X, Y, W, 8, [0, .5, 1], [], ['10', '25', '45'], []);
-  S.push(txt(ox + 285, oy + 254, 'Expression (log₁₀ TPM)', 7.5, '#333'));
-})();
+}
 
-/* ═══ e · sankey / alluvial ═══ */
-(function () {
-  const ox = COLX[0], oy = ROWY(2);
-  frame2(ox, oy, 'e', 'Alluvial · cohort flow through treatment lines');
-  const X = ox + 80, W = 340;
-  const top = oy + 26, bot = oy + 218;
-  const nx = [X, X + 155, X + 310];
-  const nw = 26;
-  const node = (x, y0, y1, col, label, pct) => {
-    S.push(rrect(x, y0, nw, y1 - y0, 2, col, 'none', 0, 0.9));
-    S.push(txt(x + nw + 5, (y0 + y1) / 2 + 2, label, 6.8, '#333', 'start'));
-    if (pct) S.push(txt(x + nw / 2, y0 - 3.5, pct, 6, '#555', 'middle', 'bold'));
-  };
-  const ribbon = (x0, a0, a1, x1, b0, b1, col, op) => {
-    const mid = (x0 + x1) / 2;
-    S.push(pathd(`M${f1(x0)} ${f1(a0)}C${f1(mid)} ${f1(a0)},${f1(mid)} ${f1(b0)},${f1(x1)} ${f1(b0)}L${f1(x1)} ${f1(b1)}C${f1(mid)} ${f1(b1)},${f1(mid)} ${f1(a1)},${f1(x0)} ${f1(a1)}Z`, col, 'none', 0, op));
-  };
-  const span = (y0, frac) => y0 + frac * (bot - top);
-  // stage 1: all patients
-  const A = { y0: top, y1: bot };
-  node(nx[0], A.y0, A.y1, C.navy, 'n = 240', '100%');
-  // stage 2: responders 70 / non 30
-  const B1 = { y0: top, y1: top + 0.68 * (bot - top) }, B2 = { y0: B1.y1 + 14, y1: bot };
-  ribbon(nx[0] + nw, A.y0, span(A.y0, 0.68), nx[1], B1.y0, B1.y1, C.teal, 0.4);
-  ribbon(nx[0] + nw, span(A.y0, 0.68), A.y1, nx[1], B2.y0, B2.y1, C.grayblue, 0.4);
-  node(nx[1], B1.y0, B1.y1, C.teal, 'Response', '68%');
-  node(nx[1], B2.y0, B2.y1, C.grayblue, 'No response', '32%');
-  // stage 3: CR 36 / PR 25 / SD 17 / PD 22
-  const h = bot - top;
-  const C1 = { y0: top, y1: top + 0.36 * h };
-  const C2 = { y0: C1.y1 + 14, y1: C1.y1 + 14 + 0.25 * h };
-  const C3 = { y0: C2.y1 + 14, y1: C2.y1 + 14 + 0.17 * h };
-  const C4 = { y0: C3.y1 + 14, y1: bot };
-  ribbon(nx[1] + nw, B1.y0, B1.y0 + 0.53 * (B1.y1 - B1.y0), nx[2], C1.y0, C1.y1, C.teal, 0.45);
-  ribbon(nx[1] + nw, B1.y0 + 0.53 * (B1.y1 - B1.y0), B1.y0 + 0.90 * (B1.y1 - B1.y0), nx[2], C2.y0, C2.y1, C.blue, 0.45);
-  ribbon(nx[1] + nw, B1.y0 + 0.90 * (B1.y1 - B1.y0), B1.y1, nx[2], C3.y0, C3.y1, C.salmon, 0.45);
-  ribbon(nx[1] + nw, B2.y0, B2.y1, nx[2], C4.y0, C4.y1, C.grayblue, 0.45);
-  node(nx[2], C1.y0, C1.y1, C.teal, 'Complete response', '36%');
-  node(nx[2], C2.y0, C2.y1, C.blue, 'Partial response', '25%');
-  node(nx[2], C3.y0, C3.y1, C.salmon, 'Stable disease', '17%');
-  node(nx[2], C4.y0, C4.y1, C.grayblue, 'Progression', '22%');
-  ['Line 1', 'Line 2', 'Outcome'].forEach((t, i) => S.push(txt(nx[i] + nw / 2, bot + 16, t, 7, '#555')));
-})();
+/* ── b | polar bars ───────────────────────────── */
+{
+  const cx = X0(1) + PW / 2, cy = ROWY(0) + PH / 2 + 4, R = 92;
+  head(S, 'b', 'polar bars', X0(1), ROWY(0), PW);
+  polarFrame(S, cx, cy, R, 2, 24);
+  const n = 24;
+  for (let k = 0; k < n; k++) {
+    const a0 = k * 360 / n - 90 + 1.6, a1 = (k + 1) * 360 / n - 90 - 1.6;
+    const r0 = 8 + rnd() * 6, r1 = r0 + 14 + rnd() * 62;
+    const p = (r, aDeg) => { const a = aDeg * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
+    const [x0, y0] = p(r1, a0), [x1, y1] = p(r1, a1), [x2, y2] = p(r0, a1), [x3, y3] = p(r0, a0);
+    S.push(pth(`M${f1(x0)} ${f1(y0)}A${f1(r1)} ${f1(r1)} 0 0 1 ${f1(x1)} ${f1(y1)}L${f1(x2)} ${f1(y2)}A${f1(r0)} ${f1(r0)} 0 0 0 ${f1(x3)} ${f1(y3)}Z`, C.teal, 1, '#FFFFFFAA', 0.6));
+  }
+}
 
-/* ═══ f · gantt ═══ */
-(function () {
-  const ox = COLX[1], oy = ROWY(2);
-  frame2(ox, oy, 'f', 'Gantt · study timeline and milestones');
-  const X = ox + 100, Y = oy + 205, W = 370;
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const Xv = m => X + m / 12 * W;
-  for (let m = 0; m <= 12; m += 1) S.push(ln(Xv(m), Y - 150, Xv(m), Y, '#EEE', 0.6));
-  months.forEach((t, i) => S.push(txt(Xv(i + 0.5), Y + 9, t, 6.2, '#555')));
-  const tasks = [
-    ['Protocol &amp; IRB', 0, 1.5, C.navy],
-    ['Site initiation', 1, 2.5, C.grayblue],
-    ['Enrollment', 2, 6.5, C.teal],
-    ['Intervention', 2.5, 9, C.blue],
-    ['Follow-up', 4, 11, C.mint],
-    ['Data cleaning', 9, 11.5, C.amber],
-    ['Analysis', 10.5, 12, C.red],
-  ];
-  tasks.forEach(([name, s, e, col], i) => {
-    const yy = Y - 150 + i * 21 + 4;
-    S.push(txt(X - 6, yy + 8.5, name, 6.6, '#333', 'end'));
-    S.push(rrect(Xv(s), yy, Xv(e) - Xv(s), 11, 5, col, 'none', 0, 0.88));
+/* ── c | polar density ────────────────────────── */
+{
+  const cx = X0(2) + PW / 2, cy = ROWY(0) + PH / 2 + 4, R = 92;
+  head(S, 'c', 'polar density', X0(2), ROWY(0), PW);
+  polarFrame(S, cx, cy, R, 2, 12);
+  let p = '';
+  for (let i = 0; i <= 120; i++) {
+    const aDeg = i * 3 - 90, a = aDeg * Math.PI / 180;
+    const r = R * (0.52 + 0.34 * Math.abs(Math.sin(a * 1.5 + 0.4)) * (0.6 + 0.4 * Math.sin(a * 3 + 1)));
+    p += `${i ? 'L' : 'M'}${f1(cx + r * Math.cos(a))} ${f1(cy + r * Math.sin(a))}`;
+  }
+  S.push(pth(p + 'Z', C.red, 0.12, C.red, 1.6));
+}
+
+/* ── d | bubble quadrant ──────────────────────── */
+{
+  const x = X0(0), y = ROWY(1) + 8;
+  head(S, 'd', 'bubble quadrant', x, ROWY(1), PW);
+  const cols = [C.blue, C.purple, C.teal, C.yellow, C.green];
+  for (let k = 0; k < 46; k++) {
+    const bx = x + 0.06 * PW + rnd() * 0.88 * PW;
+    const by = y + 0.06 * PH + rnd() * 0.88 * PH;
+    S.push(circle(bx, by, 4 + rnd() * 9, cols[Math.floor(rnd() * cols.length)], 0.55));
+  }
+  S.push(ln(x + PW / 2, y, x + PW / 2, y + PH, '#BBB', 0.8, '3 2.4'));
+  S.push(ln(x, y + PH / 2, x + PW, y + PH / 2, '#BBB', 0.8, '3 2.4'));
+  axes(S, x, y, PW, PH, [0, .5, 1], [0, .5, 1], null, null);
+}
+
+/* ── e | volcano ──────────────────────────────── */
+{
+  const x = X0(1), y = ROWY(1) + 8;
+  head(S, 'e', 'volcano', x, ROWY(1), PW);
+  for (let k = 0; k < 130; k++) {
+    const t = rnd();
+    const vx = x + (0.5 + (rnd() - 0.5) * 0.62) * PW;
+    const vy = y + (0.78 - Math.abs(vx - x - PW / 2) / PW * 1.2 + N(0, 0.1)) * PH;
+    S.push(circle(vx, Math.min(y + PH - 3, Math.max(y + 4, vy)), 1.7, '#C9C9C9', 0.8));
+  }
+  for (let k = 0; k < 30; k++) {
+    const left = rnd() > 0.5;
+    const vx = x + (left ? 0.07 + rnd() * 0.18 : 0.75 + rnd() * 0.18) * PW;
+    const vy = y + (0.06 + rnd() * 0.3) * PH;
+    S.push(circle(vx, vy, 1.9, C.red, 0.9));
+  }
+  [0.22, 0.78].forEach(t => S.push(ln(x + t * PW, y, x + t * PW, y + PH, '#AAA', 0.8, '3 2.4')));
+  S.push(ln(x, y + PH * 0.32, x + PW, y + PH * 0.32, '#AAA', 0.8, '3 2.4'));
+  axes(S, x, y, PW, PH, [0, .5, 1], [0, .5, 1], null, t => Math.round(t * 6));
+}
+
+/* ── f | z-score heatmap ──────────────────────── */
+{
+  const x = X0(2), y = ROWY(1) + 8;
+  head(S, 'f', 'z-score', x, ROWY(1), PW);
+  const rows = 6, cols = 9, cw = (PW - 46) / cols, ch = PH / rows;
+  const zdiv = v => v >= 0 ? mix('#F3E4E2', '#A34A4E', Math.min(1, v / 2.2)) : mix('#F0Eef2', '#4878A8', Math.min(1, -v / 2.2));
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const v = N(0, 1);
+    S.push(rect(x + 4 + c * cw + 0.8, y + r * ch + 0.8, cw - 1.6, ch - 1.6, zdiv(v)));
+  }
+  /* colorbar */
+  const cbx = x + PW - 26, cbw = 7, cbh = PH * 0.72, cby = y + PH * 0.1;
+  for (let i = 0; i < cbh; i += 2) S.push(rect(cbx, cby + i, cbw, 2, zdiv(2.2 - i / cbh * 4.4)));
+  S.push(`<rect x="${f1(cbx)}" y="${f1(cby)}" width="${cbw}" height="${f1(cbh)}" fill="none" stroke="#999" stroke-width="0.6"/>`);
+  [[1, '2'], [0.5, '0'], [0, '-2']].forEach(([t, s]) => {
+    S.push(ln(cbx + cbw, cby + cbh * t, cbx + cbw + 2.5, cby + cbh * t, C.ink, 0.7));
+    S.push(txt(cbx + cbw + 4.5, cby + cbh * t + 2.5, s, 7.5, C.tick, 'start'));
   });
-  // milestones
-  [[2, 'FPI'], [6.5, 'LPI'], [11, 'LPI+6mo']].forEach(([m, label]) => {
-    const d = `M${f1(Xv(m))} ${f1(Y - 158)}l4 6l-4 6l-4 -6Z`;
-    S.push(pathd(d, C.red));
-    S.push(txt(Xv(m), Y - 162, label, 5.8, C.red, 'middle', 'bold'));
-    S.push(ln(Xv(m), Y - 146, Xv(m), Y, C.red, 0.6, '2 3'));
-  });
-  S.push(ln(X, Y, X + W, Y, '#4D4D4D', 0.9));
-  S.push(ln(X, Y - 150, X, Y, '#4D4D4D', 0.9));
-  S.push(txt(ox + 285, oy + 236, '2026', 7.5, '#333'));
-})();
+}
 
-S.push('</svg>');
-fs.writeFileSync(path.join(__dirname, '..', '..', 'assets', 'showcase-pro.svg'), S.join('\n'));
-console.log('showcase-pro.svg written,', S.join('').length, 'bytes');
+const H = 74 + 2 * 292 + 40;
+fs.writeFileSync('../../assets/showcase-pro.svg',
+  `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="100%" fill="#FFFFFF"/>${S.join('')}</svg>`);
+console.log('showcase-pro.svg written', W, 'x', H);
