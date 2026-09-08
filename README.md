@@ -48,6 +48,13 @@
   <img src="assets/showcase-extra.svg" alt="FigureForge 进阶图鉴：OncoPrint 突变矩阵、瀑布图、冲积图、山脊图、Bland-Altman、堆叠面积、森林图、曼哈顿图" width="100%" />
 </div>
 
+**高阶图鉴（新增）**——弦图、UpSet、网络图、三元相图、聚类热图、矩形树图、旭日图、六边形密度、平行坐标，9 个高阶构图：
+
+<div align="center">
+  <img src="assets/showcase-plus.svg" alt="FigureForge 高阶图鉴：细胞通讯弦图、UpSet 多组学交集、组织网络、三元组成、聚类热图、通路矩形树图、旭日图、六边形密度、平行坐标" width="100%" />
+</div>
+
+
 
 ## 🧪 FigureForge — 不写代码的出图方式
 
