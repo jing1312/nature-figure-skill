@@ -4,7 +4,7 @@ Supersampled 2x: tilted perspective card + white bezel + rounded corners,
 large soft drop shadow (down-only offset), pastel pink/violet blurred
 gradient background. Output 2400x1560 JPEG q90."""
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 SS = 2                      # supersample factor
 W, H = 2400 * SS, 1560 * SS
@@ -70,16 +70,41 @@ def compose(shot_path, out_path, quad):
     alpha = card.split()[3]
     warped = Image.merge('RGBA', (*warp(rgb).split(), warp(alpha)))
 
-    # two-layer shadow: tight contact shadow + wide low ambient pool, down-only
-    for blur_r, fill, dy in ((36 * SS, 95, 40 * SS), (115 * SS, 38, 135 * SS)):
-        sil = Image.new('L', (cw, ch), 0)
-        ImageDraw.Draw(sil).rounded_rectangle([0, 0, cw - 1, ch - 1], radius=52 * SS, fill=fill)
-        sil = sil.filter(ImageFilter.GaussianBlur(blur_r))
-        sh = Image.merge('RGBA', [Image.new('L', (cw, ch), 28)] * 3 + [sil])
-        sh = warp(sh)
-        off = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-        off.paste(sh, (0, dy), sh)
-        bg = Image.alpha_composite(bg, off)
+    # ground shadow drawn in FINAL space: a pool hugging the card's bottom edge
+    # that fades vertically (near = dark, below = gone), so it never reads as a slab
+    tl, tr, br, bl = q
+    ink = (92, 82, 112)                       # muted slate-violet, matches the bg family
+
+    # 1) soft pool: quad extending down-right from the bottom edge, heavy blur
+    y_top = min(bl[1], br[1])
+    fade = Image.new('L', (1, H), 0)
+    fd = fade.load()
+    reach = 320 * SS                          # alpha reaches 0 this far below the edge
+    for y in range(H):
+        t = (y - y_top) / reach
+        fd[0, y] = max(0, round(255 * max(0.0, 1.0 - t)))
+    fade = fade.resize((W, H))
+
+    pool = Image.new('L', (W, H), 0)
+    ImageDraw.Draw(pool).polygon([
+        (bl[0] - 30 * SS, bl[1] - 10 * SS), (br[0] + 30 * SS, br[1] - 10 * SS),
+        (br[0] + 170 * SS, br[1] + 240 * SS), (bl[0] + 170 * SS, bl[1] + 265 * SS),
+    ], fill=255)
+    pool = ImageChops.multiply(pool.filter(ImageFilter.GaussianBlur(70 * SS)), fade)
+    pool = pool.point(lambda v: v * 0.42)
+    sh = Image.merge('RGBA', [Image.new('RGB', (W, H), ink).split()[i] for i in range(3)] + [pool])
+    bg = Image.alpha_composite(bg, sh)
+
+    # 2) contact shadow: thin dark line just under the bezel, small blur
+    line = Image.new('L', (W, H), 0)
+    ImageDraw.Draw(line).polygon([
+        (bl[0] + 25 * SS, bl[1] + 2 * SS), (br[0] + 25 * SS, br[1] + 2 * SS),
+        (br[0] + 45 * SS, br[1] + 46 * SS), (bl[0] + 45 * SS, bl[1] + 48 * SS),
+    ], fill=200)
+    line = line.filter(ImageFilter.GaussianBlur(16 * SS))
+    line = line.point(lambda v: v * 0.5)
+    sh2 = Image.merge('RGBA', [Image.new('RGB', (W, H), ink).split()[i] for i in range(3)] + [line])
+    bg = Image.alpha_composite(bg, sh2)
 
     bg = Image.alpha_composite(bg, warped)
     out = bg.convert('RGB').resize((2400, 1560), Image.LANCZOS)  # downsample = clean AA
