@@ -401,7 +401,7 @@ const Library = (function () {
     const item = document.createElement('div');
     item.className = 'template-item';
     item.dataset.key = tpl.id;
-    item.innerHTML = thumbSVG(tpl) + `<div class="template-label">${tpl.icon ? tpl.icon + ' ' : ''}${escapeHTML(tpl.name)}</div>`;
+    item.innerHTML = thumbSVG(tpl) + `<div class="template-label">${escapeHTML(tpl.name)}</div>`;
     const svg = item.querySelector('svg');
     if (svg) {
       svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%');

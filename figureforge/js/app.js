@@ -30,7 +30,9 @@ const App = (function () {
     wirePanelToggle();
     wireHelp();
     wireThemeToggle();
-    applyTheme(Store.getPref('theme', 'dark'));
+    // ?theme=light|dark overrides the stored preference (handy for previews)
+    const themeParam = new URLSearchParams(location.search).get('theme');
+    applyTheme(themeParam || Store.getPref('theme', 'dark'));
     applyWorkspaceBg(Store.getPref('workspaceBg', 'auto'));
     if (!Store.tryRestore()) console.log('FigureForge ready ✅ (fresh start)');
     else console.log('FigureForge ready ✅ (session restored)');
@@ -188,10 +190,13 @@ const App = (function () {
     if (sel) sel.value = color;
   }
 
+  const SUN_SVG = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.3 11.3 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.3-11.3 1.4-1.4"/></svg>';
+  const MOON_SVG = '<svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+
   function applyTheme(theme) {
     document.body.classList.toggle('theme-light', theme === 'light');
     const btn = document.getElementById('btn-theme');
-    if (btn) btn.textContent = theme === 'light' ? '🌙' : '☀️';
+    if (btn) btn.innerHTML = theme === 'light' ? MOON_SVG : SUN_SVG;
   }
 
   function wireThemeToggle() {

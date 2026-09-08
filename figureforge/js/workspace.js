@@ -128,7 +128,12 @@ const Workspace = (function () {
   }
 
   /* ---------------- node rendering ---------------- */
-  const TYPE_ICON = { figure: '📊', image: '🖼', note: '📝', text: 'T' };
+  const TYPE_ICON = {
+    figure: '<svg viewBox="0 0 24 24"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg>',
+    image: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>',
+    note: '<svg viewBox="0 0 24 24"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"/><path d="M15 3v6h6"/></svg>',
+    text: '<svg viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>',
+  };
   const TYPE_NAME = { figure: '图表', image: '图片', note: '便签', text: '文本' };
 
   function nodeBodyHTML(n) {
@@ -155,9 +160,9 @@ const Workspace = (function () {
       (headable ? `<div class="ws-node-head"><span class="ws-node-icon">${TYPE_ICON[n.type]}</span>` +
         `<span class="ws-node-title" title="双击重命名">${escHTML(n.title || TYPE_NAME[n.type])}</span>` +
         `<span class="ws-node-actions">` +
-        (n.type === 'figure' ? `<button data-act="edit" title="在编辑器中打开">✏️</button>` : '') +
-        `<button data-act="dup" title="复制节点">⧉</button>` +
-        `<button data-act="del" title="删除节点">✕</button></span></div>` : '') +
+        (n.type === 'figure' ? `<button data-act="edit" title="在编辑器中打开"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>` : '') +
+        `<button data-act="dup" title="复制节点"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>` +
+        `<button data-act="del" title="删除节点"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></span></div>` : '') +
       `<div class="ws-node-body">${nodeBodyHTML(n)}</div>` +
       (headable ? `<div class="ws-node-resize" title="拖动调整大小"></div>` : '') +
       `<div class="ws-node-port" title="拖到另一节点建立参考连线"></div>`;
@@ -747,11 +752,16 @@ const Workspace = (function () {
     body.appendChild(sec0);
     const row = document.createElement('div');
     row.className = 'ws-plaza-row';
-    [['📝', '便签', () => addSticky()], ['T', '文本', () => addTextNote()], ['🖼', '图片', () => $('ws-file-img').click()]]
-      .forEach(([icon, label, fn]) => {
+    const QA_ICONS = {
+      note: '<svg viewBox="0 0 24 24"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5L15.5 3Z"/><path d="M15 3v6h6"/></svg>',
+      text: '<svg viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>',
+      image: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>',
+    };
+    [['note', '便签', () => addSticky()], ['text', '文本', () => addTextNote()], ['image', '图片', () => $('ws-file-img').click()]]
+      .forEach(([key, label, fn]) => {
         const it = document.createElement('div');
         it.className = 'ws-plaza-item';
-        it.innerHTML = `<div class="ws-plaza-thumb" style="background:var(--bg-panel);font-size:18px;color:var(--text)">${icon}</div><div class="ws-plaza-label">${label}</div>`;
+        it.innerHTML = `<div class="ws-plaza-thumb">${QA_ICONS[key]}</div><div class="ws-plaza-label">${label}</div>`;
         it.addEventListener('click', fn);
         row.appendChild(it);
       });
@@ -921,8 +931,16 @@ const Workspace = (function () {
     wireChrome();
     syncModeButtons();
 
-    document.body.classList.add('mode-canvas');
-    state.mode = 'canvas';
+    // ?mode=editor / #editor starts in the single-figure editor view
+    const startInEditor = location.hash === '#editor' ||
+      new URLSearchParams(location.search).get('mode') === 'editor';
+    if (startInEditor) {
+      state.mode = 'editor';
+      syncModeButtons();
+    } else {
+      document.body.classList.add('mode-canvas');
+      state.mode = 'canvas';
+    }
     requestAnimationFrame(applyCamera);
 
     console.log('FigureForge workspace ready ✅ (' + state.nodes.length + ' nodes, ' + state.edges.length + ' edges)');
