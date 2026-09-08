@@ -54,6 +54,13 @@
   <img src="assets/showcase-plus.svg" alt="FigureForge 高阶图鉴：细胞通讯弦图、UpSet 多组学交集、组织网络、三元组成、聚类热图、通路矩形树图、旭日图、六边形密度、平行坐标" width="100%" />
 </div>
 
+**Ultra 图鉴（新增）**——Circos 环状图、QQ 图、KM 生存曲线+风险表、雨云图、GO 棒棒糖图、维恩图、甘特图、放射状树状图、测序覆盖度轨道：
+
+<div align="center">
+  <img src="assets/showcase-ultra.svg" alt="FigureForge Ultra 图鉴：Circos 区域连接、QQ 图、KM 生存曲线与风险表、雨云图、GO 富集棒棒糖、三集合维恩、项目甘特、放射状树状图、测序覆盖度轨道" width="100%" />
+</div>
+
+
 
 
 ## 🧪 FigureForge — 不写代码的出图方式
