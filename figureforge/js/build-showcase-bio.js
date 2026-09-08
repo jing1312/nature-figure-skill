@@ -23,13 +23,13 @@ function ramp(stops) {
     return mix(stops[i], stops[i + 1], t * n - i);
   };
 }
-const rampPG = ramp(['#E8A0C8', '#F8F6F0', '#9CCB61']);       // pink→white→green
-const rampGP = ramp(['#7CB342', '#F7F7F5', '#E8709F']);        // green→white→pink (cor)
-const rampBO = ramp(['#6FA3C8', '#F8F7F4', '#E8933F']);        // blue→white→orange
-const rampOP = ramp(['#8E7CC3', '#F8F5F2', '#F6A04D']);        // purple→white→orange
-const rampTEAL = ramp(['#E9F4F2', '#3E9C8F']);                 // light→teal
-const rampBR = ramp(['#F8F6F2', '#B5722E']);                   // light→brown
-const rampGSEA = t => t < .5 ? mix('#3E6FA8', '#F2F2F0', t * 2) : mix('#F2F2F0', '#C9366B', (t - .5) * 2);
+const rampPG = ramp(['#f3c6d9', '#F8F6F0', '#c4e3a8']);       // pink→white→green
+const rampGP = ramp(['#a8d89a', '#F7F7F5', '#efaac4']);        // green→white→pink (cor)
+const rampBO = ramp(['#a3c8e4', '#F8F7F4', '#f0c48a']);        // blue→white→orange
+const rampOP = ramp(['#b8acd9', '#F8F5F2', '#f2c78f']);        // purple→white→orange
+const rampTEAL = ramp(['#E9F4F2', '#82cbbe']);                 // light→teal
+const rampBR = ramp(['#F8F6F2', '#d9a878']);                   // light→brown
+const rampGSEA = t => t < .5 ? mix('#86aed4', '#F2F2F0', t * 2) : mix('#F2F2F0', '#e394b4', (t - .5) * 2);
 
 // ── svg helpers ──
 const f1 = v => (Math.round(v * 10) / 10);
@@ -188,11 +188,11 @@ function frame(ox, oy, letter, title) {
   for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
     const x = gx + c * cw + cw / 2, y = gy + r * ch + ch / 2, v = R[r][c];
     if (r === c) { S.push(rrect(x - 9, y - 8, 18, 16, 3, '#EEF0F4')); S.push(txt(x, y + 2, '1.00', 6, '#666')); }
-    else if (r > c) S.push(txt(x, y + 2, v.toFixed(2), 6.5, v > 0 ? '#6E9E3D' : '#7E6BB0'));
+    else if (r > c) S.push(txt(x, y + 2, v.toFixed(2), 6.5, v > 0 ? '#92c489' : '#b3a5d8'));
     else {
       if (Math.abs(v) < 0.28) { S.push(ln(x - 5, y - 5, x + 5, y + 5, '#888', 1.4), ln(x - 5, y + 5, x + 5, y - 5, '#888', 1.4)); }
       else {
-        const col = v > 0 ? '#7CB342' : '#9575CD';
+        const col = v > 0 ? '#a8d89a' : '#bfb3de';
         S.push(circle(x, y, 9, '#F1F2F6'));
         const fr = Math.abs(v), a1 = -90 + 360 * fr, laf = fr > 0.5 ? 1 : 0;
         const [x1, y1] = polar(x, y, 9, fr * 360);
@@ -204,7 +204,7 @@ function frame(ox, oy, letter, title) {
   }
   vars.forEach((t, r) => S.push(txt(gx - 6, gy + r * ch + ch / 2 + 2, t, 7, '#444', 'end')));
   vars.forEach((t, c) => S.push(`<text x="${f1(gx + c * cw + cw / 2)}" y="${f1(gy + n * ch + 10)}" font-size="6.5" fill="#444" text-anchor="end" transform="rotate(-45 ${f1(gx + c * cw + cw / 2)} ${f1(gy + n * ch + 10)})">${t}</text>`));
-  vLegend(S, ox + 500, oy + 40, 90, 9, t => t < .5 ? mix('#9575CD', '#F4F4F6', (0.5 - t) * 2) : mix('#F4F4F6', '#7CB342', (t - 0.5) * 2), [0, 0.5, 1], 'corr');
+  vLegend(S, ox + 500, oy + 40, 90, 9, t => t < .5 ? mix('#bfb3de', '#F4F4F6', (0.5 - t) * 2) : mix('#F4F4F6', '#a8d89a', (t - 0.5) * 2), [0, 0.5, 1], 'corr');
   S.push(txt(ox + 504.5, oy + 34, '-1', 6, '#555', 'middle')); S.push(txt(ox + 504.5, oy + 142, '1', 6, '#555', 'middle'));
 })();
 
@@ -225,7 +225,7 @@ function frame(ox, oy, letter, title) {
     }
   });
   // qval dots ring
-  for (let i = 0; i < n; i++) { const [x, y] = polar(cx, cy, 53, i * seg + seg / 2); S.push(circle(x, y, 2.1, i % 3 === 0 ? '#4E8FD0' : '#9EC3E4', '#33689E', 0.5)); }
+  for (let i = 0; i < n; i++) { const [x, y] = polar(cx, cy, 53, i * seg + seg / 2); S.push(circle(x, y, 2.1, i % 3 === 0 ? '#8fbde4' : '#c9dff2', '#8fa8d8', 0.5)); }
   // inner dendrogram: black elbows
   const pts = i => polar(cx, cy, 36, i * seg + seg / 2);
   [[0, 4], [5, 9], [10, 14], [15, 19], [20, 24], [25, 29]].forEach(([a, b]) => {
@@ -240,7 +240,7 @@ function frame(ox, oy, letter, title) {
   }
   // legends
   [[ox + 420, 'Exp'], [ox + 486, 'qval']].forEach(([lx, lab], k) => {
-    for (let i = 0; i < 70; i += 2) S.push(rrect(lx, oy + 60 + i, 10, 2, 0, k === 0 ? rampOP(1 - i / 70) : mix('#BFE0EA', '#2E7FA6', i / 70)));
+    for (let i = 0; i < 70; i += 2) S.push(rrect(lx, oy + 60 + i, 10, 2, 0, k === 0 ? rampOP(1 - i / 70) : mix('#BFE0EA', '#7fb3dc', i / 70)));
     S.push(`<rect x="${lx}" y="${oy + 60}" width="10" height="70" fill="none" stroke="#999" stroke-width="0.5"/>`);
     S.push(txt(lx + 5, oy + 54, lab, 7, '#333', 'middle', 'bold'));
     if (k === 0) { S.push(txt(lx + 15, oy + 66, '2', 6, '#555', 'start')); S.push(txt(lx + 15, oy + 132, '-2', 6, '#555', 'start')); }
@@ -261,7 +261,7 @@ function frame(ox, oy, letter, title) {
   envs.forEach((t, r) => S.push(txt(gx + n * cw + 6, gy + r * ch + ch / 2 + 2, t, 6.3, '#444', 'start')));
   envs.forEach((t, c) => S.push(txt(gx + c * cw + cw / 2, gy - 5, t, 6.3, '#444')));
   // cluster nodes
-  const nodes = [[ox + 66, oy + 80, 'Cluster1', '#2FA79B'], [ox + 60, oy + 152, 'Cluster2', '#F5B041'], [ox + 70, oy + 222, 'Cluster3', '#E8709F']];
+  const nodes = [[ox + 66, oy + 80, 'Cluster1', '#79c2b5'], [ox + 60, oy + 152, 'Cluster2', '#f0ce8a'], [ox + 70, oy + 222, 'Cluster3', '#efaac4']];
   nodes.forEach(([nx, ny, lab]) => { S.push(circle(nx, ny, 4.4, '#fff', '#666', 1.4)); S.push(txt(nx - 10, ny + 2.5, lab, 7, '#444', 'end')); });
   const pick = (r0) => { const a = []; for (let c = 0; c < n; c++) if (rnd() < 0.3) a.push(c); return a.length ? a : [Math.floor(rnd() * n)]; };
   nodes.forEach(([nx, ny, , col]) => {
@@ -273,7 +273,7 @@ function frame(ox, oy, letter, title) {
   });
   // legends bottom-left
   S.push(txt(ox + 24, oy + 252, 'P value', 7, '#333', 'start', 'bold'));
-  [['&lt; 0.01', '#2FA79B'], ['>= 0.05', '#BFBFBF'], ['0.01 - 0.05', '#F5B041']].forEach(([t, c], i) =>
+  [['&lt; 0.01', '#79c2b5'], ['>= 0.05', '#BFBFBF'], ['0.01 - 0.05', '#f0ce8a']].forEach(([t, c], i) =>
     S.push(ln(ox + 80 + i * 74, oy + 249, ox + 96 + i * 74, oy + 249, c, 2.2), txt(ox + 100 + i * 74, oy + 252, t, 6, '#555', 'start')));
   S.push(txt(ox + 24, oy + 268, "Mantel's r", 7, '#333', 'start', 'bold'));
   [1, 2.2, 3.6].forEach((w, i) => S.push(ln(ox + 80 + i * 74, oy + 265, ox + 96 + i * 74, oy + 265, '#888', w)));
@@ -285,7 +285,7 @@ function frame(ox, oy, letter, title) {
 (function () {
   const ox = COLX[0], oy = ROWY(3);
   frame(ox, oy, 'g', 'GSEA enrichment · running score');
-  [['Hypoxia', '#8CC152', 'NES: 2.11'], ['Protein Secretion', '#F09A4B', 'NES: 2.09']].forEach(([lab, col, nes], k) => {
+  [['Hypoxia', '#aed9a0', 'NES: 2.11'], ['Protein Secretion', '#f2c391', 'NES: 2.09']].forEach(([lab, col, nes], k) => {
     const hx = ox + 8 + k * 272;
     S.push(txt(hx + 124, oy + 16, lab, 9, '#222', 'middle', 'bold'));
     // score box
@@ -328,7 +328,7 @@ function frame(ox, oy, letter, title) {
   for (let i = 1; i < 6; i++) S.push(ln(px + pw * i / 6, py, px + pw * i / 6, py + ph, '#E8EAEE', 0.7));
   for (let i = 1; i < 4; i++) S.push(ln(px, py + ph * i / 4, px + pw, py + ph * i / 4, '#E8EAEE', 0.7));
   S.push(`<rect x="${px}" y="${py}" width="${pw}" height="${ph}" fill="none" stroke="#555" stroke-width="1.1"/>`);
-  const G = [['GP1', '#F5A94E', -4.2, 0.3, -68], ['GP2', '#7FAFD8', 0.5, 2.0, -82], ['GP3', '#D883A9', 3.9, -1.2, -38]];
+  const G = [['GP1', '#f3cc93', -4.2, 0.3, -68], ['GP2', '#a9cdea', 0.5, 2.0, -82], ['GP3', '#e8b0cb', 3.9, -1.2, -38]];
   G.forEach(([lab, col, mx, my, rot]) => {
     const pts = []; for (let i = 0; i < 12; i++) pts.push([N(mx, 0.85), N(my, 0.72)]);
     const cxm = X(pts.reduce((s, p) => s + p[0], 0) / 12), cym = Y(pts.reduce((s, p) => s + p[1], 0) / 12);
@@ -349,7 +349,7 @@ function frame(ox, oy, letter, title) {
   const mx = ox + 22, my = oy + 48, mw = 300, mh = 196, mt = 30, mr = 84;
   const X = v => mx + (v - 3) / 14.5 * mw, Y = v => my + (23.5 - v) / 21 * mh;
   S.push(`<rect x="${mx}" y="${my}" width="${mw}" height="${mh}" fill="#fff" stroke="#555" stroke-width="1"/>`);
-  const D = [['#8CC152', 55, p => 3.5 + 1.05 * p + N(0, 2)], ['#5B9BD5', 45, p => 6.5 + 0.5 * p + N(0, 1.7)]];
+  const D = [['#aed9a0', 55, p => 3.5 + 1.05 * p + N(0, 2)], ['#9ec4e6', 45, p => 6.5 + 0.5 * p + N(0, 1.7)]];
   const data = D.map(([col, n, fn]) => { const a = []; for (let i = 0; i < n; i++) { const gx2 = 3.5 + rnd() * 13; a.push([gx2, Math.max(3, fn(gx2))]); } return a; });
   // CI bands + lines
   D.forEach(([col, , fn], k) => {
@@ -358,7 +358,7 @@ function frame(ox, oy, letter, title) {
     S.push(ln(p1[0], p1[1], p2[0], p2[1], col, 2));
   });
   data.forEach((a, k) => a.forEach(([gx2, gy2]) => S.push(circle(X(gx2), Y(gy2), 3.2, D[k][0], '#fff', 0.6))));
-  [[3.5, 'Day: R² = 0.558 , p &lt; 0.001', '#6E9E3D'], [2.2, 'Night: R² = 0.336 , p &lt; 0.001', '#4A80BC']].forEach(([dy2, t, c]) =>
+  [[3.5, 'Day: R² = 0.558 , p &lt; 0.001', '#92c489'], [2.2, 'Night: R² = 0.336 , p &lt; 0.001', '#8ab2da']].forEach(([dy2, t, c]) =>
     S.push(txt(mx + 8, my + 16 + dy2 * 9, t, 7, c, 'start', 'bold')));
   [5, 10, 15].forEach(v => { S.push(txt(X(v), my + mh + 10, v, 6.5, '#555')); S.push(txt(mx - 6, Y(v) + 2, v, 6.5, '#555', 'end')); });
   S.push(txt(mx + mw / 2, my + mh + 24, 'Glucose', 8.5, '#333'));
@@ -382,7 +382,7 @@ function frame(ox, oy, letter, title) {
   const Y = v => by0 + bh - v / 200 * bh;
   [0, 50, 100, 150, 200].forEach(v => { S.push(ln(bx0, Y(v), bx0 + bw2, Y(v), v === 0 ? '#555' : '#E8EAEE', v === 0 ? 1.2 : 0.8)); S.push(txt(bx0 - 8, Y(v) + 2.5, v, 7, '#555', 'end')); });
   S.push(ln(bx0, by0 - 6, bx0, by0 + bh, '#555', 1.2));
-  const groups = [['OE-3', '#5B9BD5', 100, 10], ['OE-5', '#2FB5AB', 103, 9], ['OE-6', '#8FCE6B', 155, 17], ['WT', '#F4795B', 33, 7]];
+  const groups = [['OE-3', '#9ec4e6', 100, 10], ['OE-5', '#7fc8bb', 103, 9], ['OE-6', '#bfe3a8', 155, 17], ['WT', '#f2a988', 33, 7]];
   groups.forEach(([lab, col, h, err], i) => {
     const cx = bx0 + 68 + i * 106, wd = 46;
     S.push(rrect(cx - wd / 2, Y(h), wd, Y(0) - Y(h), 3, col, col, 1.2)).replace && 0;
@@ -405,7 +405,7 @@ function frame(ox, oy, letter, title) {
   const Y = v => by0 + bh - v / 11 * bh;
   [0, 2, 4, 6, 8, 10].forEach(v => { S.push(ln(bx0, Y(v), bx0 + bw2, Y(v), '#E8EAEE', 0.8)); S.push(txt(bx0 - 8, Y(v) + 2.5, v, 7, '#555', 'end')); });
   S.push(ln(bx0, by0 - 4, bx0, by0 + bh, '#555', 1.2));
-  const groups = [['IgG', '#5B9BD5', 5.7, 1.1], ['aITGA11', '#2FB5AB', 3.2, 0.9], ['aCHI3L1', '#8FCE6B', 5.5, 1.0], ['aT_aC', '#F4795B', 2.3, 0.55]];
+  const groups = [['IgG', '#9ec4e6', 5.7, 1.1], ['aITGA11', '#7fc8bb', 3.2, 0.9], ['aCHI3L1', '#bfe3a8', 5.5, 1.0], ['aT_aC', '#f2a988', 2.3, 0.55]];
   groups.forEach(([lab, col, med, iqr], i) => {
     const cx = bx0 + 62 + i * 104, wd = 50;
     const q1 = Y(med - iqr), q3 = Y(med + iqr), lo = Y(Math.max(0.4, med - iqr * 2)), hi = Y(med + iqr * 2);
@@ -433,7 +433,7 @@ function frame(ox, oy, letter, title) {
   const cx = ox + 210, cy = oy + 158, r0 = 16;
   const vals = [12.1, 9.5, 8.3, 7.2, 12.7, 13.9, 16.4, 12.5, 14.2, 7.2, 9.2, 7.8];
   const mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const QC = ['#8FB8E8', '#F5D9A8', '#63C1A8', '#A79AD8'];
+  const QC = ['#b8d4ef', '#F5D9A8', '#8ed4c2', '#c9c0e5'];
   vals.forEach((v, i) => {
     const r = r0 + v / 16.4 * 106, a0 = i * 30 - 88, a1 = (i + 1) * 30 - 92;
     S.push(`<path d="${annPath(cx, cy, r0, r, a0, a1)}" fill="${QC[Math.floor(i / 3)]}" stroke="#fff" stroke-width="1"/>`);

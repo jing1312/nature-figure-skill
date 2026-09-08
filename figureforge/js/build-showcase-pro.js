@@ -10,9 +10,9 @@ const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed
 const N = (m, s) => m + (rnd() + rnd() + rnd() + rnd() - 2) * 1.414 * s;
 
 const C = {
-  blue: '#33658A', teal: '#2F9C95', mauve: '#A96D8F', red: '#C94F4F',
-  gray: '#8F9494', lgray: '#D9D9D9', ink: '#333333', tick: '#444444',
-  purple: '#7B6BA8', yellow: '#E3B23C', green: '#71A862', orange: '#D97545'
+  blue: '#6fa8ce', teal: '#82cbbe', mauve: '#c3a3d1', red: '#e89b9b',
+  gray: '#aab0b0', lgray: '#D9D9D9', ink: '#333333', tick: '#444444',
+  purple: '#a79bd1', yellow: '#f0d48a', green: '#9ccb8f', orange: '#efb08c'
 };
 
 const f1 = v => Math.round(v * 10) / 10;
@@ -110,7 +110,7 @@ S.push(txt(16, 44, 'Radial, quadrant, volcano and matrix panels in an original p
     const r0 = 8 + rnd() * 6, r1 = r0 + 14 + rnd() * 62;
     const p = (r, aDeg) => { const a = aDeg * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; };
     const [x0, y0] = p(r1, a0), [x1, y1] = p(r1, a1), [x2, y2] = p(r0, a1), [x3, y3] = p(r0, a0);
-    S.push(pth(`M${f1(x0)} ${f1(y0)}A${f1(r1)} ${f1(r1)} 0 0 1 ${f1(x1)} ${f1(y1)}L${f1(x2)} ${f1(y2)}A${f1(r0)} ${f1(r0)} 0 0 0 ${f1(x3)} ${f1(y3)}Z`, mix('#B7DDD9', '#1F6E67', Math.min(1, (r1 - 20) / 62)), 1, '#FFFFFFAA', 0.6));
+    S.push(pth(`M${f1(x0)} ${f1(y0)}A${f1(r1)} ${f1(r1)} 0 0 1 ${f1(x1)} ${f1(y1)}L${f1(x2)} ${f1(y2)}A${f1(r0)} ${f1(r0)} 0 0 0 ${f1(x3)} ${f1(y3)}Z`, mix('#c9e6e1', '#55a396', Math.min(1, (r1 - 20) / 62)), 1, '#FFFFFFAA', 0.6));
   }
 }
 
@@ -146,8 +146,8 @@ S.push(txt(16, 44, 'Radial, quadrant, volcano and matrix panels in an original p
   S.push(ln(x + PW / 2, y, x + PW / 2, y + PH, '#BBB', 0.8, '3 2.4'));
   S.push(ln(x, y + PH / 2, x + PW, y + PH / 2, '#BBB', 0.8, '3 2.4'));
   /* quadrant corner labels sit in empty corners */
-  S.push(txt(x + PW - 5, y + 11, '上调通路', 8.5, '#7A1F1F', 'end', 'bold'));
-  S.push(txt(x + 5, y + 11, '下调通路', 8.5, '#1F4E5A', 'start', 'bold'));
+  S.push(txt(x + PW - 5, y + 11, '上调通路', 8.5, '#8a4a52', 'end', 'bold'));
+  S.push(txt(x + 5, y + 11, '下调通路', 8.5, '#4d7a73', 'start', 'bold'));
   axes(S, x, y, PW, PH, [0, .5, 1], [0, .5, 1], t => f1(t * 8), t => f1(t * 6 - 3));
   S.push(txt(x + PW / 2, y + PH + 26, '富集显著性 (-log₁₀P)', 9.5, C.ink, 'middle', 'bold'));
   S.push(txt(x - 10, y + PH / 2, '富集分数', 9.5, C.ink, 'middle', 'bold', -90));
@@ -172,7 +172,7 @@ S.push(txt(16, 44, 'Radial, quadrant, volcano and matrix panels in an original p
   [0.22, 0.78].forEach(t => S.push(ln(x + t * PW, y, x + t * PW, y + PH, '#AAA', 0.8, '3 2.4')));
   S.push(ln(x, y + PH * 0.32, x + PW, y + PH * 0.32, '#AAA', 0.8, '3 2.4'));
   [['FASN', 0.16, 0.1], ['ACACA', 0.82, 0.07], ['SCD', 0.79, 0.28], ['CPT1A', 0.13, 0.34]].forEach(([g, fx, fy]) => {
-    S.push(txt(x + fx * PW, y + fy * PH, g, 8.5, '#7A1F1F', 'middle', 'bold'));
+    S.push(txt(x + fx * PW, y + fy * PH, g, 8.5, '#8a4a52', 'middle', 'bold'));
   });
   axes(S, x, y, PW, PH, [0, .5, 1], [0, .5, 1], t => f1(-3 + t * 6), t => Math.round(t * 6));
   S.push(txt(x + PW / 2, y + PH + 26, 'log₂ (Fold change)', 9.5, C.ink, 'middle', 'bold'));
@@ -186,7 +186,7 @@ S.push(txt(16, 44, 'Radial, quadrant, volcano and matrix panels in an original p
   const rows = 6, cols = 9, cw = (PW - 46 - 30) / cols, ch = (PH - 12) / rows;
   const rowLabs = ['0 h', '6 h', '12 h', '24 h', '48 h', '72 h'];
   const colLabs = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9'];
-  const zdiv = v => v >= 0 ? mix('#F5E7E3', '#B04A4E', Math.min(1, v / 2.2)) : mix('#EEF1F2', '#33658A', Math.min(1, -v / 2.2));
+  const zdiv = v => v >= 0 ? mix('#F5E7E3', '#d98080', Math.min(1, v / 2.2)) : mix('#EEF1F2', '#6fa8ce', Math.min(1, -v / 2.2));
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
     const v = N(0, 1);
     S.push(rect(x + 34 + c * cw + 0.8, y + r * ch + 0.8, cw - 1.6, ch - 1.6, zdiv(v)));

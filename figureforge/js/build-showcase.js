@@ -12,9 +12,9 @@ const N = (m, s) => m + (rnd() + rnd() + rnd() + rnd() - 2) * 1.414 * s;
 
 /* chromatic pastel palette (from 科研配色 references) */
 const C = {
-  blue: '#33658A', lblue: '#A9C6DC', teal: '#2F9C95', green: '#71A862',
-  yellow: '#E3B23C', orange: '#D97545', red: '#C94F4F', pink: '#E5A2AC',
-  mauve: '#A96D8F', purple: '#7B6BA8', gray: '#8F9494', ink: '#333333',
+  blue: '#6FA8CE', lblue: '#C9E2F0', teal: '#82CBBE', green: '#9CCB8F',
+  yellow: '#F0D48A', orange: '#EFB08C', red: '#E89B9B', pink: '#F3C6D2',
+  mauve: '#C3A3D1', purple: '#A79BD1', gray: '#AAB0B0', ink: '#333333',
   tick: '#4A4A4A'
 };
 const F = 'Helvetica,Arial,sans-serif';
@@ -77,7 +77,7 @@ const X0 = col => 24 + col * COLW;
 const S = [];
 
 S.push(txt(16, 26, 'FigureForge chart atlas', 17, '#111', 'start', 'bold'));
-S.push(txt(16, 44, 'Twelve publication-grade panels in an original scientific palette.', 10.5, '#777', 'start'));
+S.push(txt(16, 44, 'Twelve publication-grade panels in a fresh pastel palette.', 10.5, '#777', 'start'));
 
 /* ── a | PCA + ellipses + marginals ───────────── */
 {
@@ -224,7 +224,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels in an original scientific pa
   const x = X0(2) + 4, y = ROWY(1) + 40, w = PW - 30, h = PH - 56;
   head(S, 'f', 'bubble + colorbar', x + 30, ROWY(1), PW);
   const ramp = t => {
-    const stops = ['#5FA8A0', '#DCE5C8', '#C48CA4', '#71589E'];
+    const stops = ['#8FD0C8', '#EAF2DC', '#E3BCD0', '#A493CC'];
     const i = Math.min(2, Math.floor(t * 3)), tt = t * 3 - i;
     const hx = (s, k) => parseInt(s.substr(1 + k * 2, 2), 16);
     const a = stops[i], b = stops[i + 1];
@@ -260,7 +260,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels in an original scientific pa
   const genes = ['GAPDH', 'ACTB', 'B2M', 'HPRT1', 'TBP', 'RPL13A', 'YWHAZ', 'SDHA'];
   const cw = (w - 42 - 34) / 8, ch = h / 8;
   const div = v => {
-    const s = v >= 0 ? ['#F7E8E6', '#EBA9A4', '#DB6E6E', '#C0392B'] : ['#EAF2F2', '#A9D4CE', '#5FA9A0', '#2E7D74'];
+    const s = v >= 0 ? ['#F7E8E6', '#f0b5ae', '#e89b9b', '#e08a8a'] : ['#EAF2F2', '#A9D4CE', '#82cbbe', '#7fc8bb'];
     const a = Math.abs(v), i = Math.min(3, Math.floor(a * 4));
     return s[i];
   };
@@ -273,7 +273,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels in an original scientific pa
   for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) {
     const v = i === j ? 1 : M[i][j];
     S.push(rect(x + 42 + j * cw, y + i * ch, cw - 1.5, ch - 1.5, div(v)));
-    if (Math.abs(v) > 0.55 && i !== j) S.push(txt(x + 42 + j * cw + cw / 2 - 0.7, y + i * ch + ch / 2 + 3, '**', 8, v > 0 ? '#7A1F1F' : '#1F4E4A', 'middle', 'bold'));
+    if (Math.abs(v) > 0.55 && i !== j) S.push(txt(x + 42 + j * cw + cw / 2 - 0.7, y + i * ch + ch / 2 + 3, '**', 8, v > 0 ? '#8a4a52' : '#4d7a73', 'middle', 'bold'));
     if (i === j) S.push(txt(x + 42 + j * cw + cw / 2 - 0.7, y + i * ch + ch / 2 + 3, '1.0', 7.5, '#FFFFFF', 'middle', 'bold'));
   }
   genes.forEach((g, i) => {
@@ -300,7 +300,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels in an original scientific pa
   colsTop.forEach((c2, j) => S.push(rect(x + 46 + j * (cw2 + 2), y, cw2, 4, c2, 0.85)));
   for (let i = 0; i < 12; i++) for (let j = 0; j < 12; j++) {
     const v = N(0, 1);
-    const col = v >= 0 ? '#F5B04C' : '#9B83C9';
+    const col = v >= 0 ? '#f0ce8a' : '#a79bd1';
     const op = 0.25 + Math.min(0.7, Math.abs(v) * 0.5);
     S.push(rect(x + 46 + j * (cw2 + 2), y + 12 + i * ch2 + 1, cw2, ch2 - 2, '#EFEFEF'));
     S.push(rect(x + 46 + j * (cw2 + 2) + 0.5, y + 12 + i * ch2 + 1.5, cw2 - 1, ch2 - 3, col, op, 2.5));
@@ -310,7 +310,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels in an original scientific pa
   const cbx = x + w - 24, cby = y + 16, cbw2 = 9, cbh = h * 0.6;
   for (let i = 0; i < cbh; i += 2) {
     const t = i / cbh;
-    S.push(rect(cbx, cby + i, cbw2, 2, t < .5 ? '#9B83C9' : '#F5B04C', t < .5 ? 1 - t * 1.2 : (t - .5) * 2 * 0.9 + 0.15));
+    S.push(rect(cbx, cby + i, cbw2, 2, t < .5 ? '#a79bd1' : '#f0ce8a', t < .5 ? 1 - t * 1.2 : (t - .5) * 2 * 0.9 + 0.15));
   }
   S.push(`<rect x="${f1(cbx)}" y="${f1(cby)}" width="${cbw2}" height="${f1(cbh)}" fill="none" stroke="#999" stroke-width="0.7"/>`);
   S.push(txt(cbx + cbw2 / 2, cby - 5, 'Z-score', 8.5, C.ink, 'middle', 'bold'));
@@ -334,7 +334,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels in an original scientific pa
   S.push(ln(x + (0.8 + 3.6) / 7.2 * w, y, x + (0.8 + 3.6) / 7.2 * w, y + h, '#888', 1, '4 3'));
   S.push(ln(x + (-0.8 + 3.6) / 7.2 * w, y, x + (-0.8 + 3.6) / 7.2 * w, y + h, '#888', 1, '4 3'));
   [['NQO1', 2.0, 7.1], ['HMOX1', -1.7, 6.3], ['GCLC', -2.4, 4.6], ['TXNRD1', 1.3, 5.2]].forEach(([g, fx, fy]) => {
-    S.push(txt(x + (fx + 3.6) / 7.2 * w, y + h - fy / 8 * h - 5, g, 8.5, '#7A1F1F', 'middle', 'bold'));
+    S.push(txt(x + (fx + 3.6) / 7.2 * w, y + h - fy / 8 * h - 5, g, 8.5, '#8a4a52', 'middle', 'bold'));
   });
   axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(-3.6 + t * 7.2), t => f1(t * 8), 'log₂ (Fold change)', '-log₁₀ (P value)');
 }
