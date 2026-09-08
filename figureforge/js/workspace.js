@@ -150,7 +150,7 @@ const Workspace = (function () {
 
   function renderNode(n) {
     const el = document.createElement('div');
-    el.className = 'ws-node type-' + n.type + (state.sel.has(n.id) ? ' selected' : '');
+    el.className = 'ws-node type-' + n.type + (n.hue ? ' hue-' + n.hue : '') + (state.sel.has(n.id) ? ' selected' : '');
     el.dataset.id = n.id;
     el.style.left = n.x + 'px';
     el.style.top = n.y + 'px';
@@ -412,7 +412,7 @@ const Workspace = (function () {
       w: opts.w ?? (type === 'note' ? 240 : type === 'text' ? 220 : 340),
       title: opts.title || TYPE_NAME[type],
       svg: opts.svg || null, src: opts.src || null,
-      text: opts.text || null, color: opts.color || null,
+      text: opts.text || null, color: opts.color || null, hue: opts.hue || null,
     };
     state.nodes.push(n);
     renderNode(n);
@@ -833,9 +833,11 @@ const Workspace = (function () {
     toast('📥 已放入画布：' + label);
   }
 
+  const NOTE_HUES = ['honey', 'mint', 'rose', 'lilac'];
   function addSticky() {
     const p = viewportCenterWorld();
-    addNode('note', { x: p.x - 120, y: p.y - 90, text: '记点什么…', title: '便签' });
+    addNode('note', { x: p.x - 120, y: p.y - 90, text: '记点什么…', title: '便签',
+      hue: NOTE_HUES[(state.noteHueSeq = (state.noteHueSeq || 0) + 1) % NOTE_HUES.length] });
   }
   function addTextNote() {
     const p = viewportCenterWorld();
@@ -914,7 +916,7 @@ const Workspace = (function () {
     addNode('note', {
       x: 80, y: 70, w: 260,
       text: '👋 欢迎来到 FigureForge 画布\n\n· 下方输入一句话，直接生成图表\n· 打开左侧 🧰 素材广场，83 面板随取随用\n· 拖动节点右侧的圆点，建立参考连线\n· 双击图表节点 → 进编辑器精修',
-      title: '开始指南',
+      title: '开始指南', hue: 'mint',
     });
   }
 
@@ -987,7 +989,7 @@ const Workspace = (function () {
         opt.value = p.key; opt.textContent = p.name;
         sel.appendChild(opt);
       });
-      sel.value = 'tableau10';
+      sel.value = (window.App && App.state && App.state.activePalette) || 'candy';
     }
 
     // empty hero chips

@@ -5,26 +5,26 @@
    micro-labels, gradient panels) adapted from currve-arrow.yysuni.com. */
 
 :root {
-  --bg: #171a21; --bg-panel: #1d212b; --bg-canvas: #121419; --bg-input: #262b38;
-  --border: #313849; --text: #d7dce6; --text-dim: #8a94ab; --text-bright: #ffffff;
-  --accent: #2bb8ab; --accent-dim: #1e3f3c; --danger: #e53935; --success: #2e9e44;
-  --selection: #2bb8ab; --radius: 4px;
+  --bg: #191e2a; --bg-panel: #1f2532; --bg-canvas: #151a27; --bg-input: #293042;
+  --border: #364054; --text: #dde3f0; --text-dim: #93a0bc; --text-bright: #ffffff;
+  --accent: #2fc4b2; --accent-dim: #1e4a45; --danger: #e53935; --success: #2e9e44;
+  --selection: #2fc4b2; --radius: 4px;
   --shadow-canvas: 0 4px 20px rgba(0,0,0,0.45);
-  --track: #39404e; --thumb-ring: #565f70;
-  --panel-grad: linear-gradient(165deg, #1f2430 0%, #1b202a 55%, #182628 100%);
-  --border-panel: rgba(43, 184, 171, 0.16);
+  --track: #3a4358; --thumb-ring: #59647c;
+  --panel-grad: linear-gradient(165deg, #222939 0%, #1d2432 55%, #1b2a33 100%);
+  --border-panel: rgba(47, 196, 178, 0.18);
   --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Daylight (paper) theme — flipped by body.theme-light */
 body.theme-light {
-  --bg: #e9edf4; --bg-panel: #f8fafd; --bg-canvas: #e2e7ef; --bg-input: #ffffff;
-  --border: #d3dae6; --text: #2c3345; --text-dim: #64708c; --text-bright: #131826;
-  --accent: #0d9488; --accent-dim: #d7f0ec; --danger: #c62828; --success: #2e7d32;
+  --bg: #efece5; --bg-panel: #fbfaf7; --bg-canvas: #e9e6de; --bg-input: #ffffff;
+  --border: #ddd8cd; --text: #33384a; --text-dim: #6d7386; --text-bright: #16192a;
+  --accent: #0d9488; --accent-dim: #d9f0ec; --danger: #c62828; --success: #2e7d32;
   --selection: #0d9488;
-  --shadow-canvas: 0 6px 24px rgba(30, 42, 68, 0.16);
-  --track: #e5e7eb; --thumb-ring: #cbd5e1;
-  --panel-grad: linear-gradient(165deg, #ffffff 0%, #f7f9fb 55%, #ecf7f5 100%);
+  --shadow-canvas: 0 6px 24px rgba(48, 42, 30, 0.14);
+  --track: #e7e3da; --thumb-ring: #cfc9bc;
+  --panel-grad: linear-gradient(165deg, #ffffff 0%, #faf9f5 55%, #eff6f3 100%);
   --border-panel: rgba(13, 148, 136, 0.2);
 }
 

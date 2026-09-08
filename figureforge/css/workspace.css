@@ -31,14 +31,19 @@ body.theme-light .mode-btn.active { box-shadow: 0 1px 4px rgba(30, 42, 68, 0.14)
 #workspace-view { position: absolute; inset: 0; display: none; overflow: hidden; z-index: 5;
   background-image:
     radial-gradient(var(--ws-dot) 1.1px, transparent 1.3px),
-    radial-gradient(1100px 700px at 50% 38%, rgba(43, 184, 171, 0.05), transparent 62%);
+    radial-gradient(1200px 760px at 50% 36%, rgba(47, 196, 178, 0.09), transparent 62%),
+    radial-gradient(900px 620px at 78% 82%, rgba(124, 111, 208, 0.07), transparent 65%),
+    radial-gradient(760px 540px at 14% 74%, rgba(236, 111, 159, 0.05), transparent 65%);
   background-color: var(--bg-canvas); }
-#workspace-view.no-grid { background-image: none, radial-gradient(1100px 700px at 50% 38%, rgba(43, 184, 171, 0.05), transparent 62%); }
+#workspace-view.no-grid { background-image: none,
+    radial-gradient(1200px 760px at 50% 36%, rgba(47, 196, 178, 0.09), transparent 62%),
+    radial-gradient(900px 620px at 78% 82%, rgba(124, 111, 208, 0.07), transparent 65%),
+    radial-gradient(760px 540px at 14% 74%, rgba(236, 111, 159, 0.05), transparent 65%); }
 body.mode-canvas #workspace-view { display: block; }
 
 #ws-world { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-origin: 0 0; }
 body.theme-light { --ws-dot: rgba(19, 24, 38, 0.13); }
-body:not(.theme-light) { --ws-dot: rgba(255, 255, 255, 0.07); }
+body:not(.theme-light) { --ws-dot: rgba(255, 255, 255, 0.09); }
 
 #ws-edges { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
 #ws-edges path.edge-line { fill: none; stroke: var(--text-dim); stroke-width: 1.6; opacity: 0.75; }
@@ -75,15 +80,23 @@ body.theme-light .ws-node { box-shadow: 0 6px 20px rgba(30, 42, 68, 0.14); }
 .ws-node-actions button[data-act="del"]:hover { color: var(--danger); }
 
 .ws-node-body { border-radius: 0 0 12px 12px; overflow: hidden; background: #ffffff; }
+.ws-node.type-note .ws-node-body { background: transparent; }
 .ws-fig, .ws-img { line-height: 0; }
 .ws-fig svg { width: 100%; height: auto; display: block; }
 .ws-img img { width: 100%; height: auto; display: block; pointer-events: none; }
 
 /* sticky note */
-.ws-node.type-note { background: #f6e18b; border-color: #e3c96a; box-shadow: 0 8px 22px rgba(0,0,0,0.3); }
-body.theme-light .ws-node.type-note { box-shadow: 0 8px 18px rgba(120, 96, 20, 0.22); }
+.ws-node.type-note { background: #f9efd2; border-color: #e7d8a6; box-shadow: 0 8px 22px rgba(0,0,0,0.3); }
+.ws-node.type-note.hue-honey { background: #f9efd2; border-color: #e7d8a6; }
+.ws-node.type-note.hue-mint { background: #d9f2e3; border-color: #aedcc5; }
+.ws-node.type-note.hue-rose { background: #fbe1e8; border-color: #eebfcc; }
+.ws-node.type-note.hue-lilac { background: #e9e3f8; border-color: #cec0eb; }
+body.theme-light .ws-node.type-note { box-shadow: 0 8px 18px rgba(120, 96, 20, 0.18); }
 .ws-node.type-note.selected { box-shadow: 0 0 0 1.5px var(--accent), 0 8px 22px rgba(0,0,0,0.3); }
-.ws-note-body { min-height: 150px; padding: 12px; font-size: 12.5px; line-height: 1.65; color: #4d3f12; outline: none; border-radius: 12px; cursor: grab; white-space: pre-wrap; word-break: break-word; }
+.ws-note-body { min-height: 150px; padding: 12px; font-size: 12.5px; line-height: 1.65; color: #6b5a1e; outline: none; border-radius: 12px; cursor: grab; white-space: pre-wrap; word-break: break-word; }
+.hue-mint .ws-note-body { color: #2f5c44; }
+.hue-rose .ws-note-body { color: #7c4054; }
+.hue-lilac .ws-note-body { color: #4f4472; }
 .ws-note-body:active { cursor: grabbing; }
 .ws-note-body[contenteditable="true"], .ws-text-body[contenteditable="true"] { cursor: text; }
 

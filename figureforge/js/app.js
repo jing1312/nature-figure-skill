@@ -10,7 +10,7 @@ const App = (function () {
   const state = {
     currentTemplate: null,
     selectedElement: null,
-    activePalette: 'tableau10',
+    activePalette: 'candy',
     zoom: 1,
     showGrid: true,
     snapEnabled: true,

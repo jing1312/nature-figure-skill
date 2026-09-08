@@ -15,9 +15,9 @@
 const T = {
   spine: "#262626", tick: "#404040", label: "#737373", title: "#1A1A1A",
   grid: "#EBEBEF", frame: "#D9D9DE", W: "#FFFFFF", cap: "#4D4D4D",
-  ctrl: "#C4C9D4", // neutral grey for control groups
+  ctrl: "#CBD2DE", // neutral grey for control groups
 };
-const S = ["#4E79A7", "#F28E2B", "#E15759", "#76B7B2", "#59A14F", "#B07AA1"]; // Tableau-family series
+const S = ["#5B8FDB", "#F2C14E", "#EC6F9F", "#6FC2D0", "#43B39C", "#9C7BD8"]; // Tableau-family series
 const F = "'Arial',sans-serif";
 
 /* ── geometry helpers (plot area for full-size charts) ── */
@@ -152,7 +152,7 @@ const CHART_TEMPLATES = {
     const fill = hi ? S[0] : T.ctrl;
     // superplot: raw data points over each bar
     const jdx = [-9, -3, 3, 9], jf = [0.88, 1.04, 0.94, 1.1];
-    const pts = jdx.map((dx, k) => '<circle cx="' + (cx + dx).toFixed(1) + '" cy="' + sy(d[0] * jf[k], 0, 80).toFixed(1) + '" r="1.7" fill="' + (hi ? '#1d3d6e' : '#5a6272') + '" fill-opacity="0.55" data-edit="true" data-role="stat"/>').join('');
+    const pts = jdx.map((dx, k) => '<circle cx="' + (cx + dx).toFixed(1) + '" cy="' + sy(d[0] * jf[k], 0, 80).toFixed(1) + '" r="1.7" fill="' + (hi ? '#27406E' : '#5a6272') + '" fill-opacity="0.55" data-edit="true" data-role="stat"/>').join('');
     return '<rect x="' + (cx - 17).toFixed(1) + '" y="' + sy(d[0], 0, 80).toFixed(1) + '" width="34" height="' + (P.y1 - sy(d[0], 0, 80)).toFixed(1) + '" fill="' + fill + '" data-edit="true" data-role="bar" data-series="' + (hi ? 1 : 0) + '"/>' +
       errBar(cx.toFixed(1), sy(d[0] + d[1], 0, 80), sy(d[0] - d[1], 0, 80), 2.5) +
       pts;
@@ -230,7 +230,7 @@ const CHART_TEMPLATES = {
   figTitle('Figure 6 | Condition A dominates the cohort composition') +
   (() => { // rich yet harmonious donut (pathLength=100, starts at 12 o'clock)
     const cx = 148, cy = 150, r = 66;
-    const segs = [[38, '#4E79A7'], [27, '#76B7B2'], [21, '#F1CE63'], [14, '#D4CFCA']];
+    const segs = [[38, '#5B8FDB'], [27, '#6FC2D0'], [21, '#F2C14E'], [14, '#D4CFCA']];
     const labels = ['Condition A · 38%', 'Condition B · 27%', 'Condition C · 21%', 'Other · 14%'];
     let acc = 0, s = '';
     segs.forEach((sg, i) => {
@@ -253,13 +253,13 @@ const CHART_TEMPLATES = {
     const px = xs.map(x => sx(x, 0, 20));
     const topA = xs.map((x, i) => px[i].toFixed(1) + ',' + sy(A[i] + B[i], 0, 80).toFixed(1));
     const topB = xs.map((x, i) => px[i].toFixed(1) + ',' + sy(B[i], 0, 80).toFixed(1));
-    return '<polygon points="' + topA.join(' ') + ' ' + px[px.length - 1].toFixed(1) + ',' + P.y1 + ' ' + px[0].toFixed(1) + ',' + P.y1 + '" fill="#AEC2DD" data-edit="true" data-role="area" data-series="0"/>' +
-      '<polygon points="' + topB.join(' ') + ' ' + px[px.length - 1].toFixed(1) + ',' + P.y1 + ' ' + px[0].toFixed(1) + ',' + P.y1 + '" fill="#76B7B2" fill-opacity="0.7" data-edit="true" data-role="area" data-series="1"/>' +
-      '<polyline points="' + topA.join(' ') + '" fill="none" stroke="#4E79A7" stroke-width="1.4" data-edit="true" data-role="line" data-series="0"/>' +
-      '<polyline points="' + topB.join(' ') + '" fill="none" stroke="#4E8A85" stroke-width="1.4" data-edit="true" data-role="line" data-series="1"/>';
+    return '<polygon points="' + topA.join(' ') + ' ' + px[px.length - 1].toFixed(1) + ',' + P.y1 + ' ' + px[0].toFixed(1) + ',' + P.y1 + '" fill="#C9D8F2" data-edit="true" data-role="area" data-series="0"/>' +
+      '<polygon points="' + topB.join(' ') + ' ' + px[px.length - 1].toFixed(1) + ',' + P.y1 + ' ' + px[0].toFixed(1) + ',' + P.y1 + '" fill="#6FC2D0" fill-opacity="0.7" data-edit="true" data-role="area" data-series="1"/>' +
+      '<polyline points="' + topA.join(' ') + '" fill="none" stroke="#5B8FDB" stroke-width="1.4" data-edit="true" data-role="line" data-series="0"/>' +
+      '<polyline points="' + topB.join(' ') + '" fill="none" stroke="#2E9E8A" stroke-width="1.4" data-edit="true" data-role="line" data-series="1"/>';
   })() +
-  legendRow(292, 36, '#4E79A7', 'Species A', 'rect', 0) +
-  legendRow(292, 50, '#76B7B2', 'Species B', 'rect', 1) +
+  legendRow(292, 36, '#5B8FDB', 'Species A', 'rect', 0) +
+  legendRow(292, 50, '#6FC2D0', 'Species B', 'rect', 1) +
 '</svg>' },
 
 'box': { name: '箱线图', icon: '📦', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280">' +
@@ -282,7 +282,7 @@ const CHART_TEMPLATES = {
         '<line x1="' + cx.toFixed(1) + '" y1="' + y(d[3]) + '" x2="' + cx.toFixed(1) + '" y2="' + y(d[4]) + '" stroke="' + T.spine + '" stroke-width="0.9" data-edit="true" data-role="stat"/>' +
         '<line x1="' + (cx - 8).toFixed(1) + '" y1="' + y(d[3]) + '" x2="' + (cx + 8).toFixed(1) + '" y2="' + y(d[3]) + '" stroke="' + T.spine + '" stroke-width="0.9" data-edit="true" data-role="stat"/>' +
         '<line x1="' + (cx - 8).toFixed(1) + '" y1="' + y(d[4]) + '" x2="' + (cx + 8).toFixed(1) + '" y2="' + y(d[4]) + '" stroke="' + T.spine + '" stroke-width="0.9" data-edit="true" data-role="stat"/>' +
-        '<rect x="' + (cx - w / 2).toFixed(1) + '" y="' + y(d[2]) + '" width="' + w + '" height="' + (sy(d[1], 0, 100) - sy(d[2], 0, 100)).toFixed(1) + '" fill="#4E79A7" fill-opacity="0.28" stroke="' + T.spine + '" stroke-width="0.9" data-edit="true" data-role="bar" data-series="0"/>' +
+        '<rect x="' + (cx - w / 2).toFixed(1) + '" y="' + y(d[2]) + '" width="' + w + '" height="' + (sy(d[1], 0, 100) - sy(d[2], 0, 100)).toFixed(1) + '" fill="#5B8FDB" fill-opacity="0.28" stroke="' + T.spine + '" stroke-width="0.9" data-edit="true" data-role="bar" data-series="0"/>' +
         '<line x1="' + (cx - w / 2).toFixed(1) + '" y1="' + y(d[0]) + '" x2="' + (cx + w / 2).toFixed(1) + '" y2="' + y(d[0]) + '" stroke="' + T.spine + '" stroke-width="1.5" data-edit="true" data-role="stat"/>';
     }).join('');
   })() +
@@ -305,11 +305,11 @@ const CHART_TEMPLATES = {
     const cols = [ // left→right (cluster order): [label, group]
       ['C4', 'Trt'], ['C1', 'Trt'], ['C5', 'Trt'], ['C2', 'Veh'], ['C6', 'Veh'], ['C3', 'Veh']];
     const progCol = { A: S[0], B: S[1], C: '#9AA0A8' };
-    const grpCol = { Trt: '#59A14F', Veh: '#C4C9D4' };
+    const grpCol = { Trt: '#43B39C', Veh: '#CBD2DE' };
     const rowH = (gy1 - gy0) / rows.length, colW = (gx1 - gx0) / cols.length;
     const rc = i => gy0 + rowH * (i + 0.5); // row center
     const cc = i => gx0 + colW * (i + 0.5); // col center
-    const dv = v => { // diverging: -2 → #2166AC, 0 → white, +2 → #B2182B
+    const dv = v => { // diverging: -2 → #3D6BB3, 0 → white, +2 → #C9699B
       const t = Math.min(1, Math.abs(v) / 2);
       const mix = (a, b) => Math.round(a + (b - a) * t);
       return v < 0 ? 'rgb(' + mix(247, 33) + ',' + mix(247, 102) + ',' + mix(250, 172) + ')'
@@ -395,7 +395,7 @@ const CHART_TEMPLATES = {
     });
     const py = 58 + 5 * 30, e = 1.15, lo = 0.98, hi = 1.36;
     s += '<text x="112" y="' + (py + 2.6) + '" font-family="' + F + '" font-size="7.5" font-weight="bold" fill="' + T.tick + '" text-anchor="end" data-edit="true">Pooled</text>' +
-      '<polygon points="' + fx(lo).toFixed(1) + ',' + py + ' ' + fx(e).toFixed(1) + ',' + (py - 6) + ' ' + fx(hi).toFixed(1) + ',' + py + ' ' + fx(e).toFixed(1) + ',' + (py + 6) + '" fill="#E15759" data-edit="true" data-role="marker" data-series="1"/>' +
+      '<polygon points="' + fx(lo).toFixed(1) + ',' + py + ' ' + fx(e).toFixed(1) + ',' + (py - 6) + ' ' + fx(hi).toFixed(1) + ',' + py + ' ' + fx(e).toFixed(1) + ',' + (py + 6) + '" fill="#EC6F9F" data-edit="true" data-role="marker" data-series="1"/>' +
       '<text x="388" y="' + (py + 2.6) + '" font-family="' + F + '" font-size="6.8" font-weight="bold" fill="' + T.label + '" text-anchor="end" data-edit="true">' + e.toFixed(2) + ' [0.98, 1.36]</text>';
     return s;
   })() +
@@ -465,10 +465,10 @@ const CHART_TEMPLATES = {
     let seed = 7;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < 30; i++) pts.push([(rnd() - 0.5) * 2.2, 0.05 + rnd() * 1.15, '#B9BDC4']);   // NS
-    for (let i = 0; i < 8; i++) pts.push([1.15 + rnd() * 2.4, 1.4 + rnd() * 5.4, '#4E79A7']);      // up
-    for (let i = 0; i < 7; i++) pts.push([-1.15 - rnd() * 2.2, 1.4 + rnd() * 4.2, '#E15759']);     // down
+    for (let i = 0; i < 8; i++) pts.push([1.15 + rnd() * 2.4, 1.4 + rnd() * 5.4, '#5B8FDB']);      // up
+    for (let i = 0; i < 7; i++) pts.push([-1.15 - rnd() * 2.2, 1.4 + rnd() * 4.2, '#EC6F9F']);     // down
     const hitA = pts[31], hitB = pts[38];
-    return pts.map(p => '<circle cx="' + sx(p[0], -4, 4).toFixed(1) + '" cy="' + sy(p[1], 0, 8).toFixed(1) + '" r="2.6" fill="' + p[2] + '" fill-opacity="0.8" data-edit="true" data-role="marker" data-series="' + (p[2] === '#B9BDC4' ? 0 : p[2] === '#4E79A7' ? 1 : 2) + '"/>').join('') +
+    return pts.map(p => '<circle cx="' + sx(p[0], -4, 4).toFixed(1) + '" cy="' + sy(p[1], 0, 8).toFixed(1) + '" r="2.6" fill="' + p[2] + '" fill-opacity="0.8" data-edit="true" data-role="marker" data-series="' + (p[2] === '#B9BDC4' ? 0 : p[2] === '#5B8FDB' ? 1 : 2) + '"/>').join('') +
       '<line x1="' + sx(hitA[0], -4, 4).toFixed(1) + '" y1="' + (sy(hitA[1], 0, 8) - 3).toFixed(1) + '" x2="' + (sx(hitA[0], -4, 4) + 10).toFixed(1) + '" y2="' + (sy(hitA[1], 0, 8) - 12).toFixed(1) + '" stroke="' + T.tick + '" stroke-width="0.6" data-edit="true" data-role="stat"/>' +
       '<text x="' + (sx(hitA[0], -4, 4) + 12).toFixed(1) + '" y="' + (sy(hitA[1], 0, 8) - 13).toFixed(1) + '" font-family="' + F + '" font-size="6.8" font-style="italic" fill="' + T.tick + '" data-edit="true">Krt14</text>' +
       '<text x="' + (P.x1 - 8) + '" y="' + (P.y0 + 12) + '" font-family="' + F + '" font-size="6.5" fill="' + T.label + '" text-anchor="end" data-edit="true">up, 186</text>' +
@@ -523,7 +523,7 @@ function miniBox(x, y, w, h) {
   return miniFrame(x, y, w, h) + miniGrid(x, y, w, h, 2) + boxes.map((b, i) => {
     const cx = x + w * (i + 0.5) / 2;
     return '<line x1="' + cx.toFixed(1) + '" y1="' + (y + (1 - b[0]) * h).toFixed(1) + '" x2="' + cx.toFixed(1) + '" y2="' + (y + (1 - b[2]) * h).toFixed(1) + '" stroke="' + T.spine + '" stroke-width="0.7" data-edit="true" data-role="stat"/>' +
-      '<rect x="' + (cx - bw / 2).toFixed(1) + '" y="' + (y + (1 - b[2]) * h).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + ((b[2] - b[1]) * h).toFixed(1) + '" fill="#4E79A7" fill-opacity="0.28" stroke="' + T.spine + '" stroke-width="0.7" data-edit="true" data-role="bar" data-series="0"/>' +
+      '<rect x="' + (cx - bw / 2).toFixed(1) + '" y="' + (y + (1 - b[2]) * h).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + ((b[2] - b[1]) * h).toFixed(1) + '" fill="#5B8FDB" fill-opacity="0.28" stroke="' + T.spine + '" stroke-width="0.7" data-edit="true" data-role="bar" data-series="0"/>' +
       '<line x1="' + (cx - bw / 2).toFixed(1) + '" y1="' + (y + (1 - b[1]) * h).toFixed(1) + '" x2="' + (cx + bw / 2).toFixed(1) + '" y2="' + (y + (1 - b[1]) * h).toFixed(1) + '" stroke="' + T.spine + '" stroke-width="1" data-edit="true" data-role="stat"/>';
   }).join('');
 }
@@ -571,7 +571,7 @@ const LAYOUT_TEMPLATES = {
   '<defs><marker id="ff-arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4D4D4D"/></marker></defs>' +
   (() => {
     // Thin-outline boxes on near-white fills; only the pivotal step carries the accent
-    const steps = [['Sample collection', 36, '#F2F4F8', '#4D4D4D'], ['Preprocessing', 158, '#F2F4F8', '#4D4D4D'], ['Model training', 280, '#E2EAF5', '#4E79A7']];
+    const steps = [['Sample collection', 36, '#F2F4F8', '#4D4D4D'], ['Preprocessing', 158, '#F2F4F8', '#4D4D4D'], ['Model training', 280, '#EAF0FA', '#5B8FDB']];
     let s = '';
     steps.forEach((st, i) => {
       const x = st[1], y = 52, w = 92, h = 52;
@@ -582,7 +582,7 @@ const LAYOUT_TEMPLATES = {
     });
     s += '<rect x="60" y="150" width="288" height="86" rx="6" fill="none" stroke="#9A9AA4" stroke-width="0.9" stroke-dasharray="5,3" data-edit="true"/>' +
       '<text x="70" y="166" font-family="' + F + '" font-size="7.5" fill="' + T.label + '" data-edit="true">Evaluation</text>';
-    const nodes = [['Cross-validation', 78, '#4E79A7'], ['Ablation', 172, '#59A14F'], ['External test', 258, '#E15759']];
+    const nodes = [['Cross-validation', 78, '#5B8FDB'], ['Ablation', 172, '#43B39C'], ['External test', 258, '#EC6F9F']];
     nodes.forEach((nd, i) => {
       s += '<rect x="' + nd[1] + '" y="178" width="' + (nd[1] === 258 ? 78 : 74) + '" height="34" rx="5" fill="#FFFFFF" stroke="' + nd[2] + '" stroke-width="1.2" data-edit="true" data-role="series" data-series="' + i + '"/>' +
         '<text x="' + (nd[1] + 37) + '" y="198" font-family="' + F + '" font-size="7.5" fill="' + T.title + '" text-anchor="middle" data-edit="true">' + nd[0] + '</text>';
@@ -639,7 +639,7 @@ const LAYOUT_TEMPLATES = {
     return gs.map((g, i) => {
       const fy = v => 126 - v / 100 * 78;
       const c0 = (g[0] - bw / 2 - 2).toFixed(1), c1 = (g[0] + bw / 2 + 2).toFixed(1);
-      return '<rect x="' + c0 + '" y="' + fy(g[1]).toFixed(1) + '" width="' + bw + '" height="' + (126 - fy(g[1])).toFixed(1) + '" fill="#C4C9D4" data-edit="true" data-role="bar" data-series="0"/>' +
+      return '<rect x="' + c0 + '" y="' + fy(g[1]).toFixed(1) + '" width="' + bw + '" height="' + (126 - fy(g[1])).toFixed(1) + '" fill="#CBD2DE" data-edit="true" data-role="bar" data-series="0"/>' +
         '<rect x="' + c1 + '" y="' + fy(g[2]).toFixed(1) + '" width="' + bw + '" height="' + (126 - fy(g[2])).toFixed(1) + '" fill="' + S[0] + '" data-edit="true" data-role="bar" data-series="1"/>' +
         errBar(c0, fy(g[1] + 4), fy(g[1] - 4), 2) + errBar(c1, fy(g[2] + 4), fy(g[2] - 4), 2);
     }).join('') +
@@ -703,7 +703,7 @@ const LAYOUT_TEMPLATES = {
   subAxes(280, 48, 378, 126, [0, 50, 100], 0, 100, { xLabels: ['A', 'B'] }) +
   (() => {
     const fy = v => 126 - v / 100 * 78;
-    return '<rect x="292" y="' + fy(38).toFixed(1) + '" width="18" height="' + (126 - fy(38)).toFixed(1) + '" fill="#C4C9D4" data-edit="true" data-role="bar" data-series="0"/>' +
+    return '<rect x="292" y="' + fy(38).toFixed(1) + '" width="18" height="' + (126 - fy(38)).toFixed(1) + '" fill="#CBD2DE" data-edit="true" data-role="bar" data-series="0"/>' +
       '<rect x="336" y="' + fy(66).toFixed(1) + '" width="18" height="' + (126 - fy(66)).toFixed(1) + '" fill="' + S[0] + '" data-edit="true" data-role="bar" data-series="1"/>' +
       errBar('301', fy(43), fy(33), 2) + errBar('345', fy(71), fy(61), 2) +
       '<path d="M292 ' + (fy(74) - 5) + ' H354" fill="none" stroke="' + T.spine + '" stroke-width="0.8" data-edit="true" data-role="stat"/>' +

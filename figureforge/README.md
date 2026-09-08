@@ -37,9 +37,11 @@ The control panels follow the polished tool aesthetic of
   `:has()`, gradient primary buttons with coloured shadows
 
 ### Colour Cards (curated palettes)
-Default template colours follow Tableau's rich harmonious family
-(#4E79A7 steel blue + grey controls + one accent). The 🌍 色板 dropdown ships
-**14 curated colour cards**, one click recolors the whole figure coherently:
+Default template colours follow the **Candy gem-pastel family**
+(#5B8FDB periwinkle + honey / rose / mint / lilac + grey controls). The 🌍 色板
+dropdown ships **14 curated colour cards**, one click recolors the whole figure
+coherently:
+- **Candy 粉蓝绿黄紫** — the fresh gem-pastel default
 - **Tableau 10** — the classic rich professional set
 - **Tol Muted** — Paul Tol's elegant colour-blind-safe scheme
 - **Seaborn Deep** — vivid yet balanced matplotlib classic
