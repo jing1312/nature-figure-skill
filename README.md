@@ -91,7 +91,7 @@
 <div align="center">
   <img src="assets/figureforge-canvas.svg" alt="FigureForge 无限画布：聚类热图、火山图、森林图等复杂示例图，一句话生成图表、节点卡片与参考连线" width="100%" />
   <br/>
-  <img src="assets/figureforge-editor.svg" alt="FigureForge 编辑器：出版级模板库、superplot 原始点叠加、投稿级细节" width="100%" />
+  <img src="assets/figureforge-editor.svg" alt="FigureForge 编辑器：出版级多面板模板（生存曲线主图+统计副图）、superplot 原始点叠加、投稿级细节" width="100%" />
 </div>
 
 ### 核心能力
