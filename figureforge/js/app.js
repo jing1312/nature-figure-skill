@@ -247,6 +247,7 @@ const App = (function () {
     };
     // Ctrl+V / Cmd+V: paste a screenshot or copied image straight onto the canvas
     document.addEventListener('paste', (e) => {
+      if (document.body.classList.contains('mode-canvas')) return; // workspace handles it
       const ae = document.activeElement;
       if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
       const items = [...((e.clipboardData && e.clipboardData.items) || [])];
@@ -284,6 +285,9 @@ const App = (function () {
 
   function wireKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
+      // In canvas (workspace) mode the editor shortcuts don't apply —
+      // workspace.js has its own handler.
+      if (document.body.classList.contains('mode-canvas')) return;
       const tag = e.target.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
       const ctrl = e.ctrlKey || e.metaKey;

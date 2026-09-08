@@ -6,6 +6,7 @@
   <title>FigureForge — 可视化图形编辑器</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/workspace.css">
 </head>
 <body>
   <header id="topbar">
@@ -13,6 +14,10 @@
       <button id="btn-collapse-left" class="tool-btn" title="收起/展开左侧栏">«</button>
       <span class="logo-icon">🎨</span>
       <span class="logo-text">FigureForge</span>
+      <div class="mode-switch" style="margin-left:10px">
+        <button id="btn-mode-canvas" class="mode-btn active" title="无限画布 — 节点卡片 · 一句话生成">🪟 画布</button>
+        <button id="btn-mode-editor" class="mode-btn" title="单图编辑器 — 逐元素精修">✏️ 编辑器</button>
+      </div>
     </div>
     <div class="toolbar">
       <button id="btn-undo" class="tool-btn" title="撤销 (Ctrl+Z)" disabled>↶</button>
@@ -80,6 +85,67 @@
         <div id="selection-overlay" class="selection-overlay"></div>
       </div>
       <div id="context-menu" class="context-menu hidden"></div>
+
+      <!-- ===== VibePaper-style infinite canvas workspace ===== -->
+      <div id="workspace-view">
+        <div id="ws-world">
+          <svg id="ws-edges" width="1" height="1"></svg>
+          <div id="ws-nodes"></div>
+        </div>
+        <div id="ws-marquee" class="hidden"></div>
+
+        <div id="ws-empty">
+          <div class="ws-empty-badge">🪟</div>
+          <h2>从一个想法开始</h2>
+          <p>所有图表、图片与灵感都落在同一张无限画布上<br>一句话生成 · 自由排列 · 参考连线 · 双击精修</p>
+          <div class="ws-empty-chips">
+            <span class="ws-empty-chip" data-act="prompt">✦ 一句话生成图表</span>
+            <span class="ws-empty-chip" data-act="plaza">🧰 打开素材广场</span>
+            <span class="ws-empty-chip" data-act="note">📝 加张便签</span>
+          </div>
+        </div>
+
+        <div id="ws-toolbar">
+          <button class="ws-tool active" data-tool="select" title="选择 / 框选 (V)">🖱</button>
+          <button class="ws-tool" data-tool="hand" title="抓手平移 (H · 或按住空格)">✋</button>
+          <div class="ws-tool-sep"></div>
+          <button class="ws-tool" id="ws-tool-note" title="新建便签">📝</button>
+          <button class="ws-tool" id="ws-tool-text" title="新建文本">T</button>
+          <button class="ws-tool" id="ws-tool-image" title="插入图片">🖼</button>
+          <div class="ws-tool-sep"></div>
+          <button class="ws-tool" id="ws-tool-plaza" title="素材广场（图鉴 + 模板）">🧰</button>
+        </div>
+
+        <div id="ws-zoom-hint">滚轮缩放 · 空格/中键拖动平移<br>拖动节点右侧圆点连线 · 双击图表进编辑器</div>
+        <div id="ws-zoom">
+          <button class="ws-tool" id="ws-zoom-out" title="缩小">−</button>
+          <span id="ws-zoom-level" title="点击回到 100%">100%</span>
+          <button class="ws-tool" id="ws-zoom-in" title="放大">+</button>
+          <button class="ws-tool" id="ws-zoom-fit" title="适应全部节点 (Ctrl+0)">⤢</button>
+        </div>
+
+        <aside id="ws-plaza">
+          <div class="ws-plaza-head">
+            <span class="ws-plaza-title">🧰 素材广场</span>
+            <button class="ws-plaza-close" id="ws-plaza-close">✕</button>
+          </div>
+          <div class="ws-plaza-sub">浏览 9 套图鉴与全部出版级模板，点击即可放到画布上 remix</div>
+          <div id="ws-plaza-body"></div>
+        </aside>
+
+        <div id="ws-prompt">
+          <div class="ws-prompt-steps" id="ws-prompt-steps"></div>
+          <div class="ws-prompt-row">
+            <span class="ws-prompt-spark">✦</span>
+            <input id="ws-prompt-input" placeholder="用一句话描述你想要的图… 例如：三组肿瘤体积比较的箱线图，带显著性标记" autocomplete="off">
+            <select id="ws-prompt-palette" title="色板"></select>
+            <button id="ws-prompt-go">生成 ⏎</button>
+          </div>
+        </div>
+
+        <input type="file" id="ws-file-img" accept="image/*" class="hidden">
+      </div>
+      <!-- ===== workspace end ===== -->
     </main>
     <aside id="right-panel">
       <div id="prop-empty" class="prop-empty">
@@ -196,6 +262,12 @@
         <span>复制 SVG</span><span>Ctrl+Shift+C</span>
         <span>粘贴图片</span><span>Ctrl+V（截图直接入画布）</span>
         <span>裁剪 / 旋转图片</span><span>双击图片，或选中后在右侧面板</span>
+        <span style="grid-column:1/-1;border-top:1px solid var(--border);margin-top:6px;padding-top:8px;color:var(--accent);font-weight:600">🪟 无限画布</span>
+        <span>平移画布</span><span>空格/中键拖动，或抓手工具</span>
+        <span>缩放画布</span><span>滚轮 · Ctrl+± · Ctrl+0 适应全部</span>
+        <span>参考连线</span><span>拖动节点右侧圆点到另一节点</span>
+        <span>节点进编辑器</span><span>双击图表卡片</span>
+        <span>删除 / 复制 / 全选</span><span>Delete · Ctrl+D · Ctrl+A</span>
         <span>本帮助</span><span>?</span>
       </div>
       <div class="modal-actions">
@@ -215,6 +287,7 @@
   <script src="js/ai-generate.js"></script>
   <script src="js/export.js"></script>
   <script src="js/daynight.js"></script>
+  <script src="js/workspace.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

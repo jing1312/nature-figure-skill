@@ -2,6 +2,19 @@
 
 A pure-frontend interactive SVG figure editor that lets you **visualize and select figure layout templates BEFORE AI generates the actual plot**.
 
+## 🪟 Infinite Canvas Workspace (VibePaper-style)
+
+The default landing view is a **VibePaper-inspired infinite canvas** where the whole figure-making process lives on one pannable, zoomable surface:
+
+- **Infinite canvas** — wheel zooms to cursor, space/middle-drag (or the ✋ tool) pans, dot grid follows the camera, `Ctrl+0` fits all nodes; zoom cluster bottom-right
+- **Node cards** — every figure, imported image, sticky note and text snippet is a draggable card (multi-select via Shift/marquee, duplicate `Ctrl+D`, arrows nudge, `Delete` removes)
+- **One-sentence generation** — the floating prompt bar compiles a description into a figure node with visible workflow steps (解析意图 → 匹配模板 → 渲染图形); uses your configured OpenAI-compatible API when present, otherwise keyword-matches a built-in publication-grade template so it *never* fails silently
+- **Reference edges** — drag the round port on a node's right edge onto another card to draw a curved reference link (cycles are rejected); double-click an edge to remove
+- **素材广场 (Plaza)** — slide-over gallery with all **9 showcase atlases** (83 panels, fetched from `/assets`) plus every publication-grade template; one click remixes it onto the canvas
+- **Editor round-trip** — double-click a figure card (or ✏️) to open it in the single-figure editor; returning to the canvas writes your edits back into the node
+- **Persistence** — nodes, edges and camera auto-save to localStorage and restore on reload; `Ctrl+V` pastes screenshots straight onto the canvas
+- Toggle between 🪟 画布 / ✏️ 编辑器 any time from the top bar
+
 ## The Problem It Solves
 
 With traditional AI figure generation (including the `nature-figure-skill` workflow), figure design — legend placement, color schemes, panel layout — is only described in text until the code is rendered. This forces expensive iterative re-drawing: "move the legend to the right", "use softer colors", "make panel A bigger".
@@ -230,11 +243,13 @@ publication-grade demo figure so you can still explore the editor.
 
 ```
 figureforge/
-  index.html              — three-panel layout entry point
+  index.html              — three-panel layout entry point + infinite canvas workspace
   css/style.css           — dual theme (dark + light), day/night sky CSS
+  css/workspace.css       — infinite canvas: node cards, edges, prompt bar, plaza
   js/
     palettes.js           — 8 Nature color palettes
     templates.js          — 16 publication-grade SVG templates (10 chart + 6 layout)
+    workspace.js          — VibePaper-style infinite canvas engine (nodes/edges/prompt/plaza)
     canvas.js             — SVG direct manipulation engine
     properties.js         — context-sensitive property panel
     ai-generate.js        — AI generation with embedded design knowledge
