@@ -66,6 +66,13 @@
   <img src="assets/showcase-max.svg" alt="FigureForge Max 图鉴：散点矩阵 SPLOM、MA 图、GSEA 通路点图、圆填充、排名凹凸图、二维等高线密度、Pre/Post 哑铃图、发散堆叠条形、日历热图" width="100%" />
 </div>
 
+**Nova 图鉴（新增）**——桑基流、圆环相关图、马赛克图、PCA 双标图、人口金字塔、环形热图、双轴组合图、伪 3D 响应面、ECDF+KS 检验：
+
+<div align="center">
+  <img src="assets/showcase-nova.svg" alt="FigureForge Nova 图鉴：治疗流桑基图、相关系数圆环图、马赛克列联图、PCA 双标图、人口金字塔、7x24 环形热图、剂量双轴组合、伪3D响应曲面、ECDF 与 KS 检验" width="100%" />
+</div>
+
+
 
 
 
