@@ -72,6 +72,13 @@
   <img src="assets/showcase-nova.svg" alt="FigureForge Nova 图鉴：治疗流桑基图、相关系数圆环图、马赛克列联图、PCA 双标图、人口金字塔、7x24 环形热图、剂量双轴组合、伪3D响应曲面、ECDF 与 KS 检验" width="100%" />
 </div>
 
+**Apex 图鉴（新增）**——漏斗图、Taylor 图、弧线图、冰柱图、蜂群图、周期图、地平线图、子弹图、华夫图：
+
+<div align="center">
+  <img src="assets/showcase-apex.svg" alt="FigureForge Apex 图鉴：meta 分析漏斗图、Taylor 模型一致性图、弧线图、层级冰柱图、蜂群图、周期图、地平线折叠图、KPI 子弹图、100 格华夫图" width="100%" />
+</div>
+
+
 
 
 
