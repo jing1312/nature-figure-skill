@@ -212,9 +212,9 @@ const App = (function () {
     const key = document.getElementById('set-api-key');
     const model = document.getElementById('set-api-model');
     function open() {
-      base.value = localStorage.getItem('ff_api_base') || '';
-      key.value = localStorage.getItem('ff_api_key') || '';
-      model.value = localStorage.getItem('ff_api_model') || '';
+      base.value = sessionStorage.getItem('ff_api_base') || '';
+      key.value = sessionStorage.getItem('ff_api_key') || '';
+      model.value = sessionStorage.getItem('ff_api_model') || '';
       modal?.classList.remove('hidden');
     }
     function close() { modal?.classList.add('hidden'); }

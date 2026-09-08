@@ -107,9 +107,12 @@ LAYOUT PATTERNS:
   }
 
   async function callAPI(systemPrompt, userPrompt) {
-    const apiBase = localStorage.getItem('ff_api_base');
-    const apiKey = localStorage.getItem('ff_api_key');
-    const apiModel = localStorage.getItem('ff_api_model') || 'gpt-4o';
+    // API key is kept in sessionStorage only (never localStorage) so it is
+    // cleared when the tab closes, limiting exposure if the origin is
+    // ever compromised (e.g. via a stored/persistent XSS elsewhere).
+    const apiBase = sessionStorage.getItem('ff_api_base');
+    const apiKey = sessionStorage.getItem('ff_api_key');
+    const apiModel = sessionStorage.getItem('ff_api_model') || 'gpt-4o';
 
     if (apiBase && apiKey) {
       const resp = await fetch(`${apiBase}/chat/completions`, {
@@ -152,13 +155,13 @@ LAYOUT PATTERNS:
   }
 
   function configure(base, key, model) {
-    localStorage.setItem('ff_api_base', base);
-    localStorage.setItem('ff_api_key', key);
-    localStorage.setItem('ff_api_model', model || 'gpt-4o');
+    sessionStorage.setItem('ff_api_base', base);
+    sessionStorage.setItem('ff_api_key', key);
+    sessionStorage.setItem('ff_api_model', model || 'gpt-4o');
   }
 
   function isConfigured() {
-    return !!localStorage.getItem('ff_api_base') && !!localStorage.getItem('ff_api_key');
+    return !!sessionStorage.getItem('ff_api_base') && !!sessionStorage.getItem('ff_api_key');
   }
 
   return { generate, configure, isConfigured, SYSTEM_PROMPT };
