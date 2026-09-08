@@ -15,7 +15,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Editor](https://img.shields.io/badge/editor-在线可用-2bb8ab.svg)](https://jing1312.github.io/nature-figure-skill/figureforge/)
 [![Templates](https://img.shields.io/badge/模板-22%20个出版级-2bb8ab.svg)](#-模板长这样真实渲染)
-[![Palettes](https://img.shields.io/badge/色卡-14%20组精选-2bb8ab.svg)](#figureforge-核心能力)
+[![Palettes](https://img.shields.io/badge/色卡-16%20组精选-2bb8ab.svg)](#figureforge-核心能力)
 [![Backends](https://img.shields.io/badge/backend-Python%20%7C%20R-3776ab.svg)](#-naturefigure--agent-skill-出图工作流)
 
 </div>
@@ -24,7 +24,7 @@
 
 ## ✨ 模板长这样（真实渲染）
 
-下面每张图都是 FigureForge 内置模板的**真实输出**——不是效果图：选骨架、改数据、一键导出 SVG / PNG / TIFF / PPTX。
+下面每张图都是 FigureForge 内置模板的**真实输出**——不是效果图：选骨架、改数据、一键导出 SVG / PNG / TIFF / PDF / PPTX。
 
 <div align="center">
   <img src="assets/showcase.svg" alt="FigureForge 模板图鉴：12 格 Chart atlas — 分组/堆叠柱状图、直方图、小提琴、箱线、山脊、多系列折线、置信带飘带、事件线、个体轨迹、点区间、斜率图，原创科学配色" width="100%" />
@@ -103,7 +103,7 @@
 - **位图编辑套件**：拖入或 Ctrl+V 粘贴截图即可上画布，双击裁剪、90° 旋转、镜像、亮度/对比度/饱和度调整。
 - **昼夜双主题**：☀ / 🌙 一键切换，全屏星空过渡动画；工作区背景 14 种可选。
 - **会话自动保存**：编辑实时存入浏览器，关页重开接着改；也可导出 `.json` 项目文件。
-- **多格式导出**：SVG（文字可编辑）/ PNG / TIFF（含 dpi 元数据，可直接投稿）/ PPTX，分辨率 1×–4×、300/600 dpi。
+- **多格式导出**：SVG（文字可编辑）/ PNG / TIFF（含 dpi 元数据，可直接投稿）/ PDF（矢量，文字可选中）/ PPTX，分辨率 1×–4×、300/600 dpi。
 
 与 AI 工作流的关系：FigureForge 不替代代码化出图——它覆盖**前期布局设计**（先定骨架再填数据）和**后期微调**（AI 出图后拖两下改到位）两端。
 
@@ -183,7 +183,7 @@ figure-01.png    ← 预览/演示用
 - [x] 多行文本编辑（tspan 拆行）
 - [x] 矢量 PDF 导出（svg2pdf.js + jsPDF，文字保持可选中）
 - [ ] 柱状图 hatch / 点纹理填充（黑白印刷友好）
-- [ ] 雷达图、效应量漏斗图、甘特时间轴等新模板
+- [x] 雷达图、效应量漏斗图、甘特时间轴等新图型（已随素材广场 9 套图鉴 83 面板上线）
 - [ ] FigureForge ↔ Python 管线闭环（编辑器 SVG → `save_pub_set` 一键补齐 PDF/TIFF）
 - [ ] 期刊规格预设：89 / 183 mm 栏宽检查、字号下限检查
 - [ ] 色觉无障碍模拟预览
