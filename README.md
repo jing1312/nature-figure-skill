@@ -42,6 +42,13 @@
   <img src="assets/showcase-bio.svg" alt="FigureForge 生信图鉴：点阵热图+聚类树、相关性热图+显著性、corrplot 圆饼矩阵、环形热图、Mantel 组合图、GSEA 富集曲线、PCA 置信椭圆、边际密度散点、柱+半小提琴、箱线+显著性、玫瑰图" width="100%" />
 </div>
 
+**进阶图鉴（新增）**——OncoPrint、瀑布图、冲积图、山脊图、Bland-Altman 一致性、免疫组成堆叠面积、森林图、曼哈顿图，8 个临床与组学高频图型：
+
+<div align="center">
+  <img src="assets/showcase-extra.svg" alt="FigureForge 进阶图鉴：OncoPrint 突变矩阵、瀑布图、冲积图、山脊图、Bland-Altman、堆叠面积、森林图、曼哈顿图" width="100%" />
+</div>
+
+
 ## 🧪 FigureForge — 不写代码的出图方式
 
 **在线打开（无需安装）**：[jing1312.github.io/nature-figure-skill/figureforge/](https://jing1312.github.io/nature-figure-skill/figureforge/)
