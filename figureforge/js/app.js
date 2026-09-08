@@ -102,6 +102,14 @@ const App = (function () {
     document.getElementById('btn-snap')?.addEventListener('click', (e) => { state.snapEnabled = !state.snapEnabled; Canvas.toggleSnap(); e.target.classList.toggle('active', state.snapEnabled); });
     document.getElementById('btn-save')?.addEventListener('click', () => Store.saveSession());
     document.getElementById('btn-insert-text')?.addEventListener('click', () => Canvas.insertText());
+    document.getElementById('btn-format-paint')?.addEventListener('click', (e) => {
+      if (Canvas.isFormatPainting()) {
+        Canvas.cancelFormatPaint();
+        e.currentTarget.classList.remove('active');
+      } else if (Canvas.startFormatPaint()) {
+        e.currentTarget.classList.add('active');
+      }
+    });
     document.getElementById('btn-help')?.addEventListener('click', () => toggleHelp(true));
   }
 
@@ -309,7 +317,10 @@ const App = (function () {
       else if (e.key === 'ArrowRight') { e.preventDefault(); Canvas.nudge(e.shiftKey ? 10 : 1, 0); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); Canvas.nudge(0, e.shiftKey ? -10 : -1); }
       else if (e.key === 'ArrowDown') { e.preventDefault(); Canvas.nudge(0, e.shiftKey ? 10 : 1); }
-      else if (e.key === 'Escape') { Canvas.deselect(); Export.closeDialog(); toggleHelp(false); document.getElementById('settings-modal')?.classList.add('hidden'); }
+      else if (e.key === 'Escape') {
+        if (Canvas.isFormatPainting()) { Canvas.cancelFormatPaint(); document.getElementById('btn-format-paint')?.classList.remove('active'); }
+        Canvas.deselect(); Export.closeDialog(); toggleHelp(false); document.getElementById('settings-modal')?.classList.add('hidden');
+      }
       else if (ctrl && e.shiftKey && e.key === 'C') { e.preventDefault(); Export.copySVG(); }
       else if (ctrl && (e.key === '=' || e.key === '+')) { e.preventDefault(); Canvas.zoomBy(1.2); updateZoomDisplay(); }
       else if (ctrl && e.key === '-') { e.preventDefault(); Canvas.zoomBy(1 / 1.2); updateZoomDisplay(); }

@@ -120,6 +120,26 @@ body.theme-light #canvas-area { background-image: radial-gradient(rgba(19, 24, 3
 #guides-overlay .resize-handle[data-corner="sw"] { cursor: nesw-resize; }
 #guides-overlay .resize-handle:hover { fill: var(--selection); }
 
+/* ── Align & distribute floating bar (appears on multi-select) ── */
+.align-bar { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 40;
+  display: flex; align-items: center; gap: 2px; padding: 4px 6px; border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-panel) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-panel); box-shadow: 0 8px 28px rgba(0,0,0,0.35); }
+.align-bar.hidden { display: none; }
+.align-btn { width: 30px; height: 30px; border-radius: 8px; border: none; background: transparent;
+  color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  padding: 0; transition: all 0.13s; }
+.align-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.align-btn svg rect { fill: currentColor; fill-opacity: 0.28; stroke: none; }
+.align-btn:hover:not(:disabled) { background: var(--bg-input); color: var(--text-bright); }
+.align-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Format painter mode ── */
+body.paint-picking #svg-canvas svg { cursor: copy; }
+body.paint-picking #svg-canvas svg [data-edit="true"][data-selected="true"] { outline: none; }
+body.paint-picking #btn-format-paint { background: var(--accent-dim); border-color: var(--accent); color: var(--text-bright); animation: paint-pulse 1.6s ease infinite; }
+@keyframes paint-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 12%, transparent); } }
+
 /* Crop overlay (image crop mode) */
 #guides-overlay .crop-shade { fill: rgba(10, 12, 18, 0.45); pointer-events: none; }
 #guides-overlay .crop-rect { fill: rgba(43, 184, 171, 0.04); stroke: var(--selection); stroke-width: 1.4; pointer-events: all; cursor: move; }

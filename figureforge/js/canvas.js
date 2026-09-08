@@ -37,11 +37,13 @@ const Canvas = (function () {
     container.classList.remove('hidden');
     empty.classList.add('hidden');
     svgEl = container.querySelector('svg');
+    markEditable(svgEl);
     if (showGrid) container.classList.add('show-grid');
     else container.classList.remove('show-grid');
     selection = [];
     hideGuides();
     closeContextMenu();
+    cancelFormatPaint();
     const vb = parseViewBox();
     vbW = vb.w; vbH = vb.h;
     zoom = 1;
@@ -64,6 +66,37 @@ const Canvas = (function () {
   }
 
   function getSVGElement() { return svgEl; }
+
+  // ── Decompose: make every drawable leaf of an (imported) SVG individually
+  //    selectable/editable. Idempotent — already-tagged templates untouched.
+  const SKIP_TAGS = new Set(['defs', 'clipPath', 'mask', 'marker', 'symbol', 'pattern',
+    'style', 'script', 'title', 'desc', 'metadata', 'linearGradient', 'radialGradient',
+    'filter', 'view', 'foreignObject']);
+  const DRAW_TAGS = new Set(['path', 'rect', 'circle', 'ellipse', 'line', 'polyline',
+    'polygon', 'text', 'image', 'use']);
+  const GROUP_TAGS = new Set(['g', 'a', 'switch']);
+
+  function markEditable(root) {
+    if (!root) return 0;
+    let n = 0;
+    const walk = (parent) => {
+      [...parent.children].forEach(node => {
+        if (node.nodeType !== 1) return;
+        const tag = node.tagName;
+        if (SKIP_TAGS.has(tag)) return;
+        if (DRAW_TAGS.has(tag)) {
+          if (tag === 'use') {
+            // <use> shells stay editable as one unit; content lives in defs
+            if (!node.getAttribute('data-edit')) { node.setAttribute('data-edit', 'true'); n++; }
+          } else if (!node.getAttribute('data-edit')) {
+            node.setAttribute('data-edit', 'true'); n++;
+          }
+        } else if (GROUP_TAGS.has(tag)) walk(node);
+      });
+    };
+    walk(root);
+    return n;
+  }
 
   function attachSVGListeners() {
     if (!svgEl) return;
@@ -106,6 +139,7 @@ const Canvas = (function () {
 
   function notifySelectionChanged() {
     updateSelectionOverlay();
+    updateAlignBar();
     const el = getSelected();
     if (window.__ffOnSelectionChanged) window.__ffOnSelectionChanged(el);
     else if (window.Properties) Properties.onSelectionChanged(el);
@@ -146,6 +180,19 @@ const Canvas = (function () {
   function getWorldBBox(el) {
     let b;
     try { b = el.getBBox(); } catch (e) { b = { x: 0, y: 0, width: 0, height: 0 }; }
+    // Map bbox corners through the full ancestor transform chain so the box
+    // is correct even inside <g transform="..."> (imported SVGs).
+    try {
+      const m = svgEl.getScreenCTM().inverse().multiply(el.getScreenCTM());
+      const pts = [[b.x, b.y], [b.x + b.width, b.y], [b.x, b.y + b.height], [b.x + b.width, b.y + b.height]]
+        .map(([x, y]) => {
+          const p = new DOMPoint(x, y).matrixTransform(m);
+          return [p.x, p.y];
+        });
+      const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+      const x0 = Math.min(...xs), y0 = Math.min(...ys);
+      return { x: x0, y: y0, w: Math.max(...xs) - x0, h: Math.max(...ys) - y0 };
+    } catch (e) { /* fall through to the cheap path */ }
     let dx = 0, dy = 0;
     const tr = el.getAttribute('transform');
     if (tr) {
@@ -153,6 +200,21 @@ const Canvas = (function () {
       if (m) { dx = parseFloat(m[1]); dy = m[2] ? parseFloat(m[2]) : 0; }
     }
     return { x: b.x + dx, y: b.y + dy, w: b.width, h: b.height };
+  }
+
+  // Convert a delta in svgEl (viewBox) space into the element's local space,
+  // accounting for ancestor transforms (rotate/scale on parent groups).
+  function worldDeltaToLocal(el, wdx, wdy) {
+    try {
+      const m = svgEl.getScreenCTM().inverse().multiply(el.parentNode.getScreenCTM());
+      return { dx: m.a * wdx + m.c * wdy, dy: m.b * wdx + m.d * wdy };
+    } catch (e) { return { dx: wdx, dy: wdy }; }
+  }
+
+  // Move an element by a world-space delta (viewBox units), transform-safe.
+  function moveElementWorld(el, wdx, wdy) {
+    const { dx, dy } = worldDeltaToLocal(el, wdx, wdy);
+    applyTranslate(el, dx, dy);
   }
 
   function unionBBox(boxes) {
@@ -195,13 +257,12 @@ const Canvas = (function () {
       for (let i = 0; i + 1 < pts.length; i += 2) { pts[i] += dx; pts[i + 1] += dy; }
       el.setAttribute('points', pts.join(','));
     } else {
-      let ox = 0, oy = 0;
-      const tr = el.getAttribute('transform');
-      if (tr) {
-        const m = /translate\(\s*([-\d.eE]+)(?:[\s,]+([-\d.eE]+))?\)/.exec(tr);
-        if (m) { ox = parseFloat(m[1]); oy = m[2] ? parseFloat(m[2]) : 0; }
-      }
-      el.setAttribute('transform', `translate(${ox + dx} ${oy + dy})`);
+      let ox = 0, oy = 0, rest = '';
+      const tr = el.getAttribute('transform') || '';
+      const m = /translate\(\s*([-\d.eE]+)(?:[\s,]+([-\d.eE]+))?\)/.exec(tr);
+      if (m) { ox = parseFloat(m[1]); oy = m[2] ? parseFloat(m[2]) : 0; }
+      rest = tr.replace(/translate\(\s*[-\d.eE]+(?:[\s,]+[-\d.eE]+)?\)\s*/i, '').trim();
+      el.setAttribute('transform', `translate(${ox + dx} ${oy + dy})` + (rest ? ' ' + rest : ''));
     }
   }
 
@@ -406,6 +467,13 @@ const Canvas = (function () {
     closeContextMenu();
     if (e.button !== 0) return;
     commitTextEdit();
+    if (paintMode && paintSource) {
+      const t = findEditableElement(e.target);
+      if (t) applyFormatPaint(t);
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     const target = findEditableElement(e.target);
     if (target) {
       if (e.shiftKey) toggleInSelection(target);
@@ -510,7 +578,10 @@ const Canvas = (function () {
       dy = Math.round(dy / GRID_SIZE) * GRID_SIZE;
     }
 
-    dragStartState.forEach(s => setElementPosition(s.el, s.pos.x + dx, s.pos.y + dy));
+    dragStartState.forEach(s => {
+      const l = worldDeltaToLocal(s.el, dx, dy);
+      setElementPosition(s.el, s.pos.x + l.dx, s.pos.y + l.dy);
+    });
     updateSelectionOverlay();
   }
 
@@ -537,13 +608,13 @@ const Canvas = (function () {
   // ── Nudge with arrow keys ──
   function nudge(dx, dy) {
     if (!selection.length) return;
-    const moves = selection.map(el => ({ el, from: getElementPosition(el) }));
-    moves.forEach(m => setElementPosition(m.el, m.from.x + dx, m.from.y + dy));
+    const moves = selection.map(el => ({ el, from: getElementPosition(el), loc: worldDeltaToLocal(el, dx, dy) }));
+    moves.forEach(m => setElementPosition(m.el, m.from.x + m.loc.dx, m.from.y + m.loc.dy));
     updateSelectionOverlay();
     if (window.History) {
       History.push({
         undo: () => moves.forEach(m => setElementPosition(m.el, m.from.x, m.from.y)),
-        redo: () => moves.forEach(m => setElementPosition(m.el, m.from.x + dx, m.from.y + dy)),
+        redo: () => moves.forEach(m => setElementPosition(m.el, m.from.x + m.loc.dx, m.from.y + m.loc.dy)),
         label: 'Nudge'
       });
     }
@@ -595,6 +666,140 @@ const Canvas = (function () {
       });
     }
   }
+
+  // ── Align & distribute (world-space, transform-safe) ──
+  function alignSelection(mode) {
+    if (!svgEl || selection.length < 2) return;
+    const items = selection.map(el => ({ el, b: getWorldBBox(el) }));
+    const union = unionBBox(items.map(s => s.b));
+    const shifts = new Map(); // el -> world delta
+    if (mode.startsWith('dist')) {
+      if (selection.length < 3) return;
+      const horiz = mode === 'dist-h';
+      items.sort((p, q) => horiz ? p.b.x - q.b.x : p.b.y - q.b.y);
+      const first = items[0].b, last = items[items.length - 1].b;
+      const span = horiz ? (last.x + last.w - first.x) : (last.y + last.h - first.y);
+      for (let i = 1; i < items.length - 1; i++) {
+        const b = items[i].b;
+        if (horiz) shifts.set(items[i].el, first.x + (span - b.w) * i / (items.length - 1) - b.x);
+        else shifts.set(items[i].el, first.y + (span - b.h) * i / (items.length - 1) - b.y);
+      }
+    } else {
+      items.forEach(({ el, b }) => {
+        let wdx = 0, wdy = 0;
+        if (mode === 'left') wdx = union.x - b.x;
+        else if (mode === 'hcenter') wdx = union.x + union.w / 2 - (b.x + b.w / 2);
+        else if (mode === 'right') wdx = union.x + union.w - (b.x + b.w);
+        else if (mode === 'top') wdy = union.y - b.y;
+        else if (mode === 'vcenter') wdy = union.y + union.h / 2 - (b.y + b.h / 2);
+        else if (mode === 'bottom') wdy = union.y + union.h - (b.y + b.h);
+        shifts.set(el, { wdx, wdy });
+      });
+    }
+    if (!shifts.size) return;
+    const moves = [];
+    shifts.forEach((s, el) => {
+      const wdx = typeof s === 'number' ? s : s.wdx;
+      const wdy = typeof s === 'number' ? 0 : s.wdy;
+      if (Math.abs(wdx) < 0.01 && Math.abs(wdy) < 0.01) return;
+      const from = getElementPosition(el);
+      moveElementWorld(el, wdx, wdy);
+      moves.push({ el, from, to: getElementPosition(el) });
+    });
+    if (!moves.length) return;
+    updateSelectionOverlay();
+    if (window.History) {
+      History.push({
+        undo: () => moves.forEach(m => setElementPosition(m.el, m.from.x, m.from.y)),
+        redo: () => moves.forEach(m => setElementPosition(m.el, m.to.x, m.to.y)),
+        label: 'Align ' + mode
+      });
+    }
+  }
+
+  function ensureAlignBar() {
+    const bar = document.getElementById('align-bar');
+    if (!bar || bar.childElementCount) return;
+    const ICONS = {
+      'left':    '<line x1="5" y1="4" x2="5" y2="20"/><rect x="8" y="6" width="11" height="4" rx="1"/><rect x="8" y="14" width="7" height="4" rx="1"/>',
+      'hcenter': '<line x1="12" y1="4" x2="12" y2="20"/><rect x="5" y="6" width="14" height="4" rx="1"/><rect x="7" y="14" width="10" height="4" rx="1"/>',
+      'right':   '<line x1="19" y1="4" x2="19" y2="20"/><rect x="5" y="6" width="11" height="4" rx="1"/><rect x="9" y="14" width="7" height="4" rx="1"/>',
+      'top':     '<line x1="4" y1="5" x2="20" y2="5"/><rect x="6" y="8" width="4" height="11" rx="1"/><rect x="14" y="8" width="4" height="7" rx="1"/>',
+      'vcenter': '<line x1="4" y1="12" x2="20" y2="12"/><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="7" width="4" height="10" rx="1"/>',
+      'bottom':  '<line x1="4" y1="19" x2="20" y2="19"/><rect x="6" y="5" width="4" height="11" rx="1"/><rect x="14" y="9" width="4" height="7" rx="1"/>',
+      'dist-h':  '<rect x="3" y="9" width="4" height="6" rx="1"/><rect x="10" y="9" width="4" height="6" rx="1"/><rect x="17" y="9" width="4" height="6" rx="1"/>',
+      'dist-v':  '<rect x="9" y="3" width="6" height="4" rx="1"/><rect x="9" y="10" width="6" height="4" rx="1"/><rect x="9" y="17" width="6" height="4" rx="1"/>',
+    };
+    const TIPS = { left: '左对齐', hcenter: '水平居中', right: '右对齐', top: '顶对齐', vcenter: '垂直居中', bottom: '底对齐', 'dist-h': '横向等距分布', 'dist-v': '纵向等距分布' };
+    Object.keys(ICONS).forEach(mode => {
+      const btn = document.createElement('button');
+      btn.className = 'align-btn';
+      btn.dataset.align = mode;
+      btn.title = TIPS[mode];
+      btn.innerHTML = `<svg viewBox="0 0 24 24">${ICONS[mode]}</svg>`;
+      btn.addEventListener('click', () => alignSelection(mode));
+      bar.appendChild(btn);
+    });
+  }
+
+  function updateAlignBar() {
+    const bar = document.getElementById('align-bar');
+    if (!bar) return;
+    ensureAlignBar();
+    if (selection.length >= 2 && !isCropping()) {
+      bar.classList.remove('hidden');
+      bar.querySelectorAll('button[data-align]').forEach(btn => {
+        btn.disabled = btn.dataset.align.startsWith('dist') && selection.length < 3;
+      });
+    } else bar.classList.add('hidden');
+  }
+
+  // ── Format painter ──
+  const PAINT_ATTRS = ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-linecap',
+    'stroke-linejoin', 'opacity', 'fill-opacity', 'font-family', 'font-size', 'font-weight',
+    'font-style', 'text-anchor'];
+  let paintSource = null;
+  let paintMode = false;
+
+  function startFormatPaint() {
+    if (!selection.length || !svgEl) { if (window.Export) Export.toast('格式刷：请先选中一个取样元素'); return false; }
+    paintSource = getSelected();
+    paintMode = true;
+    document.body.classList.add('paint-picking');
+    if (window.Export) Export.toast('🖌 格式刷已取样 — 依次点击要应用样式的元素，Esc 退出');
+    return true;
+  }
+
+  function cancelFormatPaint() {
+    paintMode = false; paintSource = null;
+    document.body.classList.remove('paint-picking');
+  }
+
+  function isFormatPainting() { return paintMode; }
+
+  function applyFormatPaint(target) {
+    if (!paintSource || !target || target === paintSource) return;
+    const changes = [];
+    PAINT_ATTRS.forEach(attr => {
+      const v = paintSource.getAttribute(attr);
+      if (v === null) return;
+      if (target.getAttribute(attr) !== v) {
+        changes.push({ attr, old: target.getAttribute(attr), new: v });
+        target.setAttribute(attr, v);
+      }
+    });
+    updateSelectionOverlay();
+    if (window.__ffOnSelectionChanged) window.__ffOnSelectionChanged(target);
+    if (changes.length && window.History) {
+      History.push({
+        undo: () => changes.forEach(c => c.old === null ? target.removeAttribute(c.attr) : target.setAttribute(c.attr, c.old)),
+        redo: () => changes.forEach(c => target.setAttribute(c.attr, c.new)),
+        label: 'Format paint'
+      });
+    }
+    if (window.Export) Export.toast(changes.length ? `🖌 已应用 ${changes.length} 项样式（继续点击或 Esc 退出）` : '样式相同，无变化');
+  }
+
 
   // ── Insert text ──
   function insertText(x, y, str) {
@@ -1098,6 +1303,7 @@ const Canvas = (function () {
     if (el && el.tagName === 'g' && el.getAttribute('data-role') === 'group')
       items.push({ label: '⛓✕ 解组 (Ctrl+Shift+G)', fn: ungroupSelection });
     if (selection.length === 1 && el && el.tagName === 'text') items.push({ label: '✏️ 编辑文字', fn: () => startTextEdit(el) });
+    if (selection.length === 1 && el) items.push({ label: '🖌 格式刷（取此样式）', fn: startFormatPaint });
     if (selection.length) {
       items.push({ label: '⧉ 复制', fn: duplicateElement });
       items.push({ label: '⬆ 置顶', fn: () => raiseToTop(selection.slice()) });
@@ -1288,6 +1494,8 @@ const Canvas = (function () {
     getSelection, getSelected, deselect, selectAll, updateSelectionOverlay,
     getWorldBBox, getElementPosition, setElementPosition, applyTranslate,
     groupSelection, ungroupSelection,
+    alignSelection, updateAlignBar,
+    startFormatPaint, cancelFormatPaint, isFormatPainting, applyFormatPaint, markEditable, moveElementWorld,
     insertText, insertImage,
     startImageCrop, isCropping,
     rotateImageElement, flipImageElement, replaceImageElement,

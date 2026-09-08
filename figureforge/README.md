@@ -122,6 +122,13 @@ Every data mark carries a data-series id, and the whole figure respects it:
 - **Multi-select**: Shift+click or rubber-band marquee on empty canvas;
   multi-drag keeps relative spacing, batch fill/stroke/order from the panel
 - **Group / ungroup**: Ctrl+G / Ctrl+Shift+G (also in context menu)
+- **Align & distribute bar**: select 2+ elements and a floating toolbar appears
+  (left / centre-h / right, top / centre-v / bottom, horizontal & vertical
+  equal spacing for 3+); computed in world space so it stays correct inside
+  transformed groups; one undo step per action
+- **Format painter**: select a source element, hit the 🖌 toolbar button (or
+  the context menu), then click any elements to copy fill / stroke / width /
+  dash / opacity / font attributes onto them; Esc exits
 - Double-click to edit text inline; toolbar `T` inserts a new text box
 - Arrow keys nudge (Shift+arrow = 10 units); wheel zooms
 - Right-click context menu: duplicate, bring to front, send to back, delete
@@ -142,7 +149,10 @@ Every data mark carries a data-series id, and the whole figure respects it:
 
 ### Import
 - **SVG files**: drag onto the canvas (or 📥 导入) — fully editable vectors,
-  optionally added to the template library
+  optionally added to the template library. Imported files are **automatically
+  decomposed**: every shape / text leaf gets tagged editable, so an
+  externally-produced figure (with nested `<g transform>` groups) is
+  immediately selectable and draggable element-by-element
 - **PNG / JPG / WebP / GIF**: drag onto canvas (or 📥 导入 / Ctrl+V paste a
   screenshot) → inserted as a movable, resizable `<image>` — **plus real
   bitmap editing** (see below)
