@@ -102,7 +102,12 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
   S.push(ln(x + w / 2, y, x + w / 2, y + h, '#AAA', 0.9, '4 3'));
   S.push(ln(x, y + h / 2, x + w, y + h / 2, '#AAA', 0.9, '4 3'));
   axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(-4.5 + t * 9), t => f1(-3 + t * 6), 'PC1 (35.6%)', 'PC2 (18.9%)');
-  legend(S, x + w - 76, y + 6, groups.map(g => [g[0], 'Group ' + 'ABCD'[groups.indexOf(g)]]));
+  /* direct labels instead of legend (skill rule) */
+  groups.forEach(([c, mx, my], gi) => {
+    const px3 = x + (mx + 4.5) / 9 * w, py3 = y + h - (my + 3) / 6 * h;
+    const dy3 = gi === 1 ? -18 : 22;
+    S.push(txt(px3, py3 + dy3, 'Group ' + 'ABC'[gi], 9.5, c, 'middle', 'bold'));
+  });
 }
 
 /* ── b | jointplot: fit + CI + marginals + stats ── */
@@ -143,21 +148,21 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
   const cols = [C.teal, C.green, C.orange, C.blue];
   cols.forEach((col, i) => {
     const cx = x + w * (0.115 + i * 0.25), bw = 34;
-    const m = [98, 102, 155, 34][i], sd = [9, 8, 20, 5][i];
-    S.push(rect(cx - bw / 2, y + h - m / 210 * h, bw, m / 210 * h, col, 0.9));
-    S.push(ln(cx - bw / 2 - 9, y + h - (m + sd) / 210 * h, cx + bw / 2 + 9, y + h - (m + sd) / 210 * h, C.ink, 1.1));
-    S.push(ln(cx, y + h - (m + sd) / 210 * h, cx, y + h - Math.max(0, m - sd) / 210 * h, C.ink, 1.1));
-    S.push(ln(cx - bw / 2 - 9, y + h - Math.max(0, m - sd) / 210 * h, cx + bw / 2 + 9, y + h - Math.max(0, m - sd) / 210 * h, C.ink, 1.1));
+    const m = [62, 78, 116, 38][i], sd = [6, 7, 12, 4][i];
+    S.push(rect(cx - bw / 2, y + h - m / 160 * h, bw, m / 160 * h, col, 0.9));
+    S.push(ln(cx - bw / 2 - 9, y + h - (m + sd) / 160 * h, cx + bw / 2 + 9, y + h - (m + sd) / 160 * h, C.ink, 1.1));
+    S.push(ln(cx, y + h - (m + sd) / 160 * h, cx, y + h - Math.max(0, m - sd) / 160 * h, C.ink, 1.1));
+    S.push(ln(cx - bw / 2 - 9, y + h - Math.max(0, m - sd) / 160 * h, cx + bw / 2 + 9, y + h - Math.max(0, m - sd) / 160 * h, C.ink, 1.1));
     const pts2 = Array.from({ length: 16 }, () => N(m, sd));
-    const gy2 = Array.from({ length: 30 }, (_, j) => m - 3 * sd + j * 6 * sd / 29);
+    const gy2 = Array.from({ length: 30 }, (_, j) => m - 2.4 * sd + j * 4.8 * sd / 29);
     const dk = kde(pts2, sd * 0.75, gy2), mx2 = Math.max(...dk);
-    let p = `M${f1(cx + bw / 2 + 10)} ${f1(y + h - (gy2[0]) / 210 * h)}`;
-    dk.forEach((v, j) => { p += `L${f1(cx + bw / 2 + 10 + v / mx2 * 24)} ${f1(y + h - gy2[j] / 210 * h)}`; });
-    p += `L${f1(cx + bw / 2 + 10)} ${f1(y + h - gy2[29] / 210 * h)}Z`;
+    let p = `M${f1(cx + bw / 2 + 10)} ${f1(y + h - (gy2[0]) / 160 * h)}`;
+    dk.forEach((v, j) => { p += `L${f1(cx + bw / 2 + 10 + v / mx2 * 24)} ${f1(y + h - gy2[j] / 160 * h)}`; });
+    p += `L${f1(cx + bw / 2 + 10)} ${f1(y + h - gy2[29] / 160 * h)}Z`;
     S.push(pth(p, col, 0.45, col, 1));
-    pts2.forEach(v => S.push(circle(cx + bw / 2 + 12 + rnd() * 8, y + h - v / 210 * h, 1.8, col, 0.85)));
+    pts2.forEach(v => S.push(circle(cx + bw / 2 + 12 + rnd() * 8, y + h - v / 160 * h, 1.8, col, 0.85)));
   });
-  axes(S, x, y, w, h, [0.115, .365, .615, .865], [0, .5, 1], t => ['OE-3', 'OE-5', 'OE-6', 'WT'][Math.round(t * 3.55)], t => f1(t * 210), 'Line', 'Linalool content');
+  axes(S, x, y, w, h, [0.115, .365, .615, .865], [0, .5, 1], t => ['Ctrl', 'Low', 'Mid', 'High'][Math.round(t * 3.55)], t => f1(t * 160), 'Line', 'Metabolite (umol/g)');
 }
 
 /* ── d | violin + box + brackets ──────────────── */
@@ -177,17 +182,17 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
     const dk = kde(data, 0.6, gy2), mx2 = Math.max(...dk);
     let up = '', dn = '';
     dk.forEach((v, j) => {
-      const yy = y + h - (gy2[j] + 3) / 6 * h;
+      const yy = y + 24 + (3 - gy2[j]) / 6 * (h - 34);
       up += `${j ? 'L' : 'M'}${f1(cx + v / mx2 * 22)} ${f1(yy)}`;
       dn = `L${f1(cx - v / mx2 * 22)} ${f1(yy)}` + dn;
     });
-    S.push(pth(`M${f1(cx)} ${f1(y + h - (gy2[0] + 3) / 6 * h)}` + up.replace(/^M/, 'L') + dn + 'Z', col, 0.4, col, 1.1));
+    S.push(pth(`M${f1(cx)} ${f1(y + 24 + (3 - gy2[0]) / 6 * (h - 34))}` + up.replace(/^M/, 'L') + dn + 'Z', col, 0.4, col, 1.1));
     const bw = 16, q1 = -0.75, med = 0.02, q3 = 0.8;
-    S.push(rect(cx - bw / 2, y + h - (q3 + 3) / 6 * h, bw, (q3 - q1) / 6 * h, '#FFFFFF', 0.95));
-    S.push(`<rect x="${f1(cx - bw / 2)}" y="${f1(y + h - (q3 + 3) / 6 * h)}" width="${bw}" height="${f1((q3 - q1) / 6 * h)}" fill="none" stroke="#111" stroke-width="1.1"/>`);
-    S.push(ln(cx - bw / 2, y + h - (med + 3) / 6 * h, cx + bw / 2, y + h - (med + 3) / 6 * h, '#111', 1.3));
+    S.push(rect(cx - bw / 2, y + 24 + (3 - q3) / 6 * (h - 34), bw, (q3 - q1) / 6 * h, '#FFFFFF', 0.95));
+    S.push(`<rect x="${f1(cx - bw / 2)}" y="${f1(y + 24 + (3 - q3) / 6 * (h - 34))}" width="${bw}" height="${f1((q3 - q1) / 6 * h)}" fill="none" stroke="#111" stroke-width="1.1"/>`);
+    S.push(ln(cx - bw / 2, y + 24 + (3 - med) / 6 * (h - 34), cx + bw / 2, y + 24 + (3 - med) / 6 * (h - 34), '#111', 1.3));
   });
-  bracket(x + w * 0.09, x + w * 0.91, y + 12, '***');
+  bracket(x + w * 0.09, x + w * 0.91, y + 11, '***');
   axes(S, x, y, w, h, [0.09, .295, .5, .705, .91], [0, .5, 1], t => ['A', 'B', 'C', 'D', 'E'][Math.min(4, Math.round(t * 4.44))], t => f1(-3 + t * 6), 'Group', 'Expression');
 }
 
@@ -206,7 +211,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
   });
   S.push(pth(up + dn + 'Z', C.orange, 0.15));
   /* inset zoom (top-left) */
-  const ix = x + 8, iy = y + 8, iw = 108, ih = 74;
+  const ix = x + 7, iy = y + 7, iw = 88, ih = 58;
   S.push(rect(ix, iy, iw, ih, '#FFFFFF', 0.95));
   S.push(`<rect x="${f1(ix)}" y="${f1(iy)}" width="${iw}" height="${ih}" fill="none" stroke="#999" stroke-width="0.9"/>`);
   data.slice(0, 45).forEach(([px, py]) => S.push(circle(ix + px / 22 * iw, iy + ih - (py - 2) / 12 * ih, 2.4, C.teal, 0.85)));
@@ -216,7 +221,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
 
 /* ── f | bubble + color/size legends ──────────── */
 {
-  const x = X0(2) + 4, y = ROWY(1) + 6, w = PW - 30, h = PH - 20;
+  const x = X0(2) + 4, y = ROWY(1) + 40, w = PW - 30, h = PH - 56;
   head(S, 'f', 'bubble + colorbar', x + 30, ROWY(1), PW);
   const ramp = t => {
     const stops = ['#E8A33D', '#F3E2C2', '#C9A0D8', '#8E5FB4'];
@@ -231,20 +236,20 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
     const py2 = y + h - Math.min(395, Math.max(30, gy2)) / 420 * h;
     S.push(circle(px2, py2, 3 + gl / 330 * 10, ramp(1 - (age - 20) / 65), 0.85, '#FFFFFF', 0.8));
   });
-  /* color legend */
-  const cbx = x + w - 66, cby = y + 8, cbw2 = 10, cbh = 64;
-  for (let i = 0; i < cbh; i += 2) S.push(rect(cbx, cby + i, cbw2, 2, ramp(1 - i / cbh)));
-  S.push(`<rect x="${f1(cbx)}" y="${f1(cby)}" width="${cbw2}" height="${cbh}" fill="none" stroke="#999" stroke-width="0.7"/>`);
-  S.push(txt(cbx + cbw2 + 3, cby + 8, '80', 8.5, C.tick, 'start'));
-  S.push(txt(cbx + cbw2 + 3, cby + cbh, '20', 8.5, C.tick, 'start'));
-  S.push(txt(cbx + cbw2 / 2, cby - 5, 'Age', 9, C.ink, 'middle', 'bold'));
-  /* size legend */
-  const sx = cbx - 10;
-  [[5, '56'], [8, '136'], [12, '330']].forEach(([r2, s2], i) => {
-    S.push(circle(sx, cby + 14 + i * 22, r2, '#FFFFFF', 1, '#555', 0.9));
-    S.push(txt(sx + 16, cby + 17 + i * 22, s2, 8.5, C.tick, 'start'));
+  /* frameless legend strip above plot area (skill rule: never over data) */
+  const sy3 = y - 24;
+  S.push(txt(x + 2, sy3 + 9, 'Age', 9, C.ink, 'start', 'bold'));
+  const gx3 = x + 32, gw3 = 44;
+  for (let i = 0; i < gw3; i += 2) S.push(rect(gx3 + i, sy3 + 2, 2, 9, ramp(1 - i / gw3)));
+  S.push(`<rect x="${f1(gx3)}" y="${f1(sy3 + 2)}" width="${gw3}" height="9" fill="none" stroke="#999" stroke-width="0.7"/>`);
+  S.push(txt(gx3, sy3 + 21, '20', 8, C.tick, 'middle'));
+  S.push(txt(gx3 + gw3, sy3 + 21, '80', 8, C.tick, 'middle'));
+  S.push(txt(gx3 + gw3 + 30, sy3 + 9, 'Glucose', 9, C.ink, 'start', 'bold'));
+  [[3.4, '56'], [5.2, '136'], [7.6, '330']].forEach(([r3, s3], i) => {
+    const cx3 = gx3 + gw3 + 88 + i * 26;
+    S.push(circle(cx3, sy3 + 6.5, r3, '#FFFFFF', 1, '#555', 0.9));
+    S.push(txt(cx3 + 12, sy3 + 9.5, s3, 7.5, C.tick, 'start'));
   });
-  S.push(txt(sx, cby - 5, 'Glucose', 9, C.ink, 'middle', 'bold'));
   axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(t * 20), t => f1(t * 420), 'Glycosylated hemoglobin (%)', 'Total cholesterol');
 }
 
@@ -349,7 +354,6 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
     }
     S.push(pth(p, 'none', 1, col, 1.8));
   });
-  legend(S, x + w - 92, y + 10, [[C.orange, 's100b'], [C.purple, 'ndka']]);
   S.push(txt(x + w - 96, y + h - 8, 's100b AUC = 0.731', 9, C.orange, 'end', 'bold'));
   S.push(txt(x + w - 96, y + h - 19, 'ndka AUC = 0.612', 9, C.purple, 'end', 'bold'));
   axes(S, x, y, w, h, [0, .25, .5, .75, 1], [0, .25, .5, .75, 1], t => f1(t), t => f2(t), '1 - Specificity', 'Sensitivity');
@@ -387,7 +391,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
 
 /* ── l | multi-line + error bars + legend ─────── */
 {
-  const x = X0(2) + 4, y = ROWY(3) + 6, w = PW - 30, h = PH - 20;
+  const x = X0(2) + 4, y = ROWY(3) + 36, w = PW - 30, h = PH - 50;
   head(S, 'l', 'trends ± CI', x + 30, ROWY(3), PW);
   const series = [[C.red, 18, 3.2], [C.orange, 13, 2.8], [C.teal, 8, 2.2], [C.blue, 4, 1.8]];
   series.forEach(([col, m, s2], si) => {
@@ -404,7 +408,12 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
     S.push(pth(up + dn + 'Z', col, 0.13));
     S.push(pth(p, 'none', 1, col, 1.7));
   });
-  legend(S, x + w - 78, y + 6, series.map((s2, i) => [s2[0], '组别 ' + (i + 1)]));
+  /* frameless legend strip above plot (skill rule) */
+  const lw2 = 56, lx2 = x + w / 2 - 2 * lw2;
+  series.forEach(([col], i) => {
+    S.push(circle(lx2 + i * lw2 + 5, y - 14, 3.4, col));
+    S.push(txt(lx2 + i * lw2 + 13, y - 11, '组别 ' + (i + 1), 9, C.ink, 'start'));
+  });
   axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(t * 30), t => f1(t * 24), '时间 (天)', '测量值');
 }
 
