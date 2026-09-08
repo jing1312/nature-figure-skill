@@ -6,15 +6,15 @@
 'use strict';
 const fs = require('fs');
 
-let seed = 20260910;
+let seed = 20260918;
 const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
 const N = (m, s) => m + (rnd() + rnd() + rnd() + rnd() - 2) * 1.414 * s;
 
 /* chromatic pastel palette (from 科研配色 references) */
 const C = {
-  blue: '#3E7CB8', lblue: '#9DC3E0', teal: '#45B5AA', green: '#94CB5E',
-  yellow: '#F5C242', orange: '#F08A4B', red: '#E26A6A', pink: '#F2A7B3',
-  mauve: '#C77FA8', purple: '#9B83C9', gray: '#9A9A9A', ink: '#333333',
+  blue: '#33658A', lblue: '#A9C6DC', teal: '#2F9C95', green: '#71A862',
+  yellow: '#E3B23C', orange: '#D97545', red: '#C94F4F', pink: '#E5A2AC',
+  mauve: '#A96D8F', purple: '#7B6BA8', gray: '#8F9494', ink: '#333333',
   tick: '#4A4A4A'
 };
 const F = 'Helvetica,Arial,sans-serif';
@@ -77,13 +77,13 @@ const X0 = col => 24 + col * COLW;
 const S = [];
 
 S.push(txt(16, 26, 'FigureForge chart atlas', 17, '#111', 'start', 'bold'));
-S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palette.', 10.5, '#777', 'start'));
+S.push(txt(16, 44, 'Twelve publication-grade panels in an original scientific palette.', 10.5, '#777', 'start'));
 
 /* ── a | PCA + ellipses + marginals ───────────── */
 {
   const x = X0(0) + 4, y = ROWY(0) + 28, w = PW - 30, h = PH - 46;
   head(S, 'a', 'PCA', x + 30, ROWY(0), PW);
-  const groups = [[C.orange, -2.1, -1.0], [C.teal, 2.3, 1.3], [C.blue, 2.1, -1.6]];
+  const groups = [[C.orange, -1.8, 1.05], [C.teal, 2.15, 0.85], [C.blue, 0.35, -1.9]];
   const pts = groups.map(([c, mx, my]) => [c, Array.from({ length: 12 }, () => [N(mx, 0.55), N(my, 0.5)])]);
   /* marginals */
   const gx = Array.from({ length: 50 }, (_, i) => -4.5 + i * 9 / 49);
@@ -114,31 +114,31 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
 {
   const x = X0(1) + 4, y = ROWY(0) + 28, w = PW - 30, h = PH - 46;
   head(S, 'b', 'jointplot', x + 30, ROWY(0), PW);
-  const data = Array.from({ length: 90 }, () => { const gx2 = N(9.5, 3); return [gx2, 2.2 + gx2 * 1.05 + N(0, 1.6)]; });
-  const gx = Array.from({ length: 40 }, (_, i) => 2 + i * 16 / 39);
+  const data = Array.from({ length: 72 }, () => { const gx2 = N(11, 2.8); return [gx2, 1.6 + gx2 * 0.78 + N(0, 1.4)]; });
+  const gx = Array.from({ length: 40 }, (_, i) => 4 + i * 16 / 39);
   const dh = kde(data.map(p => p[0]), 1.1, gx), m1 = Math.max(...dh);
   let p1 = `M${f1(x)} ${f1(y - 2)}`;
-  dh.forEach((v, j) => { p1 += `L${f1(x + (gx[j] - 2) / 16 * w)} ${f1(y - 2 - v / m1 * 20)}`; });
+  dh.forEach((v, j) => { p1 += `L${f1(x + (gx[j] - 4) / 16 * w)} ${f1(y - 2 - v / m1 * 20)}`; });
   S.push(pth(p1 + `L${f1(x + w)} ${f1(y - 2)}Z`, C.blue, 0.35));
-  const gy = Array.from({ length: 40 }, (_, i) => 2 + i * 20 / 39);
+  const gy = Array.from({ length: 40 }, (_, i) => i * 18 / 39);
   const dv = kde(data.map(p => p[1]), 1.2, gy), m2 = Math.max(...dv);
   let p2 = `M${f1(x + w + 2)} ${f1(y)}`;
-  dv.forEach((v, j) => { p2 += `L${f1(x + w + 2 + v / m2 * 20)} ${f1(y + h - (gy[j] - 2) / 20 * h)}`; });
+  dv.forEach((v, j) => { p2 += `L${f1(x + w + 2 + v / m2 * 20)} ${f1(y + h - gy[j] / 18 * h)}`; });
   S.push(pth(p2 + `L${f1(x + w + 2)} ${f1(y + h)}Z`, C.blue, 0.35));
-  data.forEach(([px, py]) => S.push(circle(x + (px - 2) / 16 * w, y + h - (py - 2) / 20 * h, 3.4, C.green, 0.8)));
+  data.forEach(([px, py]) => S.push(circle(x + (px - 4) / 16 * w, y + h - py / 18 * h, 3.4, C.green, 0.8)));
   /* fit + CI */
-  const fit = t => 2.4 + t * 16 * 1.05 + 2 - 2;
+  const fit = t => 2.4 + t * 16 * 0.78;
   let up = '', dn = '';
   [0, .25, .5, .75, 1].forEach(t => {
-    const yy = fit(t), sd = 1.9;
-    up += `${t ? 'L' : 'M'}${f1(x + t * w)} ${f1(y + h - (yy + sd - 2) / 20 * h)}`;
-    dn = `L${f1(x + t * w)} ${f1(y + h - (yy - sd - 2) / 20 * h)}` + dn;
+    const yy = fit(t), sd = 1.6;
+    up += `${t ? 'L' : 'M'}${f1(x + t * w)} ${f1(y + h - (yy + sd) / 18 * h)}`;
+    dn = `L${f1(x + t * w)} ${f1(y + h - (yy - sd) / 18 * h)}` + dn;
   });
   S.push(pth(up + dn + 'Z', C.blue, 0.14));
-  S.push(ln(x, y + h - (fit(0) - 2) / 20 * h, x + w, y + h - (fit(1) - 2) / 20 * h, C.blue, 1.8));
-  S.push(txt(x + 8, y + 16, 'R² = 0.72', 9.5, C.ink, 'start', 'bold'));
+  S.push(ln(x, y + h - fit(0) / 18 * h, x + w, y + h - fit(1) / 18 * h, C.blue, 1.8));
+  S.push(txt(x + 8, y + 16, 'R² = 0.68', 9.5, C.ink, 'start', 'bold'));
   S.push(txt(x + 8, y + 28, 'p &lt; 0.001', 9.5, C.ink, 'start'));
-  axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(2 + t * 16), t => f1(2 + t * 20), 'Glucose', 'Hemoglobin');
+  axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(4 + t * 16), t => f1(t * 18), 'Dose (mg/kg)', 'Response score');
 }
 
 /* ── c | bar + half violin + jitter ───────────── */
@@ -148,21 +148,21 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
   const cols = [C.teal, C.green, C.orange, C.blue];
   cols.forEach((col, i) => {
     const cx = x + w * (0.115 + i * 0.25), bw = 34;
-    const m = [62, 78, 116, 38][i], sd = [6, 7, 12, 4][i];
-    S.push(rect(cx - bw / 2, y + h - m / 160 * h, bw, m / 160 * h, col, 0.9));
-    S.push(ln(cx - bw / 2 - 9, y + h - (m + sd) / 160 * h, cx + bw / 2 + 9, y + h - (m + sd) / 160 * h, C.ink, 1.1));
-    S.push(ln(cx, y + h - (m + sd) / 160 * h, cx, y + h - Math.max(0, m - sd) / 160 * h, C.ink, 1.1));
-    S.push(ln(cx - bw / 2 - 9, y + h - Math.max(0, m - sd) / 160 * h, cx + bw / 2 + 9, y + h - Math.max(0, m - sd) / 160 * h, C.ink, 1.1));
+    const m = [55, 82, 104, 47][i], sd = [5, 8, 9, 6][i];
+    S.push(rect(cx - bw / 2, y + h - m / 140 * h, bw, m / 140 * h, col, 0.9));
+    S.push(ln(cx - bw / 2 - 9, y + h - (m + sd) / 140 * h, cx + bw / 2 + 9, y + h - (m + sd) / 140 * h, C.ink, 1.1));
+    S.push(ln(cx, y + h - (m + sd) / 140 * h, cx, y + h - Math.max(0, m - sd) / 140 * h, C.ink, 1.1));
+    S.push(ln(cx - bw / 2 - 9, y + h - Math.max(0, m - sd) / 140 * h, cx + bw / 2 + 9, y + h - Math.max(0, m - sd) / 140 * h, C.ink, 1.1));
     const pts2 = Array.from({ length: 16 }, () => N(m, sd));
     const gy2 = Array.from({ length: 30 }, (_, j) => m - 2.4 * sd + j * 4.8 * sd / 29);
     const dk = kde(pts2, sd * 0.75, gy2), mx2 = Math.max(...dk);
-    let p = `M${f1(cx + bw / 2 + 10)} ${f1(y + h - (gy2[0]) / 160 * h)}`;
-    dk.forEach((v, j) => { p += `L${f1(cx + bw / 2 + 10 + v / mx2 * 24)} ${f1(y + h - gy2[j] / 160 * h)}`; });
-    p += `L${f1(cx + bw / 2 + 10)} ${f1(y + h - gy2[29] / 160 * h)}Z`;
+    let p = `M${f1(cx + bw / 2 + 10)} ${f1(y + h - (gy2[0]) / 140 * h)}`;
+    dk.forEach((v, j) => { p += `L${f1(cx + bw / 2 + 10 + v / mx2 * 24)} ${f1(y + h - gy2[j] / 140 * h)}`; });
+    p += `L${f1(cx + bw / 2 + 10)} ${f1(y + h - gy2[29] / 140 * h)}Z`;
     S.push(pth(p, col, 0.45, col, 1));
-    pts2.forEach(v => S.push(circle(cx + bw / 2 + 12 + rnd() * 8, y + h - v / 160 * h, 1.8, col, 0.85)));
+    pts2.forEach(v => S.push(circle(cx + bw / 2 + 12 + rnd() * 8, y + h - v / 140 * h, 1.8, col, 0.85)));
   });
-  axes(S, x, y, w, h, [0.115, .365, .615, .865], [0, .5, 1], t => ['Ctrl', 'Low', 'Mid', 'High'][Math.round(t * 3.55)], t => f1(t * 160), 'Line', 'Metabolite (umol/g)');
+  axes(S, x, y, w, h, [0.115, .365, .615, .865], [0, .5, 1], t => ['Ctrl', 'Low', 'Mid', 'High'][Math.round(t * 3.55)], t => f1(t * 140), 'Line', 'Metabolite (umol/g)');
 }
 
 /* ── d | violin + box + brackets ──────────────── */
@@ -177,7 +177,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
   };
   cols.forEach((col, i) => {
     const cx = x + w * (0.09 + i * 0.205);
-    const data = Array.from({ length: 60 }, () => N(0, 0.85 + i * 0.13));
+    const data = Array.from({ length: 55 }, () => N(0, 0.8 + i * 0.15));
     const gy2 = Array.from({ length: 44 }, (_, j) => -3 + j * 6 / 43);
     const dk = kde(data, 0.6, gy2), mx2 = Math.max(...dk);
     let up = '', dn = '';
@@ -187,7 +187,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
       dn = `L${f1(cx - v / mx2 * 22)} ${f1(yy)}` + dn;
     });
     S.push(pth(`M${f1(cx)} ${f1(y + 24 + (3 - gy2[0]) / 6 * (h - 34))}` + up.replace(/^M/, 'L') + dn + 'Z', col, 0.4, col, 1.1));
-    const bw = 16, q1 = -0.75, med = 0.02, q3 = 0.8;
+    const bw = 16, q1 = -0.68, med = 0.05, q3 = 0.72;
     S.push(rect(cx - bw / 2, y + 24 + (3 - q3) / 6 * (h - 34), bw, (q3 - q1) / 6 * h, '#FFFFFF', 0.95));
     S.push(`<rect x="${f1(cx - bw / 2)}" y="${f1(y + 24 + (3 - q3) / 6 * (h - 34))}" width="${bw}" height="${f1((q3 - q1) / 6 * h)}" fill="none" stroke="#111" stroke-width="1.1"/>`);
     S.push(ln(cx - bw / 2, y + 24 + (3 - med) / 6 * (h - 34), cx + bw / 2, y + 24 + (3 - med) / 6 * (h - 34), '#111', 1.3));
@@ -200,23 +200,23 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
 {
   const x = X0(1) + 4, y = ROWY(1) + 6, w = PW - 30, h = PH - 20;
   head(S, 'e', 'scatter + inset', x + 30, ROWY(1), PW);
-  const data = Array.from({ length: 110 }, () => { const g = N(10, 3.4); return [g, g * 1.2 + N(0, 2.4)]; });
-  data.forEach(([px, py]) => S.push(circle(x + px / 22 * w, y + h - py / 27 * h, 4.2, C.purple, 0.8)));
-  S.push(ln(x + 2 / 22 * w, y + h - (2 * 1.2 + 1.4) / 27 * h, x + 20 / 22 * w, y + h - (20 * 1.2 + 1.4) / 27 * h, C.orange, 1.8));
+  const data = Array.from({ length: 96 }, () => { const g = N(8, 2.6); return [g, 2 + g * 1.05 + N(0, 2.0)]; });
+  data.forEach(([px, py]) => S.push(circle(x + px / 18 * w, y + h - py / 22 * h, 4.2, C.purple, 0.8)));
+  S.push(ln(x + 1 / 18 * w, y + h - (1 * 1.05 + 2) / 22 * h, x + 16 / 18 * w, y + h - (16 * 1.05 + 2) / 22 * h, C.orange, 1.8));
   let up = '', dn = '';
   [0, .5, 1].forEach(t => {
-    const yy = 2 + t * 20 * 1.2 + 1.4;
-    up += `${t ? 'L' : 'M'}${f1(x + t * 20 / 22 * w)} ${f1(y + h - (yy + 2.6) / 27 * h)}`;
-    dn = `L${f1(x + t * 20 / 22 * w)} ${f1(y + h - (yy - 2.6) / 27 * h)}` + dn;
+    const yy = 2 + t * 16 * 1.05 + 2;
+    up += `${t ? 'L' : 'M'}${f1(x + t * 16 / 18 * w)} ${f1(y + h - (yy + 2.3) / 22 * h)}`;
+    dn = `L${f1(x + t * 16 / 18 * w)} ${f1(y + h - (yy - 2.3) / 22 * h)}` + dn;
   });
   S.push(pth(up + dn + 'Z', C.orange, 0.15));
   /* inset zoom (top-left) */
   const ix = x + 7, iy = y + 7, iw = 88, ih = 58;
   S.push(rect(ix, iy, iw, ih, '#FFFFFF', 0.95));
   S.push(`<rect x="${f1(ix)}" y="${f1(iy)}" width="${iw}" height="${ih}" fill="none" stroke="#999" stroke-width="0.9"/>`);
-  data.slice(0, 45).forEach(([px, py]) => S.push(circle(ix + px / 22 * iw, iy + ih - (py - 2) / 12 * ih, 2.4, C.teal, 0.85)));
-  S.push(ln(ix + 2 / 22 * iw, iy + ih - (2 * 1.2 - 2) / 12 * ih, ix + 14 / 22 * iw, iy + ih - (14 * 1.2 - 2) / 12 * ih, C.red, 1.2));
-  axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(t * 22), t => f1(t * 27), 'Glucose', 'Hemoglobin (%)');
+  data.slice(0, 40).forEach(([px, py]) => S.push(circle(ix + px / 18 * iw, iy + ih - (py - 1) / 13 * ih, 2.4, C.teal, 0.85)));
+  S.push(ln(ix + 1 / 18 * iw, iy + ih - (1 * 1.05 + 2 - 1) / 13 * ih, ix + 10 / 18 * iw, iy + ih - (10 * 1.05 + 2 - 1) / 13 * ih, C.red, 1.2));
+  axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(t * 18), t => f1(t * 22), 'Follow-up (months)', 'Biomarker (ng/mL)');
 }
 
 /* ── f | bubble + color/size legends ──────────── */
@@ -224,17 +224,17 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
   const x = X0(2) + 4, y = ROWY(1) + 40, w = PW - 30, h = PH - 56;
   head(S, 'f', 'bubble + colorbar', x + 30, ROWY(1), PW);
   const ramp = t => {
-    const stops = ['#E8A33D', '#F3E2C2', '#C9A0D8', '#8E5FB4'];
+    const stops = ['#5FA8A0', '#DCE5C8', '#C48CA4', '#71589E'];
     const i = Math.min(2, Math.floor(t * 3)), tt = t * 3 - i;
     const hx = (s, k) => parseInt(s.substr(1 + k * 2, 2), 16);
     const a = stops[i], b = stops[i + 1];
     return '#' + [0, 1, 2].map(k => Math.round(hx(a, k) + (hx(b, k) - hx(a, k)) * tt).toString(16).padStart(2, '0')).join('');
   };
-  const data = Array.from({ length: 34 }, () => [N(6.5, 3), N(230, 70), N(45, 20), N(180, 70)]);
+  const data = Array.from({ length: 30 }, () => [N(7.2, 2.4), N(180, 55), N(38, 12), N(95, 30)]);
   data.forEach(([gx2, gy2, age, gl]) => {
-    const px2 = x + Math.min(19.2, Math.max(0.8, gx2)) / 20 * w;
-    const py2 = y + h - Math.min(395, Math.max(30, gy2)) / 420 * h;
-    S.push(circle(px2, py2, 3 + gl / 330 * 10, ramp(1 - (age - 20) / 65), 0.85, '#FFFFFF', 0.8));
+    const px2 = x + Math.min(15.4, Math.max(0.6, gx2)) / 16 * w;
+    const py2 = y + h - Math.min(285, Math.max(25, gy2)) / 300 * h;
+    S.push(circle(px2, py2, 3 + gl / 330 * 10, ramp(1 - (age - 15) / 50), 0.85, '#FFFFFF', 0.8));
   });
   /* frameless legend strip above plot area (skill rule: never over data) */
   const sy3 = y - 24;
@@ -242,22 +242,22 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
   const gx3 = x + 32, gw3 = 44;
   for (let i = 0; i < gw3; i += 2) S.push(rect(gx3 + i, sy3 + 2, 2, 9, ramp(1 - i / gw3)));
   S.push(`<rect x="${f1(gx3)}" y="${f1(sy3 + 2)}" width="${gw3}" height="9" fill="none" stroke="#999" stroke-width="0.7"/>`);
-  S.push(txt(gx3, sy3 + 21, '20', 8, C.tick, 'middle'));
-  S.push(txt(gx3 + gw3, sy3 + 21, '80', 8, C.tick, 'middle'));
-  S.push(txt(gx3 + gw3 + 30, sy3 + 9, 'Glucose', 9, C.ink, 'start', 'bold'));
-  [[3.4, '56'], [5.2, '136'], [7.6, '330']].forEach(([r3, s3], i) => {
+  S.push(txt(gx3, sy3 + 21, '25', 8, C.tick, 'middle'));
+  S.push(txt(gx3 + gw3, sy3 + 21, '70', 8, C.tick, 'middle'));
+  S.push(txt(gx3 + gw3 + 30, sy3 + 9, 'BMI', 9, C.ink, 'start', 'bold'));
+  [[3.4, '42'], [5.2, '78'], [7.6, '120']].forEach(([r3, s3], i) => {
     const cx3 = gx3 + gw3 + 88 + i * 26;
     S.push(circle(cx3, sy3 + 6.5, r3, '#FFFFFF', 1, '#555', 0.9));
     S.push(txt(cx3 + 12, sy3 + 9.5, s3, 7.5, C.tick, 'start'));
   });
-  axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(t * 20), t => f1(t * 420), 'Glycosylated hemoglobin (%)', 'Total cholesterol');
+  axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(t * 16), t => f1(t * 300), 'Fasting glucose (mmol/L)', 'Triglycerides (mg/dL)');
 }
 
 /* ── g | corr heatmap + stars ─────────────────── */
 {
   const x = X0(0) + 4, y = ROWY(2) + 6, w = PW - 30, h = PH - 20;
   head(S, 'g', 'correlation', x + 30, ROWY(2), PW);
-  const genes = ['CD3D', 'IL32', 'CD2', 'CCR7', 'LDHB', 'AQP3', 'S100A8', 'CD79A'];
+  const genes = ['GAPDH', 'ACTB', 'B2M', 'HPRT1', 'TBP', 'RPL13A', 'YWHAZ', 'SDHA'];
   const cw = (w - 42) / 8, ch = h / 8;
   const div = v => {
     const s = v >= 0 ? ['#F7E8E6', '#EBA9A4', '#DB6E6E', '#C0392B'] : ['#EAF2F2', '#A9D4CE', '#5FA9A0', '#2E7D74'];
@@ -295,7 +295,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
   const x = X0(1) + 4, y = ROWY(2) + 6, w = PW - 30, h = PH - 20;
   head(S, 'h', 'dot heatmap', x + 30, ROWY(2), PW);
   const colsTop = [C.mauve, C.green, C.blue, C.yellow, C.orange, C.red];
-  const genes = ['LDHB', 'CCR7', 'CD3D', 'S100A8', 'IL32', 'CD2', 'AQP3', 'CD79A', 'GZMA', 'NKG7', 'GNLY', 'PF4'];
+  const genes = ['NQO1', 'GCLC', 'HMOX1', 'TXNRD1', 'SOD2', 'CAT', 'GPX1', 'PRDX1', 'FTH1', 'GSR', 'GSTP1', 'MT1G'];
   const cell = 8, cw2 = (w - 104) / 12 - 2, ch2 = (h - 16) / 12;
   colsTop.forEach((c2, j) => S.push(rect(x + 46 + j * (cw2 + 2), y, cw2, 4, c2, 0.85)));
   for (let i = 0; i < 12; i++) for (let j = 0; j < 12; j++) {
@@ -325,18 +325,18 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
     let lfc;
     if (side < 0.42) lfc = N(0, 0.55);
     else lfc = (side < 0.71 ? -1 : 1) * (0.9 + Math.abs(N(0, 0.75)));
-    const pv = Math.min(8.5, Math.max(0.05, -Math.log10(1 - rnd()) * (0.35 + Math.abs(lfc) * 1.15)));
-    const up2 = lfc > 0.9 && pv > 1.35, dn2 = lfc < -0.9 && pv > 1.35;
-    S.push(circle(x + (lfc + 4.2) / 8.4 * w, y + h - pv / 9 * h, up2 || dn2 ? 2.6 : 2.1,
+    const pv = Math.min(8, Math.max(0.05, -Math.log10(1 - rnd()) * (0.35 + Math.abs(lfc) * 1.15)));
+    const up2 = lfc > 0.8 && pv > 1.2, dn2 = lfc < -0.8 && pv > 1.2;
+    S.push(circle(x + (lfc + 3.6) / 7.2 * w, y + h - pv / 8 * h, up2 || dn2 ? 2.6 : 2.1,
       up2 ? C.red : dn2 ? C.blue : '#C9C9C9', up2 || dn2 ? 0.9 : 0.75));
   }
-  S.push(ln(x, y + h - 1.35 / 9 * h, x + w, y + h - 1.35 / 9 * h, '#888', 1, '4 3'));
-  S.push(ln(x + (0.9 + 4.2) / 8.4 * w, y, x + (0.9 + 4.2) / 8.4 * w, y + h, '#888', 1, '4 3'));
-  S.push(ln(x + (-0.9 + 4.2) / 8.4 * w, y, x + (-0.9 + 4.2) / 8.4 * w, y + h, '#888', 1, '4 3'));
-  [['S100A9', 2.5, 7.9], ['MMP17', -2.2, 7.0], ['APOD', -3.1, 5.0], ['CXCL8', 1.6, 5.6]].forEach(([g, fx, fy]) => {
-    S.push(txt(x + (fx + 4.2) / 8.4 * w, y + h - fy / 9 * h - 5, g, 8.5, '#7A1F1F', 'middle', 'bold'));
+  S.push(ln(x, y + h - 1.2 / 8 * h, x + w, y + h - 1.2 / 8 * h, '#888', 1, '4 3'));
+  S.push(ln(x + (0.8 + 3.6) / 7.2 * w, y, x + (0.8 + 3.6) / 7.2 * w, y + h, '#888', 1, '4 3'));
+  S.push(ln(x + (-0.8 + 3.6) / 7.2 * w, y, x + (-0.8 + 3.6) / 7.2 * w, y + h, '#888', 1, '4 3'));
+  [['NQO1', 2.0, 7.1], ['HMOX1', -1.7, 6.3], ['GCLC', -2.4, 4.6], ['TXNRD1', 1.3, 5.2]].forEach(([g, fx, fy]) => {
+    S.push(txt(x + (fx + 3.6) / 7.2 * w, y + h - fy / 8 * h - 5, g, 8.5, '#7A1F1F', 'middle', 'bold'));
   });
-  axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(-4.2 + t * 8.4), t => f1(t * 9), 'log₂ (Fold change)', '-log₁₀ (P value)');
+  axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(-3.6 + t * 7.2), t => f1(t * 8), 'log₂ (Fold change)', '-log₁₀ (P value)');
 }
 
 /* ── j | ROC + legend + AUC ───────────────────── */
@@ -344,7 +344,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
   const x = X0(0) + 4, y = ROWY(3) + 6, w = PW - 30, h = PH - 20;
   head(S, 'j', 'ROC', x + 30, ROWY(3), PW);
   S.push(ln(x, y + h, x + w, y, '#AAAAAA', 1.1, '5 4'));
-  [['s100b', C.orange, 0.32, 0.73], ['ndka', C.purple, 0.45, 0.61]].forEach(([name, col, bend, auc], si) => {
+  [['MMP9', C.orange, 0.48, 0.79], ['TIMP1', C.purple, 0.35, 0.64]].forEach(([name, col, bend, auc], si) => {
     let p = `M${f1(x)} ${f1(y + h)}`;
     for (let i = 0; i <= 22; i++) {
       const t = i / 22;
@@ -354,8 +354,8 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
     }
     S.push(pth(p, 'none', 1, col, 1.8));
   });
-  S.push(txt(x + w - 96, y + h - 8, 's100b AUC = 0.731', 9, C.orange, 'end', 'bold'));
-  S.push(txt(x + w - 96, y + h - 19, 'ndka AUC = 0.612', 9, C.purple, 'end', 'bold'));
+  S.push(txt(x + w - 96, y + h - 8, 'MMP9 AUC = 0.786', 9, C.orange, 'end', 'bold'));
+  S.push(txt(x + w - 96, y + h - 19, 'TIMP1 AUC = 0.643', 9, C.purple, 'end', 'bold'));
   axes(S, x, y, w, h, [0, .25, .5, .75, 1], [0, .25, .5, .75, 1], t => f1(t), t => f2(t), '1 - Specificity', 'Sensitivity');
 }
 
@@ -370,9 +370,9 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
     S.push(ln(cx, cy, cx + R * Math.cos(a), cy + R * Math.sin(a), '#D8D8D8', 0.8));
   }
   const series = [
-    [C.blue, [0.82, 0.55, 0.66, 0.48, 0.74, 0.58], 'Group A'],
-    [C.teal, [0.58, 0.75, 0.52, 0.63, 0.5, 0.7], 'Group B'],
-    [C.mauve, [0.66, 0.5, 0.72, 0.55, 0.64, 0.46], 'Group C']
+    [C.blue, [0.75, 0.48, 0.62, 0.55, 0.68, 0.5], 'Group A'],
+    [C.teal, [0.5, 0.7, 0.45, 0.68, 0.52, 0.62], 'Group B'],
+    [C.mauve, [0.62, 0.55, 0.7, 0.48, 0.6, 0.42], 'Group C']
   ];
   series.forEach(([col, vs]) => {
     let p = '';
@@ -393,16 +393,16 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
 {
   const x = X0(2) + 4, y = ROWY(3) + 36, w = PW - 30, h = PH - 50;
   head(S, 'l', 'trends ± CI', x + 30, ROWY(3), PW);
-  const series = [[C.red, 18, 3.2], [C.orange, 13, 2.8], [C.teal, 8, 2.2], [C.blue, 4, 1.8]];
+  const series = [[C.red, 22, 3.4], [C.orange, 15, 2.6], [C.teal, 9, 2.1], [C.blue, 5, 1.7]];
   series.forEach(([col, m, s2], si) => {
     let p = '', up = '', dn = '';
     for (let i = 0; i <= 7; i++) {
       const t = i / 7;
-      const v = m * (0.55 + 0.45 * t) + Math.sin(t * 6 + si) * 1.2 + N(0, 0.5);
-      const px = x + t * w, py = y + h - Math.max(2, v) / 24 * h;
+      const v = m * (0.5 + 0.5 * t) + Math.sin(t * 5 + si * 1.3) * 1.3 + N(0, 0.55);
+      const px = x + t * w, py = y + h - Math.max(2, v) / 28 * h;
       p += `${i ? 'L' : 'M'}${f1(px)} ${f1(py)}`;
-      up += `${i ? 'L' : 'M'}${f1(px)} ${f1(py - (s2 * (0.5 + t * 0.6)) / 24 * h)}`;
-      dn = `L${f1(px)} ${f1(py + (s2 * (0.5 + t * 0.6)) / 24 * h)}` + dn;
+      up += `${i ? 'L' : 'M'}${f1(px)} ${f1(py - (s2 * (0.5 + t * 0.6)) / 28 * h)}`;
+      dn = `L${f1(px)} ${f1(py + (s2 * (0.5 + t * 0.6)) / 28 * h)}` + dn;
       S.push(circle(px, py, 2.6, col, 1, '#FFFFFF', 0.8));
     }
     S.push(pth(up + dn + 'Z', col, 0.13));
@@ -414,7 +414,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels with chromatic pastel palett
     S.push(circle(lx2 + i * lw2 + 5, y - 14, 3.4, col));
     S.push(txt(lx2 + i * lw2 + 13, y - 11, '组别 ' + (i + 1), 9, C.ink, 'start'));
   });
-  axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(t * 30), t => f1(t * 24), '时间 (天)', '测量值');
+  axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(t * 30), t => f1(t * 28), '时间 (天)', '测量值');
 }
 
 const H = 66 + 4 * 296 + 6;

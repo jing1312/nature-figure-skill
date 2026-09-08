@@ -27,7 +27,7 @@
 下面每张图都是 FigureForge 内置模板的**真实输出**——不是效果图：选骨架、改数据、一键导出 SVG / PNG / TIFF / PPTX。
 
 <div align="center">
-  <img src="assets/showcase.svg" alt="FigureForge 模板图鉴：12 格 Chart atlas — 分组/堆叠柱状图、直方图、小提琴、箱线、山脊、多系列折线、置信带飘带、事件线、个体轨迹、点区间、斜率图，参考图鉴风格低饱和配色" width="100%" />
+  <img src="assets/showcase.svg" alt="FigureForge 模板图鉴：12 格 Chart atlas — 分组/堆叠柱状图、直方图、小提琴、箱线、山脊、多系列折线、置信带飘带、事件线、个体轨迹、点区间、斜率图，原创科学配色" width="100%" />
 </div>
 
 **进阶图形**——组学、队列与项目管理级别的复杂图型，同样开箱即用：
