@@ -60,6 +60,13 @@
   <img src="assets/showcase-ultra.svg" alt="FigureForge Ultra 图鉴：Circos 区域连接、QQ 图、KM 生存曲线与风险表、雨云图、GO 富集棒棒糖、三集合维恩、项目甘特、放射状树状图、测序覆盖度轨道" width="100%" />
 </div>
 
+**Max 图鉴（新增）**——散点矩阵、MA 图、通路点图、圆填充、排名凹凸图、二维等高线密度、哑铃图、发散堆叠条、日历热图：
+
+<div align="center">
+  <img src="assets/showcase-max.svg" alt="FigureForge Max 图鉴：散点矩阵 SPLOM、MA 图、GSEA 通路点图、圆填充、排名凹凸图、二维等高线密度、Pre/Post 哑铃图、发散堆叠条形、日历热图" width="100%" />
+</div>
+
+
 
 
 
