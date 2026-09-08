@@ -271,20 +271,27 @@ const CHART_TEMPLATES = {
       [42, 36, 48, 30, 56], [55, 48, 62, 44, 70], [38, 32, 45, 26, 52], [61, 54, 68, 50, 78]];
     const jit = [-9, -4, 1, 6, 10, -1, 4]; // deterministic jitter for raw points
     const fracs = [0.18, 0.3, 0.42, 0.55, 0.68, 0.8, 0.92]; // position inside [lo, hi]
+    const cols = [ // Ctrl neutral, then dose-deepening periwinkle
+      { fill: '#CBD2DE', line: '#77839B', ink: '#4A5468' },
+      { fill: '#C9D8F2', line: '#5B8FDB', ink: '#3D6BB3' },
+      { fill: '#93B7E8', line: '#4A7BD0', ink: '#2E5AA8' },
+      { fill: '#5B8FDB', line: '#3D6BB3', ink: '#27406E' }];
     return stats.map((d, i) => {
-      const cx = P.x0 + (P.x1 - P.x0) / 4 * (i + 0.5), w = 30;
+      const c = cols[i];
+      const cx = P.x0 + (P.x1 - P.x0) / 4 * (i + 0.5), w = 32;
       const y = v => sy(v, 0, 100).toFixed(1);
       const pts = jit.map((dx, k) => {
         const v = d[3] + fracs[k] * (d[4] - d[3]);
-        return '<circle cx="' + (cx + dx).toFixed(1) + '" cy="' + y(v) + '" r="1.7" fill="' + T.cap + '" fill-opacity="0.45" data-edit="true" data-role="stat"/>';
+        return '<circle cx="' + (cx + dx).toFixed(1) + '" cy="' + y(v) + '" r="1.9" fill="' + c.ink + '" fill-opacity="0.55" data-edit="true" data-role="stat"/>';
       }).join('');
       return pts +
-        '<line x1="' + cx.toFixed(1) + '" y1="' + y(d[3]) + '" x2="' + cx.toFixed(1) + '" y2="' + y(d[4]) + '" stroke="' + T.spine + '" stroke-width="0.9" data-edit="true" data-role="stat"/>' +
-        '<line x1="' + (cx - 8).toFixed(1) + '" y1="' + y(d[3]) + '" x2="' + (cx + 8).toFixed(1) + '" y2="' + y(d[3]) + '" stroke="' + T.spine + '" stroke-width="0.9" data-edit="true" data-role="stat"/>' +
-        '<line x1="' + (cx - 8).toFixed(1) + '" y1="' + y(d[4]) + '" x2="' + (cx + 8).toFixed(1) + '" y2="' + y(d[4]) + '" stroke="' + T.spine + '" stroke-width="0.9" data-edit="true" data-role="stat"/>' +
-        '<rect x="' + (cx - w / 2).toFixed(1) + '" y="' + y(d[2]) + '" width="' + w + '" height="' + (sy(d[1], 0, 100) - sy(d[2], 0, 100)).toFixed(1) + '" fill="#5B8FDB" fill-opacity="0.28" stroke="' + T.spine + '" stroke-width="0.9" data-edit="true" data-role="bar" data-series="0"/>' +
-        '<line x1="' + (cx - w / 2).toFixed(1) + '" y1="' + y(d[0]) + '" x2="' + (cx + w / 2).toFixed(1) + '" y2="' + y(d[0]) + '" stroke="' + T.spine + '" stroke-width="1.5" data-edit="true" data-role="stat"/>';
-    }).join('');
+        '<line x1="' + cx.toFixed(1) + '" y1="' + y(d[3]) + '" x2="' + cx.toFixed(1) + '" y2="' + y(d[4]) + '" stroke="' + c.line + '" stroke-width="1.2" data-edit="true" data-role="stat"/>' +
+        '<line x1="' + (cx - 9).toFixed(1) + '" y1="' + y(d[3]) + '" x2="' + (cx + 9).toFixed(1) + '" y2="' + y(d[3]) + '" stroke="' + c.line + '" stroke-width="1.2" data-edit="true" data-role="stat"/>' +
+        '<line x1="' + (cx - 9).toFixed(1) + '" y1="' + y(d[4]) + '" x2="' + (cx + 9).toFixed(1) + '" y2="' + y(d[4]) + '" stroke="' + c.line + '" stroke-width="1.2" data-edit="true" data-role="stat"/>' +
+        '<rect x="' + (cx - w / 2).toFixed(1) + '" y="' + y(d[2]) + '" width="' + w + '" height="' + (sy(d[1], 0, 100) - sy(d[2], 0, 100)).toFixed(1) + '" fill="' + c.fill + '" stroke="' + c.line + '" stroke-width="1.3" data-edit="true" data-role="bar" data-series="0"/>' +
+        '<line x1="' + (cx - w / 2).toFixed(1) + '" y1="' + y(d[0]) + '" x2="' + (cx + w / 2).toFixed(1) + '" y2="' + y(d[0]) + '" stroke="' + c.ink + '" stroke-width="1.9" data-edit="true" data-role="stat"/>';
+    }).join('') +
+    sigBr((P.x0 + (P.x1 - P.x0) / 4 * 0.5).toFixed(1), (P.x0 + (P.x1 - P.x0) / 4 * 3.5).toFixed(1), sy(88, 0, 100), '**');
   })() +
   note('box, IQR; whiskers, 1.5× IQR') +
 '</svg>' },
@@ -441,12 +448,12 @@ const CHART_TEMPLATES = {
     const lo = [[0, 100], [6, 96], [6, 88], [12, 88], [12, 80], [18, 80], [18, 70], [24, 70], [24, 60], [30, 60], [30, 51], [36, 51]];
     const censor = [[12, 96], [18, 89], [24, 74], [30, 47]];
     return '<path d="' + stepPath(up, fx, fy) + ' L' + fx(36) + ' ' + fy(51).toFixed(1) + ' ' + stepPath(lo.slice().reverse().concat([[0, 100]]), fx, fy).replace('M', 'L') + ' Z" fill="' + S[0] + '" fill-opacity="0.1" stroke="none" data-edit="true" data-role="band"/>' +
-      '<path d="' + stepPath(ctrl, fx, fy) + '" fill="none" stroke="#9AA0A8" stroke-width="1.6" data-edit="true" data-role="line" data-series="1"/>' +
-      '<path d="' + stepPath(treat, fx, fy) + '" fill="none" stroke="' + S[0] + '" stroke-width="1.8" data-edit="true" data-role="line" data-series="0"/>' +
+      '<path d="' + stepPath(ctrl, fx, fy) + '" fill="none" stroke="#EC6F9F" stroke-width="2.2" data-edit="true" data-role="line" data-series="1"/>' +
+      '<path d="' + stepPath(treat, fx, fy) + '" fill="none" stroke="' + S[0] + '" stroke-width="2.2" data-edit="true" data-role="line" data-series="0"/>' +
       censor.map(pt => '<line x1="' + (fx(pt[0]) - 2.4).toFixed(1) + '" y1="' + (fy(pt[1]) - 2.4).toFixed(1) + '" x2="' + (fx(pt[0]) + 2.4).toFixed(1) + '" y2="' + (fy(pt[1]) + 2.4).toFixed(1) + '" stroke="' + S[0] + '" stroke-width="1" data-edit="true" data-role="stat"/>' +
         '<line x1="' + (fx(pt[0]) - 2.4).toFixed(1) + '" y1="' + (fy(pt[1]) + 2.4).toFixed(1) + '" x2="' + (fx(pt[0]) + 2.4).toFixed(1) + '" y2="' + (fy(pt[1]) - 2.4).toFixed(1) + '" stroke="' + S[0] + '" stroke-width="1" data-edit="true" data-role="stat"/>').join('') +
       legendRow(252, 40, S[0], 'Treated (n = 42)', 'line', 0) +
-      legendRow(252, 53, '#9AA0A8', 'Control (n = 40)', 'line', 1) +
+      legendRow(252, 53, '#EC6F9F', 'Control (n = 40)', 'line', 1) +
       '<text x="' + (P.x1 - 6) + '" y="' + sy(20, 0, 100).toFixed(1) + '" font-family="' + F + '" font-size="7.5" font-style="italic" fill="' + T.tick + '" text-anchor="end" data-edit="true">P = 0.003 (log-rank)</text>' +
       subTitle('ticks, censored', P.x1, P.y1 + 24);
   })() +
