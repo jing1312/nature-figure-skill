@@ -89,7 +89,7 @@
 **在线打开（无需安装）**：[jing1312.github.io/nature-figure-skill/figureforge/](https://jing1312.github.io/nature-figure-skill/figureforge/)
 
 <div align="center">
-  <img src="assets/figureforge-canvas.svg" alt="FigureForge 无限画布：多面板复合图、生存曲线、小提琴图等示例图，一句话生成图表、节点卡片与参考连线" width="100%" />
+  <img src="assets/figureforge-canvas.svg" alt="FigureForge 无限画布：素材广场、节点选中精修、参考连线与一句话生成，示例为综合主图、生存曲线与箱线图" width="100%" />
   <br/>
   <img src="assets/figureforge-editor.svg" alt="FigureForge 编辑器：出版级多面板模板（生存曲线主图+统计副图）、superplot 原始点叠加、投稿级细节" width="100%" />
 </div>
