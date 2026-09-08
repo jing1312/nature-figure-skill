@@ -201,4 +201,5 @@ save_pub_r <- function(plot, filename, width_mm = 183, height_mm = 120, dpi = 60
 | [references/nature-2026-observations.md](references/nature-2026-observations.md) | Real `Nature` page archetypes: schematic-led composites, dark image plates, clinical triptychs, asymmetric hero layouts |
 | [references/tutorials.md](references/tutorials.md) | End-to-end walkthroughs: bars, trends, heatmaps |
 | [references/chart-types.md](references/chart-types.md) | Radar, 3D sphere, fill_between, scatter patterns |
+| [references/atlas-gallery.md](references/atlas-gallery.md) | Choosing from the 83 bundled showcase panels, or reusing atlas slot geometry / jewel-pastel palette / QA rules in a generator |
 | [references/demos.md](references/demos.md) | Bundled figures4papers Python scripts and output previews for concrete pattern adaptation |

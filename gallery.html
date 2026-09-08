@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FigureForge Atlas Gallery — 83 panels</title>
+<style>
+  :root { --ink: #333; --tick: #667; --line: #e8e8e8; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif; color: var(--ink); background: #fff; }
+  header { padding: 48px 32px 20px; max-width: 1160px; margin: 0 auto; }
+  header h1 { font-size: 28px; letter-spacing: .2px; }
+  header p { color: var(--tick); margin-top: 8px; font-size: 14.5px; }
+  nav { position: sticky; top: 0; z-index: 10; background: #ffffffee; backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  nav .inner { max-width: 1160px; margin: 0 auto; padding: 10px 32px; display: flex; gap: 8px; flex-wrap: wrap; }
+  nav a { text-decoration: none; color: var(--ink); font-size: 13px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); }
+  nav a:hover { background: #f2f6fa; }
+  main { max-width: 1160px; margin: 0 auto; padding: 12px 32px 64px; }
+  section { margin-top: 44px; }
+  section h2 { font-size: 18px; display: flex; align-items: baseline; gap: 10px; }
+  section h2 small { color: var(--tick); font-weight: 400; font-size: 13px; }
+  .frame { margin-top: 14px; border: 1px solid var(--line); border-radius: 12px; padding: 18px; background: #fff; overflow-x: auto; }
+  .frame img { width: 100%; display: block; min-width: 720px; }
+  .panel-list { margin-top: 10px; color: var(--tick); font-size: 13px; line-height: 1.7; }
+  footer { max-width: 1160px; margin: 0 auto; padding: 24px 32px 48px; color: var(--tick); font-size: 13px; border-top: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<header>
+  <h1>FigureForge Atlas Gallery</h1>
+  <p>9 套图鉴 · 83 个面板 —— 全部由 <code>figureforge/js/</code> 下的 Node 生成器程序化绘制，统一宝石粉彩体系，可作为论文选图索引。</p>
+</header>
+<nav><div class="inner">
+  <a href="#base">Base 12</a><a href="#pro">Pro 6</a><a href="#bio">Bio 12</a><a href="#extra">Extra 8</a>
+  <a href="#plus">Plus 9</a><a href="#ultra">Ultra 9</a><a href="#max">Max 9</a><a href="#nova">Nova 9</a><a href="#apex">Apex 9</a>
+</div></nav>
+<main>
+
+<section id="base">
+  <h2>Base atlas <small>基础 12 格 · 分布 / 比较 / 关联</small></h2>
+  <div class="frame"><img src="assets/showcase.svg" alt="base atlas"></div>
+  <div class="panel-list">分组柱状 · 直方图 · 小提琴 · 箱线 · 趋势±CI · 飘带 · 事件线 · 个体轨迹 · 点区间 · 斜率图 · PCA · jointplot · 相关热图 · 点阵热图 · 火山 · ROC</div>
+</section>
+
+<section id="pro">
+  <h2>Pro atlas <small>进阶 6 格 · 径向与组学</small></h2>
+  <div class="frame"><img src="assets/showcase-pro.svg" alt="pro atlas"></div>
+  <div class="panel-list">雷达 · 极坐标柱 · 极坐标密度 · 通路象限 · 火山（基因标签）· z-score 热图</div>
+</section>
+
+<section id="bio">
+  <h2>Bio edition <small>单细胞风味 12 格</small></h2>
+  <div class="frame"><img src="assets/showcase-bio.svg" alt="bio atlas"></div>
+  <div class="panel-list">单细胞与生信高频构图（UMAP 风格散点、堆叠组成、哑铃、山脊等）</div>
+</section>
+
+<section id="extra">
+  <h2>Extra atlas <small>临床与组学 8 格</small></h2>
+  <div class="frame"><img src="assets/showcase-extra.svg" alt="extra atlas"></div>
+  <div class="panel-list">OncoPrint · 瀑布图 · 冲积图 · 山脊 · Bland-Altman · 免疫组成流 · 森林图 · 曼哈顿</div>
+</section>
+
+<section id="plus">
+  <h2>Plus atlas <small>高阶 9 格 · 关系与层级</small></h2>
+  <div class="frame"><img src="assets/showcase-plus.svg" alt="plus atlas"></div>
+  <div class="panel-list">弦图 · UpSet · 组织网络 · 三元相图 · 聚类热图 · 矩形树图 · 旭日图 · 六边形密度 · 平行坐标</div>
+</section>
+
+<section id="ultra">
+  <h2>Ultra atlas <small>基因组与临床 9 格</small></h2>
+  <div class="frame"><img src="assets/showcase-ultra.svg" alt="ultra atlas"></div>
+  <div class="panel-list">Circos 连接 · QQ 图 · KM 生存+风险表 · 雨云图 · GO 棒棒糖 · 维恩 · 甘特 · 放射树状图 · 测序覆盖度</div>
+</section>
+
+<section id="max">
+  <h2>Max atlas <small>矩阵与排名 9 格</small></h2>
+  <div class="frame"><img src="assets/showcase-max.svg" alt="max atlas"></div>
+  <div class="panel-list">散点矩阵 · MA 图 · 通路点图 · 圆填充 · 凹凸图 · 二维等高线 · 哑铃 · 发散堆叠 · 日历热图</div>
+</section>
+
+<section id="nova">
+  <h2>Nova atlas <small>流与结构 9 格</small></h2>
+  <div class="frame"><img src="assets/showcase-nova.svg" alt="nova atlas"></div>
+  <div class="panel-list">桑基 · 相关圆环图 · 马赛克 · PCA 双标图 · 人口金字塔 · 环形热图 · 双轴组合 · 伪 3D 响应面 · ECDF+KS</div>
+</section>
+
+<section id="apex">
+  <h2>Apex atlas <small>meta 与诊断 9 格</small></h2>
+  <div class="frame"><img src="assets/showcase-apex.svg" alt="apex atlas"></div>
+  <div class="panel-list">漏斗图 · Taylor 图 · 弧线图 · 冰柱图 · 蜂群图 · 周期图 · 地平线 · 子弹图 · 华夫图</div>
+</section>
+
+</main>
+<footer>
+  重新生成任意图鉴：<code>node figureforge/js/build-showcase-*.js</code> · 设计约定与 QA 规则见 <code>skills/nature-figure/references/atlas-gallery.md</code>
+</footer>
+</body>
+</html>
