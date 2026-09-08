@@ -214,7 +214,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels in an original scientific pa
   const ix = x + 7, iy = y + 7, iw = 88, ih = 58;
   S.push(rect(ix, iy, iw, ih, '#FFFFFF', 0.95));
   S.push(`<rect x="${f1(ix)}" y="${f1(iy)}" width="${iw}" height="${ih}" fill="none" stroke="#999" stroke-width="0.9"/>`);
-  data.slice(0, 40).forEach(([px, py]) => S.push(circle(ix + px / 18 * iw, iy + ih - (py - 1) / 13 * ih, 2.4, C.teal, 0.85)));
+  data.slice(0, 40).forEach(([px, py]) => S.push(circle(ix + Math.min(17.2, Math.max(0.8, px)) / 18 * iw, iy + ih - Math.min(12.6, Math.max(1.4, py - 1)) / 13 * ih, 2.4, C.teal, 0.85)));
   S.push(ln(ix + 1 / 18 * iw, iy + ih - (1 * 1.05 + 2 - 1) / 13 * ih, ix + 10 / 18 * iw, iy + ih - (10 * 1.05 + 2 - 1) / 13 * ih, C.red, 1.2));
   axes(S, x, y, w, h, [0, .5, 1], [0, .5, 1], t => f1(t * 18), t => f1(t * 22), 'Follow-up (months)', 'Biomarker (ng/mL)');
 }
@@ -258,7 +258,7 @@ S.push(txt(16, 44, 'Twelve publication-grade panels in an original scientific pa
   const x = X0(0) + 4, y = ROWY(2) + 6, w = PW - 30, h = PH - 20;
   head(S, 'g', 'correlation', x + 30, ROWY(2), PW);
   const genes = ['GAPDH', 'ACTB', 'B2M', 'HPRT1', 'TBP', 'RPL13A', 'YWHAZ', 'SDHA'];
-  const cw = (w - 42) / 8, ch = h / 8;
+  const cw = (w - 42 - 34) / 8, ch = h / 8;
   const div = v => {
     const s = v >= 0 ? ['#F7E8E6', '#EBA9A4', '#DB6E6E', '#C0392B'] : ['#EAF2F2', '#A9D4CE', '#5FA9A0', '#2E7D74'];
     const a = Math.abs(v), i = Math.min(3, Math.floor(a * 4));
@@ -386,7 +386,12 @@ S.push(txt(16, 44, 'Twelve publication-grade panels in an original scientific pa
     const a = (k * 360 / axesN - 90) * Math.PI / 180;
     S.push(txt(cx + (R + 12) * Math.cos(a), cy + (R + 12) * Math.sin(a) + 3, '指标 ' + (k + 1), 8.5, C.tick));
   }
-  legend(S, cx + R + 16, cy - 30, series.map(s2 => [s2[0], s2[2]]));
+  /* frameless legend */
+  series.forEach((s3, i) => {
+    const ly3 = cy - 24 + i * 17;
+    S.push(circle(cx + R + 22, ly3, 3.4, s3[0]));
+    S.push(txt(cx + R + 30, ly3 + 3, s3[2], 9, C.ink, 'start'));
+  });
 }
 
 /* ── l | multi-line + error bars + legend ─────── */
