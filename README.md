@@ -89,11 +89,14 @@
 **在线打开（无需安装）**：[jing1312.github.io/nature-figure-skill/figureforge/](https://jing1312.github.io/nature-figure-skill/figureforge/)
 
 <div align="center">
-  <img src="assets/figureforge-editor.svg" alt="FigureForge 编辑器：暗色 currve-arrow 风格三栏布局，模板库、吸附参考线、属性面板、系列联动改色" width="100%" />
+  <img src="assets/figureforge-canvas.svg" alt="FigureForge 无限画布：一句话生成图表、节点卡片与参考连线" width="100%" />
+  <br/>
+  <img src="assets/figureforge-editor.svg" alt="FigureForge 编辑器：出版级模板库、superplot 原始点叠加、投稿级细节" width="100%" />
 </div>
 
 ### 核心能力
 
+- **无限画布（VibePaper 式工作区）**：一句话生成图表上画布；图表 / 图片 / 便签 / 文本四类节点卡片自由排列，拖动端口建立参考连线；素材广场内置 9 套图鉴 83 面板随取随用；双击卡片进编辑器精修，改完自动写回。
 - **22 个出版级模板**：柱状图（superplot 原始点叠加）、聚类热图（行列树状图 + 发散色阶）、火山图、森林图、KM 生存曲线、小提琴图、箱线图、多面板综合图……全部按投稿标准预置误差棒、显著性括号、置信带与图例位置。
 - **16 组精选色卡**：Tableau 10、Tol Muted、Economist、莫兰迪、马卡龙、Candy 粉蓝绿黄紫、Berry 蓝紫粉同族等；**系列联动改色**——改一处颜色，同系列数据点、图例、色标全部同步，一次撤销整组回退。
 - **Figma 手感编辑**：智能参考线吸附（<kbd>Alt</kbd> 临时关闭）、Shift+点击 / 框选多选、Ctrl+G 成组、四角手柄缩放、方向键微移、全程撤销重做。
