@@ -1,5 +1,3 @@
-<p align="center"><a href="README.zh-CN.md">简体中文</a> | <b>English</b></p>
-
 <div align="center">
   <img src="assets/nature-figure-cover.svg" alt="FigureForge · nature-figure workflow: publication figures that survive peer review" width="100%" />
 </div>
@@ -7,6 +5,8 @@
 <div align="center">
 
 # 🎨 nature-figure-skill
+
+<p align="center"><a href="README.zh-CN.md">简体中文</a> | <b>English</b></p>
 
 ### A paper-figure studio in the browser — drag-and-drop templates, with an agent workflow as the power path
 

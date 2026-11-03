@@ -1,5 +1,3 @@
-<p align="center"><b>简体中文</b> | <a href="README.md">English</a></p>
-
 <div align="center">
   <img src="assets/nature-figure-cover.svg" alt="FigureForge · nature-figure 工作流：让每一张论文配图，都经得起审稿人追问" width="100%" />
 </div>
@@ -7,6 +5,8 @@
 <div align="center">
 
 # 🎨 nature-figure-skill
+
+<p align="center"><b>简体中文</b> | <a href="README.md">English</a></p>
 
 ### 浏览器里的论文配图工作室 —— 模板拖拽即用，Agent 工作流兜底
 
