@@ -17,8 +17,8 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Editor](https://img.shields.io/badge/editor-在线可用-2bb8ab.svg)](https://jing1312.github.io/nature-figure-skill/figureforge/)
 [![Templates](https://img.shields.io/badge/模板-22%20个出版级-2bb8ab.svg)](#-模板长这样真实渲染)
-[![Palettes](https://img.shields.io/badge/色卡-16%20组精选-2bb8ab.svg)](#figureforge-核心能力)
-[![Backends](https://img.shields.io/badge/backend-Python%20%7C%20R-3776ab.svg)](#-naturefigure--agent-skill-出图工作流)
+[![Palettes](https://img.shields.io/badge/色卡-16%20组精选-2bb8ab.svg)](#核心能力)
+[![Backends](https://img.shields.io/badge/backend-Python%20%7C%20R-3776ab.svg)](#-nature-figure--agent-skill-出图工作流)
 
 </div>
 
@@ -113,6 +113,8 @@
 
 把 SKILL.md 装进你的 Agent（Claude Code / Codex 等），配图就从「一次性脚本」变成「可审查的生产线」：
 
+装好之后 skill 自己会分流：免代码、或只想先看排版的请求走 FigureForge 编辑器，其余才进入下面这条契约先行的 Python / R 管线。
+
 ```text
 图表契约 → 后端门禁 → 单后端绘制 → 布局与 QA → 独立导出 → 交付清单
 ```
@@ -189,7 +191,7 @@ figure-01.png    ← 预览/演示用
 - [ ] FigureForge ↔ Python 管线闭环（编辑器 SVG → `save_pub_set` 一键补齐 PDF/TIFF）
 - [ ] 期刊规格预设：89 / 183 mm 栏宽检查、字号下限检查
 - [ ] 色觉无障碍模拟预览
-- [ ] GitHub Actions：模板 XML 有效性 + 语法门禁
+- [x] GitHub Actions 门禁：编辑器 JS 语法、模板与色卡完整性、SVG 合法性、skill 元数据与 eval schema、Markdown 链接与锚点解析
 
 ## 📚 随仓库附带的科研技能包
 

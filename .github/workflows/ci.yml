@@ -3,10 +3,22 @@ name: CI
 on:
   push:
     branches: [main]
-    paths: ['figureforge/**', 'scripts/**', '.github/workflows/**']
+    paths:
+      - 'figureforge/**'
+      - 'scripts/**'
+      - 'skills/**'
+      - 'assets/**'
+      - '.github/workflows/**'
+      - '*.md'
   pull_request:
     branches: [main]
-    paths: ['figureforge/**', 'scripts/**', '.github/workflows/**']
+    paths:
+      - 'figureforge/**'
+      - 'scripts/**'
+      - 'skills/**'
+      - 'assets/**'
+      - '.github/workflows/**'
+      - '*.md'
 
 jobs:
   check:
@@ -16,6 +28,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
       - name: Syntax check all editor JS
         run: |
           for f in figureforge/js/*.js; do
@@ -23,3 +38,9 @@ jobs:
           done
       - name: Template & palette integrity
         run: node scripts/check-templates.js
+      - name: Skill metadata, evals schema, markdown links
+        run: node scripts/check-repo.js
+      - name: Dump template SVGs
+        run: node scripts/dump-templates.js
+      - name: SVG well-formedness (assets + templates)
+        run: python3 scripts/check-svg.py .tmp/template-svg assets

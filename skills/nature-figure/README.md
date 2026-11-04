@@ -1,5 +1,7 @@
 # nature-figure skill
 
+<p align="center"><a href="README.zh-CN.md">简体中文</a> | <b>English</b></p>
+
 Submission-grade scientific figures for Nature-tier journals and high-impact academic venues,
 with both Python and R plotting tracks.
 
@@ -75,6 +77,11 @@ inside a larger *Nature*-style result figure.
 nature-figure/
 ├── SKILL.md                     ← skill trigger & overview (loaded by Claude automatically)
 ├── README.md                    ← this file
+├── README.zh-CN.md              ← condensed Chinese version
+├── agents/
+│   └── openai.yaml              ← OpenAI/Codex surface: display name, default prompt
+├── evals/
+│   └── evals.json               ← behavioural eval cases (routing, contract, export, QA)
 ├── assets/
 │   ├── gallery/                 ← result-figure preview PNGs
 │   ├── chart-atlas/             ← chart-type taxonomy preview PNGs
@@ -89,8 +96,10 @@ nature-figure/
     ├── api.md                   ← PALETTE constants, helper function signatures
     ├── design-theory.md         ← typography, color theory, layout, export policy
     ├── common-patterns.md       ← reusable code patterns (bars, legends, heatmaps)
+    ├── nature-2026-observations.md ← real Nature page archetypes
     ├── tutorials.md             ← end-to-end walkthroughs
     ├── chart-types.md           ← radar, 3D sphere, scatter, fill_between, log-scale
+    ├── atlas-gallery.md         ← 83 bundled panels: geometry, jewel-pastel palette, QA rules
     └── demos.md                 ← figures4papers demo map and routing guide
 ```
 
@@ -107,6 +116,22 @@ The agent triages the route before anything else. A no-code request must **not**
 "Python or R?" question; that gate belongs to the scripted track. FigureForge covers layout
 design and final tweaking — the scripted track is still needed for batch regeneration,
 parameter sweeps, and reproducible exports.
+
+### FigureForge → Python handoff
+
+The two routes compose instead of competing. A typical end-to-end run:
+
+1. **Fix the skeleton in FigureForge** — pick the panel layout, drag the slots, decide which
+   panel is the hero, then export the SVG.
+2. **Lift the geometry into code** — `references/atlas-gallery.md` records the slot positions,
+   jewel-pastel palette and QA rules of every bundled panel; the same numbers go straight into
+   a `subplot_mosaic` / `patchwork` layout so the script reproduces the design you approved.
+3. **Fill with real data and export the full set** — render with the selected backend and use
+   `save_pub_set()` / `save_pub_r()` to produce SVG + PDF + TIFF for every figure, with shared
+   typography, color semantics and statistic formatting.
+
+Nothing in the handoff requires switching the whole job: FigureForge owns the composition, the
+script owns the data and the submission bundle.
 
 ---
 

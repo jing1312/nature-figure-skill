@@ -107,6 +107,8 @@ How it relates to the AI workflow: FigureForge doesn't replace code-driven figur
 
 Load SKILL.md into your agent (Claude Code, Codex, etc.) and figure-making turns from "one-off scripts" into "an auditable production line":
 
+Once installed, the skill triages the route itself: no-code or layout-first requests go to the FigureForge editor; everything else enters the contract-first Python/R pipeline below.
+
 ```text
 figure contract → backend gate → single-backend render → layout & QA → independent export → delivery checklist
 ```
@@ -183,7 +185,7 @@ figure-01.png    ← preview / slides
 - [ ] FigureForge ↔ Python pipeline loop (editor SVG → `save_pub_set` one-click PDF/TIFF backfill)
 - [ ] Journal spec presets: 89 / 183 mm column-width checks, minimum font-size checks
 - [ ] Color-vision deficiency simulation preview
-- [ ] GitHub Actions: template XML validity + syntax gates
+- [x] GitHub Actions gates: editor JS syntax, template/palette integrity, SVG well-formedness, skill frontmatter + eval schema, markdown link & anchor resolution
 
 ## 📚 Research skill pack bundled with this repo
 
