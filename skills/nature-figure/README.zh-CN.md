@@ -62,7 +62,9 @@ nature-figure/
 ├── README.md                    ← 英文正本
 ├── README.zh-CN.md              ← 本文件
 ├── agents/openai.yaml           ← OpenAI/Codex 接入：显示名与默认提示词
-├── evals/evals.json             ← 行为评测用例（分流、契约、导出、QA）
+├── evals/
+│   ├── evals.json               ← 行为评测用例（分流、契约、导出、QA）
+│   └── visual-baseline/         ← 渲染基准图 + render.py（说明见该目录 README）
 ├── assets/
 │   ├── gallery/                 ← 成图预览 PNG
 │   ├── chart-atlas/             ← 图型分类预览 PNG
@@ -115,6 +117,9 @@ def save_pub_py(fig, filename, dpi=600):
     fig.savefig(f"{filename}.tiff", dpi=dpi, bbox_inches="tight")
     plt.close(fig)
 ```
+
+> `save_pub_py` 是单文件便捷版；**正本是 `references/api.md` 里的 `save_pub_set(fig, out_dir, stem)`**
+> ——一次导出 SVG + PDF + TIFF 三件套。整套图请统一用正本，避免各图 dpi 与格式漂移。
 
 R 侧的 `save_pub_r()` 模板见 `references/r-workflow.md`。
 

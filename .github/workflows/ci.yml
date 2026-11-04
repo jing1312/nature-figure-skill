@@ -43,4 +43,16 @@ jobs:
       - name: Dump template SVGs
         run: node scripts/dump-templates.js
       - name: SVG well-formedness (assets + templates)
-        run: python3 scripts/check-svg.py .tmp/template-svg assets
+        run: python3 scripts/check-svg.py .tmp/template-svg assets skills/nature-figure/evals/visual-baseline
+
+  visual-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install plotting stack
+        run: pip install --quiet matplotlib numpy
+      - name: api.md blocks execute + baseline invariants hold
+        run: python3 skills/nature-figure/evals/visual-baseline/render.py --check

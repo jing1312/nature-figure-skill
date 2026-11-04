@@ -4,6 +4,42 @@ Conventions, constants, and reusable code blocks. Implement in your script or ad
 
 ---
 
+## Preamble — paste this first
+
+Every snippet below assumes these imports and the publication style are already in place.
+The blocks in this file are **not** standalone: they reference `plt`, `np` and `mpl`.
+
+```python
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+
+# Then paste the helper you need from this file and call it once, e.g.
+#   apply_publication_style()   # 7 pt type, 0.8 pt axes — Nature double column
+#
+# Type scale is FINAL PRINT SIZE in points.
+# Nature double column (183 mm wide): body text 5-7 pt, axis labels 6-7 pt, panel letters 7-8 pt.
+# 16-24 pt is slide-deck size and will look oversized once the figure is scaled to 183 mm.
+```
+
+---
+
+## Type scale rule
+
+| Context | Final-size pt |
+| --- | --- |
+| Tick labels, axis titles | 5–7 |
+| Panel letters (a, b, c) | 7–8 |
+| Legend text | 6–7 |
+| Inline stat strip | 6–7 |
+| Slide / poster figure (not for print) | 12–16 |
+
+Never hard-code 16 or 24 as a "publication" default. If a panel really needs larger type
+(a full-page figure), scale the canvas with it — a 90 mm single-column panel at 7 pt is
+still 7 pt in the final PDF.
+
+---
+
 ## Constants
 
 ### PALETTE
@@ -136,6 +172,9 @@ These three lines are **non-negotiable** and must appear at the top of every scr
 before any figure is created. They guarantee editable text in SVG output:
 
 ```python
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'Liberation Sans']
 plt.rcParams['svg.fonttype'] = 'none'   # keeps text as <text> nodes, not paths
@@ -154,8 +193,12 @@ exports. Never use `.png` alone when the figure contains text that may need adju
 ## apply_publication_style()
 
 ```python
-def apply_publication_style(font_size=16, axes_linewidth=2.5, use_tex=False):
-    """Apply Nature-style rcParams. Call once before creating any figures."""
+def apply_publication_style(font_size=7, axes_linewidth=0.8, use_tex=False):
+    """Apply Nature-style rcParams. Call once before creating any figures.
+
+    Defaults target a 183 mm (double-column) final figure: 7 pt type, 0.8 pt axes.
+    Pass a larger size only when the canvas itself is larger (slide, poster).
+    """
     # ── MANDATORY: editable SVG text ──────────────────────────────────────────
     plt.rcParams['font.family'] = 'sans-serif'
     plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'Liberation Sans']
@@ -170,10 +213,11 @@ def apply_publication_style(font_size=16, axes_linewidth=2.5, use_tex=False):
         plt.rcParams['text.usetex'] = True
 ```
 
-**Presets:**
-- Large bar panels: `apply_publication_style(font_size=24, axes_linewidth=3)`
-- Compact figures: `apply_publication_style(font_size=15, axes_linewidth=2)`
-- Dense journal-width multi-panels: `apply_publication_style(font_size=8, axes_linewidth=1)`
+**Presets** (all values are final print size in pt):
+- Journal double column (183 mm) — **the default**: `apply_publication_style()` → 7 pt / 0.8
+- Journal single column (89 mm): `apply_publication_style(font_size=6, axes_linewidth=0.6)`
+- Dense multi-panel page: `apply_publication_style(font_size=5.5, axes_linewidth=0.6)`
+- Slide / poster figure (canvas scaled up too): `apply_publication_style(font_size=12, axes_linewidth=1.2)`
 - LaTeX labels: `apply_publication_style(use_tex=True)`
 
 ---
@@ -193,9 +237,15 @@ def is_dark(hex_color, threshold=128):
 ## add_panel_label(ax, label, ...)
 
 ```python
-def add_panel_label(ax, label, x=-0.06, y=1.02, fontsize=14,
+def add_panel_label(ax, label, x=-0.06, y=1.02, fontsize=None,
                     color='black', fontweight='bold'):
-    """Place a Nature-style panel label near the top-left edge."""
+    """Place a Nature-style panel label near the top-left edge.
+
+    fontsize=None follows the active type scale (rcParams['font.size'] * 1.15),
+    so panel letters stay consistent with the rest of the figure.
+    """
+    if fontsize is None:
+        fontsize = mpl.rcParams['font.size'] * 1.15
     ax.text(
         x, y, label,
         transform=ax.transAxes,
@@ -258,7 +308,7 @@ def style_dark_image_ax(ax, facecolor='black'):
 def make_grouped_bar(ax, categories, series, labels,
                      ylabel='Value', colors=None,
                      annotate=False, bar_width=0.8,
-                     error_kw=None):
+                     error_kw=None, legend=True, legend_outside=True):
     """
     Grouped bar chart.
 
@@ -274,6 +324,9 @@ def make_grouped_bar(ax, categories, series, labels,
     annotate   : bool  — print value above each bar
     bar_width  : float — total width for all bars in one category
     error_kw   : dict  — passed to ax.bar as error_kw
+    legend         : bool  — draw a legend at all
+    legend_outside : bool  — place the legend outside the axes (default). Set False
+                        only when the panel has genuinely empty space inside.
 
     Returns
     -------
@@ -283,7 +336,8 @@ def make_grouped_bar(ax, categories, series, labels,
     if colors is None:
         colors = DEFAULT_COLORS
     if error_kw is None:
-        error_kw = {'elinewidth': 2, 'capthick': 2, 'capsize': 10}
+        lw = mpl.rcParams['axes.linewidth']
+        error_kw = {'elinewidth': max(0.6, lw), 'capthick': max(0.6, lw), 'capsize': 2.5}
     n_groups = len(series)
     n_cats = len(categories)
     w = bar_width / n_groups
@@ -292,18 +346,23 @@ def make_grouped_bar(ax, categories, series, labels,
     for i, (vals, label, color) in enumerate(zip(series, labels, colors)):
         offset = (i - (n_groups - 1) / 2) * w
         bars = ax.bar(x + offset, vals, width=w, label=label,
-                      color=color, edgecolor='black', linewidth=1.5,
+                      color=color, edgecolor='none',
                       error_kw=error_kw)
         containers.append(bars)
         if annotate:
             for bar, val in zip(bars, vals):
                 ax.text(bar.get_x() + bar.get_width() / 2,
                         bar.get_height() + 0.01,
-                        f'{val:.2f}', ha='center', va='bottom', fontsize=10)
+                        f'{val:.2f}', ha='center', va='bottom',
+                        fontsize=mpl.rcParams['font.size'] * 0.9)
     ax.set_xticks(x)
     ax.set_xticklabels(categories)
     ax.set_ylabel(ylabel)
-    ax.legend()
+    if legend:
+        if legend_outside:
+            ax.legend(loc='upper left', bbox_to_anchor=(1.02, 1.0), borderaxespad=0)
+        else:
+            ax.legend(loc='upper left', frameon=False)
     return containers
 ```
 
@@ -315,7 +374,8 @@ def make_grouped_bar(ax, categories, series, labels,
 def make_trend(ax, x, y_series, labels,
                colors=None, ylabel=None, xlabel=None,
                show_shadow=False, shadow_alpha=0.15,
-               lw=2.5, marker='o', markersize=8):
+               lw=1.6, marker='o', markersize=4,
+               legend=True, legend_outside=True):
     """
     Multi-line trend plot.
 
@@ -325,6 +385,8 @@ def make_trend(ax, x, y_series, labels,
     y_series : list[array]  — one 1D array per line
     labels   : list[str]
     show_shadow : bool  — fill_between ± std if y_series contains 2D arrays (rows=runs)
+    legend_outside : bool  — legend outside the axes by default, so it can never
+                        cover the data (a hard rule of this skill).
     """
     import numpy as np
     if colors is None:
@@ -344,7 +406,11 @@ def make_trend(ax, x, y_series, labels,
         ax.set_ylabel(ylabel)
     if xlabel:
         ax.set_xlabel(xlabel)
-    ax.legend()
+    if legend:
+        if legend_outside:
+            ax.legend(loc='upper left', bbox_to_anchor=(1.02, 1.0), borderaxespad=0)
+        else:
+            ax.legend(loc='upper left', frameon=False)
 ```
 
 ---
@@ -416,20 +482,76 @@ def make_heatmap(ax, matrix, x_labels=None, y_labels=None,
 
 ---
 
-## finalize_figure(fig, out_path, ...)
+## save_pub_set(fig, out_dir, stem, ...) — the canonical export
+
+This is the **single canonical export helper** of the skill. It writes the full
+submission bundle for one figure: editable SVG (primary), TrueType-embedded PDF, and a
+600 dpi TIFF. Use it everywhere; `save_pub_figure` below is the single-file variant.
 
 ```python
-def finalize_figure(fig, out_path, formats=None, dpi=300,
-                    pad=2, bbox_inches=None, close=True):
+def save_pub_set(fig, out_dir, stem, formats=('svg', 'pdf', 'tiff'), dpi=600,
+                 bbox_inches='tight', close=True):
     """
-    Apply tight_layout and save figure.
+    Export one figure as a submission-grade file set.
+
+    Parameters
+    ----------
+    fig      : matplotlib Figure
+    out_dir : str | Path — target directory (created if missing)
+    stem    : str          — file stem, e.g. 'figure-01'
+    formats : tuple        — subset of ('svg', 'pdf', 'tiff', 'png')
+    dpi     : int          — raster dpi (600 for line art and dense panels)
+    bbox_inches : str|None — 'tight' keeps the frameless stat strip and panel
+                             labels; use None only if you manage margins yourself.
+
+    Returns
+    -------
+    list[str] — saved file paths, in order
+    """
+    import os
+    from pathlib import Path
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    saved = []
+    for fmt in formats:
+        p = str(out / f'{stem}.{fmt}')
+        kw = {}
+        if fmt in ('svg', 'pdf', 'tiff', 'png') and bbox_inches:
+            kw['bbox_inches'] = bbox_inches
+        fig.savefig(p, dpi=dpi, **kw)
+        saved.append(p)
+    if close:
+        plt.close(fig)
+    return saved
+```
+
+Example:
+
+```python no-run
+save_pub_set(fig, out_dir='figures', stem='figure-01')      # svg + pdf + tiff
+save_pub_set(fig, out_dir='figures', stem='figure-02', formats=('svg', 'pdf'))
+```
+
+---
+
+## save_pub_figure(fig, out_path, ...)
+
+Single-file export with an explicit extension. `finalize_figure` is kept as an alias
+for older scripts.
+
+```python
+def save_pub_figure(fig, out_path, formats=None, dpi=600,
+                     pad=2, bbox_inches='tight', close=True):
+    """
+    Apply tight_layout and save one figure.
 
     Parameters
     ----------
     out_path : str   — path without extension, or with extension
     formats  : list  — e.g. ['png', 'pdf']. If None, uses extension of out_path.
-    dpi      : int   — 300 standard, 600 for dense bar panels
+    dpi      : int   — 600 for line art, 300 is enough for photographic panels
     pad      : float — tight_layout pad (2 default, 1 for compact multi-panel)
+    bbox_inches : str|None — 'tight' preserves the stat strip and panel labels
     """
     import os
     from pathlib import Path
@@ -450,28 +572,41 @@ def finalize_figure(fig, out_path, formats=None, dpi=300,
     if close:
         plt.close(fig)
     return saved
+
+
+finalize_figure = save_pub_figure   # backward-compatible alias
 ```
 
 ---
+
+## Headless / server rendering
+
+```python
+import matplotlib
+matplotlib.use('Agg')          # no display needed; must come before pyplot
+import matplotlib.pyplot as plt
+```
 
 ## Validation Rules
 
 - `make_grouped_bar`: `len(categories)` must equal length of each array in `series`.
 - `make_trend`: each array in `y_series` must have same length as `x`.
 - `make_heatmap`: `matrix` must be 2D; `x_labels` length = `matrix.shape[1]`; `y_labels` length = `matrix.shape[0]`.
-- `finalize_figure`: supported formats — `png`, `pdf`, `svg`, `eps`, `jpg`, `tif`.
+- `save_pub_set`: supported formats — `svg`, `pdf`, `tiff`, `png`.
 
 ---
 
 ## Conventions
 
-- Save outputs under `./figures/` (or path given by user); `finalize_figure` creates parent dirs.
+- Save outputs under `./figures/` (or path given by user); `save_pub_set` and `save_pub_figure` create parent dirs.
 - In headless / batch runs, set non-interactive backend before importing pyplot:
-  ```python
-  import matplotlib
-  matplotlib.use('Agg')
-  import matplotlib.pyplot as plt
-  ```
-- Always `plt.close(fig)` after saving to free memory.
+
+```python
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+```
+
+- Always `plt.close(fig)` after saving to free memory (`save_pub_set` does it for you).
 - For multi-panel figures, prefer one baseline family plus one hero family; reserve green/red for delta cues.
 - When color roles, resolution, or layout are underspecified and would change the figure, confirm with user before finalizing.

@@ -80,17 +80,14 @@ When the user asks for multiple separate plots, build a shared plotting contract
 Use consistent file stems and identical export settings so the figures still read as one manuscript set.
 
 ```python
-def save_pub_set(fig, out_dir, stem, dpi=600):
-    out_dir.mkdir(exist_ok=True)
-    fig.savefig(out_dir / f'{stem}.svg', bbox_inches='tight')
-    fig.savefig(out_dir / f'{stem}.pdf', bbox_inches='tight')
-    fig.savefig(out_dir / f'{stem}.png', dpi=dpi, bbox_inches='tight')
-    plt.close(fig)
+# Canonical export helper — full definition in references/api.md
+# Writes SVG (editable primary) + PDF (TrueType) + TIFF (600 dpi) per figure.
+from pathlib import Path
 
 for sample_id, sample_label in samples:
-    fig, ax = plt.subplots(figsize=(3.45, 3.2))
+    fig, ax = plt.subplots(figsize=(3.45, 3.2))   # 87 mm single column
     # draw one scientific question per output file
-    save_pub_set(fig, out_dir, f'{sample_id}_metric_name')
+    save_pub_set(fig, out_dir=Path('figures'), stem=f'{sample_id}_metric_name')
 ```
 
 Rules:
@@ -98,6 +95,8 @@ Rules:
 - Do not create a multi-panel page unless the user explicitly asks for a composite.
 - Reuse the same axis wording, statistic precision, legend placement, and colour semantics across all independent outputs.
 - Keep a CSV or TSV source table with the statistics used in titles, stat strips, and captions.
+- `save_pub_set()` is the only export helper to call; do not hand-roll a second `save_pub_*`
+  function in the script — that is how dpi and format drift between figures.
 
 ---
 

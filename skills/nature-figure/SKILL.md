@@ -116,18 +116,21 @@ mpl.rcParams.update({
     "font.sans-serif": ["Arial", "Helvetica", "DejaVu Sans", "sans-serif"],
     "svg.fonttype": "none",     # editable text in SVG
     "pdf.fonttype": 42,         # editable TrueType text in PDF
-    "font.size": 7,             # use 15-24 only for large slide-sized panels
+    "font.size": 7,             # FINAL print size in pt; 15-24 only for slide-sized panels
     "axes.spines.right": False,
     "axes.spines.top": False,
     "axes.linewidth": 0.8,
     "legend.frameon": False,
 })
 
-def save_pub_py(fig, filename, dpi=600):
-    fig.savefig(f"{filename}.svg", bbox_inches="tight")
-    fig.savefig(f"{filename}.pdf", bbox_inches="tight")
-    fig.savefig(f"{filename}.tiff", dpi=dpi, bbox_inches="tight")
+# Canonical export helper — full definition in references/api.md.
+# Writes the submission bundle for one figure: editable SVG + TrueType PDF + 600 dpi TIFF.
+save_pub_set(fig, out_dir='figures', stem='figure-01')
 ```
+
+Type sizes here are **final print size in points**: a 183 mm double-column figure uses
+5–7 pt text. Never hard-code 16–24 pt as a "publication" default — that is slide-deck
+size and looks oversized once the figure is scaled to journal width.
 
 Use `text.usetex = True` only when LaTeX is installed and math-rich labels are required.
 

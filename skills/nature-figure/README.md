@@ -81,7 +81,8 @@ nature-figure/
 ├── agents/
 │   └── openai.yaml              ← OpenAI/Codex surface: display name, default prompt
 ├── evals/
-│   └── evals.json               ← behavioural eval cases (routing, contract, export, QA)
+│   ├── evals.json               ← behavioural eval cases (routing, contract, export, QA)
+│   └── visual-baseline/         ← rendered reference figure + render.py (see its README)
 ├── assets/
 │   ├── gallery/                 ← result-figure preview PNGs
 │   ├── chart-atlas/             ← chart-type taxonomy preview PNGs
