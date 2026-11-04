@@ -90,6 +90,23 @@ The agent should load `nature-figure`, define the figure contract, ask for Pytho
 or R if needed, and use `references/figure-selection.md` when the chart type is
 unclear.
 
+A no-code request ("just show me a layout", "I don't want to write code") should
+route to the FigureForge editor instead of asking for a backend.
+
+### Optional: run the repo self-checks locally
+
+The same zero-dependency gates CI runs can be run locally — useful after editing
+skills, references, templates, or docs:
+
+```bash
+node scripts/check-templates.js                          # 22 templates + palettes
+node scripts/check-repo.js                               # skill metadata, evals schema, doc links
+node scripts/dump-templates.js                           # export the 22 template SVGs
+python3 scripts/check-svg.py .tmp/template-svg assets     # real XML parse of every SVG
+```
+
+`python3` may be `python` on Windows. Everything should end with "all … passed".
+
 ## Common mistakes
 
 - Do not copy only `skills/nature-figure/SKILL.md`; copy or link the whole folder.
