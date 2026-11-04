@@ -32,6 +32,94 @@
         }
       ],
       "files": []
+    },
+    {
+      "id": "route-nocode-to-figureforge",
+      "prompt": "我不太会写代码，能不能给我一个能拖拽的模板？我想先看看整体排版效果，数据我自己后面填。",
+      "expected_output": "The assistant should route the request to the FigureForge browser editor instead of asking \"Python or R?\" or starting a script: point the user to the online editor, name the available assets (22 publication-grade templates, 16 curated palettes, 9 atlases / 83 panels, drag-to-arrange canvas, one-line AI generation), and explain that FigureForge covers layout design and final tweaking while a reproducible scriptable pipeline belongs to the Python/R track.",
+      "assertions": [
+        {
+          "name": "figureforge_routed",
+          "description": "The response directs the user to the FigureForge browser editor and describes what it offers, instead of only talking about Python/R."
+        },
+        {
+          "name": "no_backend_gate_on_nocode_request",
+          "description": "The assistant does not demand a \"Python or R?\" choice for a no-code / drag-and-drop request."
+        },
+        {
+          "name": "code_track_offered_when_needed",
+          "description": "The response notes that batch regeneration, parameter sweeps, or journal-spec exports still require the scripted track."
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": "figure-contract-before-plotting",
+      "prompt": "帮我做一张能投 Nature 风格的三组处理对比图。",
+      "expected_output": "The assistant must first ask the concise backend question \"Python or R?\" and wait, without writing scripts or generating mock data. It should also state the figure contract it will establish before plotting: the one-sentence core conclusion, the evidence chain / panel map, the archetype classification, and the journal-export requirements.",
+      "assertions": [
+        {
+          "name": "backend_asked_first",
+          "description": "The assistant asks \"Python or R?\" and stops before producing any script, mock data, or figure."
+        },
+        {
+          "name": "contract_outlined",
+          "description": "The response names the contract elements: core conclusion, evidence chain / panel map, archetype, and journal/export requirements."
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": "independent-export-no-silent-merge",
+      "prompt": "Use Python. I need three separate figures for my paper — a KM survival curve, an expression heatmap, and a correlation matrix — as Figure 1, Figure 2 and Figure 3. Please export the submission files.",
+      "expected_output": "Each figure must be exported as its own primary SVG plus PDF/TIFF companions with no silent merging into one composite page, and the three figures must share typography, axis wording, color semantics and statistic formatting. The response should use the independent figure-set export helper pattern.",
+      "assertions": [
+        {
+          "name": "no_silent_merge",
+          "description": "Three separate figure files are produced; they are not silently combined into a single composite page."
+        },
+        {
+          "name": "consistent_style_across_set",
+          "description": "The response states or applies shared typography, color semantics, axis wording and statistic formatting across the set."
+        },
+        {
+          "name": "editable_primary_export",
+          "description": "Each figure gets an editable SVG primary file plus PDF/TIFF companions with the requested dpi."
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": "qa-contract-before-delivery",
+      "prompt": "Use Python. This figure set is ready — can it go to submission? Please run the final check.",
+      "expected_output": "Before declaring the set ready, the assistant opens the QA contract and checks the concrete pre-delivery items (resolution/dpi, font sizes and legibility at final column width, legend and annotation placement, statistics and n reporting, colorblind/greyscale safety, source-data traceability), then reports pass/fail per item rather than asserting readiness.",
+      "assertions": [
+        {
+          "name": "qa_contract_applied",
+          "description": "The assistant applies the QA contract items (dpi/resolution, font size, legend placement, statistics/n, colorblind safety, source data) rather than giving a generic \"looks good\"."
+        },
+        {
+          "name": "per_item_verdict",
+          "description": "The response reports item-by-item findings and names any remaining fix instead of claiming the set is submission-ready without checks."
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": "atlas-reuse-before-coding",
+      "prompt": "Use Python. Make a radar chart comparing four treatment arms in Nature style.",
+      "expected_output": "Before writing new plotting code, the assistant checks the bundled atlas gallery / chart-types references for an existing radar panel and reuses its geometry, palette and QA rules, falling back to custom code only when no panel fits.",
+      "assertions": [
+        {
+          "name": "atlas_checked_first",
+          "description": "The assistant consults the bundled atlas gallery or chart-types reference before inventing a layout from scratch."
+        },
+        {
+          "name": "reuse_or_justify",
+          "description": "The response reuses an existing panel's geometry/palette, or explains why no bundled panel fits."
+        }
+      ],
+      "files": []
     }
   ]
 }

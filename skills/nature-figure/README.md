@@ -96,6 +96,20 @@ nature-figure/
 
 ---
 
+## Two routes: FigureForge or the scripted pipeline
+
+| If the user wants… | Route |
+| --- | --- |
+| A drag-and-drop template, a quick layout preview, no code, or "I'll fill in the data myself" | **FigureForge** — the browser editor in [`figureforge/`](../../figureforge/): 22 publication-grade templates, 16 curated palettes, 9 atlases / 83 panels, canvas arrangement, one-line AI generation, SVG / PNG / TIFF / PDF / PPTX export. Live at [jing1312.github.io/nature-figure-skill/figureforge/](https://jing1312.github.io/nature-figure-skill/figureforge/) |
+| A script, batch/loop output, reproducible data-to-figure pipeline, or journal-spec exports | **This skill** — Python or R, contract-first |
+
+The agent triages the route before anything else. A no-code request must **not** trigger the
+"Python or R?" question; that gate belongs to the scripted track. FigureForge covers layout
+design and final tweaking — the scripted track is still needed for batch regeneration,
+parameter sweeps, and reproducible exports.
+
+---
+
 ## Backend and contract rules
 
 Ask the user to choose **Python or R** unless the backend is already specified.

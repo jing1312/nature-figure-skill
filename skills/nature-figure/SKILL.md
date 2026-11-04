@@ -1,7 +1,13 @@
 ---
 name: nature-figure
 description: >-
-  Submission-grade Nature/high-impact journal figure workflow for Python or R. Use whenever the user asks to create, revise, audit, or polish manuscript figures, multi-panel scientific plots, figures4papers-style matplotlib plots, chart-family recommendations, or journal-ready SVG/PDF/TIFF outputs, especially for Nature-family or other high-impact journals. Before plotting, define the figure's conclusion, evidence logic, export needs, and review risks. If the user has not chosen Python or R, ask "Python or R?" and stop. Use only the selected backend for figure generation, previewing, exporting, and QA. Supports matplotlib/seaborn and ggplot2/patchwork/ComplexHeatmap. Not for dashboards or Illustrator/Figma-first infographics.
+  Submission-grade Nature/high-impact journal figure workflow. Use whenever the user asks to create,
+  revise, audit, or polish manuscript figures, multi-panel scientific plots, figures4papers-style
+  matplotlib plots, chart-family recommendations, or journal-ready SVG/PDF/TIFF outputs, especially
+  for Nature-family or other high-impact journals. Route no-code / drag-and-drop / "just show me the
+  layout" requests to the FigureForge browser editor; otherwise ask "Python or R?" and stop, then use
+  only that backend for drawing, previewing, exporting, and QA. Supports matplotlib/seaborn and
+  ggplot2/patchwork/ComplexHeatmap. Not for interactive dashboards or Illustrator/Figma-first infographics.
 ---
 
 # Nature Figure Making Skill
@@ -13,6 +19,10 @@ review-risk check before code or aesthetics.
 If the user does not yet know which chart family fits the task, start with
 `references/figure-selection.md` before moving into backend-specific plotting.
 
+This skill covers two routes to the same destination: the no-code **FigureForge** browser
+editor (`figureforge/`, 22 publication-grade templates / 16 palettes / 83 atlas panels) and the
+scripted **Python / R** pipeline. Triage the route first — see the routing table below.
+
 The older Python/matplotlib rules in this skill remain valid. The skill now also supports
 R, especially `ggplot2 + patchwork + ComplexHeatmap + ggrepel + svglite/cairo_pdf + ragg`.
 If the user provides a private plotting template collection, use it only as an internal
@@ -21,6 +31,23 @@ adaptation source and do not reveal its path, filenames, or provenance in user-f
 Color policy: prefer **unified method families across all panels** over maximal hue separation.
 For dense Nature Machine Intelligence-style figure pages, use the low-saturation `NMI pastel`
 family described in `references/api.md` and reserve green/red mainly for gains, drops, and other directional cues.
+
+## Route triage: FigureForge or code?
+
+Two routes, one destination. Decide the route **before** any contract, script, or question.
+
+| Signal in the request | Route |
+| --- | --- |
+| "I don't want to write code", "drag", "click a template", "just show me the layout first", "quick prototype", "I'll plug in my own data" | **FigureForge** — the browser editor in `figureforge/` |
+| "write me a script", "reproduce this figure", "batch / loop over samples", "my data is in a CSV", "match the journal spec", "iterate in Python or R" | **Code track** — the rest of this skill |
+
+**FigureForge route rules.**
+- Do **not** ask "Python or R?" for a FigureForge request — the backend gate belongs to the code track only.
+- FigureForge gives you 22 publication-grade templates, 16 curated palettes, 9 atlases / 83 ready-made panels, a drag-to-arrange canvas, one-line AI generation, and SVG / PNG / TIFF / PDF / PPTX export, at `https://jing1312.github.io/nature-figure-skill/figureforge/`.
+- It covers **layout design** and **final tweaking**. If the user still needs a reproducible scriptable pipeline (batch regeneration, parameter sweeps, journal-spec exports), move to the code track and say why.
+- Chart-family and palette rules below still apply to which template or panel you pick there.
+
+**Code track rules.** Everything from this point on assumes the code track.
 
 ## First move: figure contract before plotting
 
@@ -57,8 +84,8 @@ with the recommended backend.
    a unique piece of evidence.
 3. Archetype: classify the figure as `quantitative grid`, `schematic-led composite`,
    `image plate + quant`, or `asymmetric mixed-modality figure`.
-4. Backend: use the selected Python or R track exclusively for all figure drawing,
-   previewing, exporting, and visual QA. Do not cross-render with the other language.
+4. Backend: the selected Python or R track is exclusive for all figure drawing, previewing,
+   exporting, and visual QA — never cross-render with the other language.
 5. Journal/export contract: set final dimensions, editable text, source data, statistics,
    image-integrity notes, and export formats before styling.
 
@@ -77,13 +104,8 @@ file when the user explicitly asks for that audit trail.
 
 ## Python quick-start
 
-**Python-only execution rule.** When the user has selected Python, do all figure
-drawing, previewing, exporting, and visual QA in Python. Do not call R/ggplot2,
-ComplexHeatmap, patchwork, or any R graphics device to create a temporary preview,
-fallback export, or layout approximation. If Python or required Python plotting
-packages are missing, stop before rendering and report the missing dependency. You
-may still write the Python script, provide `pip`/environment install commands, or
-ask permission to install dependencies, but do not cross-render the figure in R.
+All drawing, previewing, exporting, and visual QA for this track must happen in Python —
+see the backend gate above.
 
 ```python
 import matplotlib as mpl
@@ -147,6 +169,7 @@ save_pub_r <- function(plot, filename, width_mm = 183, height_mm = 120, dpi = 60
 
 - Start by classifying the requested figure into one of four archetypes:
   `quantitative grid`, `schematic-led composite`, `image plate + quant`, or `asymmetric mixed-modality figure`.
+- **Look before you build**: check `references/atlas-gallery.md` and `references/chart-types.md` first — the repo ships 9 atlases / 83 ready-made panels (bars, heatmaps, radar/polar, distributions, forest/interval, areas, image plates, network/matrix, and the Pro/Bio/Extra/Plus/Ultra/Max/Nova/Apex sets). When a panel already matches the requested figure family, reuse its geometry, palette and QA rules instead of reinventing the layout from scratch.
 - Prefer one **hero panel** plus subordinate evidence panels over filling the canvas with equal-sized subplots.
 - If the user asks for a single chart, still identify its role in the manuscript claim:
   discovery, mechanism, validation, comparison, robustness, or clinical/biological relevance.
@@ -187,19 +210,19 @@ save_pub_r <- function(plot, filename, width_mm = 183, height_mm = 120, dpi = 60
 
 ## Related files
 
-| File | Open when |
-|------|-----------|
-| [references/figure-selection.md](references/figure-selection.md) | Need to choose a chart family from a paper, slide, or report goal before plotting |
-| [references/figure-contract.md](references/figure-contract.md) | Need to convert a user request into core conclusion, evidence hierarchy, panel map, and review-risk checks |
-| [references/backend-selection.md](references/backend-selection.md) | User has not chosen Python/R, asks for a recommendation, or a mixed Python/R workflow is possible |
-| [references/r-workflow.md](references/r-workflow.md) | User chooses R or provides R scripts/templates/data |
-| [references/r-template-index.md](references/r-template-index.md) | Need to adapt a user-provided or private R template collection without exposing source paths |
-| [references/qa-contract.md](references/qa-contract.md) | Before final delivery, revision package, microscopy/blot figure, or journal-specific audit |
-| [references/design-theory.md](references/design-theory.md) | Typography, color theory, layout rationale, export policy |
-| [references/api.md](references/api.md) | Python PALETTE, helper function signatures, validation rules |
-| [references/common-patterns.md](references/common-patterns.md) | Python layout patterns: hero panels, legend-only axes, dark image plates, asymmetric layouts |
-| [references/nature-2026-observations.md](references/nature-2026-observations.md) | Real `Nature` page archetypes: schematic-led composites, dark image plates, clinical triptychs, asymmetric hero layouts |
-| [references/tutorials.md](references/tutorials.md) | End-to-end walkthroughs: bars, trends, heatmaps |
-| [references/chart-types.md](references/chart-types.md) | Radar, 3D sphere, fill_between, scatter patterns |
-| [references/atlas-gallery.md](references/atlas-gallery.md) | Choosing from the 83 bundled showcase panels, or reusing atlas slot geometry / jewel-pastel palette / QA rules in a generator |
-| [references/demos.md](references/demos.md) | Bundled figures4papers Python scripts and output previews for concrete pattern adaptation |
+| File | Open when | Typical trigger |
+|------|-----------|-----------------|
+| [references/figure-selection.md](references/figure-selection.md) | Need to choose a chart family from a paper, slide, or report goal before plotting | "这组数据该画什么图？" |
+| [references/figure-contract.md](references/figure-contract.md) | Need to convert a user request into core conclusion, evidence hierarchy, panel map, and review-risk checks | "帮我做一张能投 Nature 的图" |
+| [references/atlas-gallery.md](references/atlas-gallery.md) | Need to choose from the 83 bundled showcase panels, or reuse atlas slot geometry / jewel-pastel palette / QA rules in a generator | "有没有现成的版式可以直接用" |
+| [references/backend-selection.md](references/backend-selection.md) | User has not chosen Python/R, asks for a recommendation, or a mixed Python/R workflow is possible | "Python 和 R 你帮我选" |
+| [references/r-workflow.md](references/r-workflow.md) | User chooses R or provides R scripts/templates/data | "用 R 画" |
+| [references/r-template-index.md](references/r-template-index.md) | Need to adapt a user-provided or private R template collection without exposing source paths | 用户给了自己的 R 模板库 |
+| [references/qa-contract.md](references/qa-contract.md) | Before final delivery, revision package, microscopy/blot figure, or journal-specific audit | "这组图能投了吗 / 帮我做投稿前检查" |
+| [references/design-theory.md](references/design-theory.md) | Typography, color theory, layout rationale, export policy | "字号多大 / 配色怎么定 / 为什么这样排" |
+| [references/api.md](references/api.md) | Python PALETTE, helper function signatures, validation rules | 写 Python 代码前查调色板与 helper |
+| [references/common-patterns.md](references/common-patterns.md) | Python layout patterns: hero panels, legend-only axes, dark image plates, asymmetric layouts | "多面板怎么排才不像拼盘" |
+| [references/nature-2026-observations.md](references/nature-2026-observations.md) | Real `Nature` page archetypes: schematic-led composites, dark image plates, clinical triptychs, asymmetric hero layouts | "照 Nature 正刊的版式做" |
+| [references/tutorials.md](references/tutorials.md) | End-to-end walkthroughs: bars, trends, heatmaps | "给我一个完整可跑的端到端例子" |
+| [references/chart-types.md](references/chart-types.md) | Radar, 3D sphere, fill_between, scatter patterns | "雷达图 / 3D / 置信带 怎么画" |
+| [references/demos.md](references/demos.md) | Bundled figures4papers Python scripts and output previews for concrete pattern adaptation | "有没有现成脚本可以改" |
