@@ -120,6 +120,38 @@
         }
       ],
       "files": []
+    },
+    {
+      "id": "type-scale-is-final-print-size",
+      "prompt": "Use Python. Make a two-panel Nature-style figure for a 183 mm double-column journal page.",
+      "expected_output": "The script sets the type scale to final print size: 5-7 pt text for ticks and axis titles, 7-8 pt panel letters, axes linewidth around 0.8 pt, on a 183 mm canvas. It must not use a 16-24 pt default, and it should reuse apply_publication_style() from references/api.md.",
+      "assertions": [
+        {
+          "name": "print_size_type_scale",
+          "description": "Font sizes are set in the 5-8 pt final-print range on a 183 mm canvas, not 16-24 pt."
+        },
+        {
+          "name": "canonical_style_helper_used",
+          "description": "The script applies the publication style defaults (svg.fonttype='none', frameless legend, thin axes) from references/api.md."
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": "legend-outside-and-single-export-helper",
+      "prompt": "Use Python. Make a grouped bar chart and a survival-style trend chart for the same manuscript, then export them for submission.",
+      "expected_output": "Both panels place the legend outside the axes (or use direct labels) so nothing covers the data, and every figure is exported through the same save_pub_set(fig, out_dir, stem) helper producing SVG + PDF + TIFF with identical styling across the set. No second ad-hoc save_pub_* function is defined in the script.",
+      "assertions": [
+        {
+          "name": "legend_not_over_data",
+          "description": "Legends are placed outside the plotting area; statistics use a frameless strip above the axes if shown at all."
+        },
+        {
+          "name": "single_export_helper",
+          "description": "Both figures are exported with the canonical save_pub_set helper (svg + pdf + tiff), with shared styling across the set."
+        }
+      ],
+      "files": []
     }
   ]
 }

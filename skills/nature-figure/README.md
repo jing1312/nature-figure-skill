@@ -136,6 +136,28 @@ script owns the data and the submission bundle.
 
 ---
 
+## Three hard rules (never trade these away)
+
+**① Type scale is FINAL PRINT SIZE, in points.**
+A 183 mm double-column figure uses 5–7 pt text (axis titles 6–7 pt, panel letters 7–8 pt),
+axes linewidth ≈ 0.8 pt. Never ship a 16–24 pt default — that is slide-deck size; once the
+canvas is scaled to journal width it crops axis titles, overlaps legends and collides tick
+labels. Start from `apply_publication_style()` in `references/api.md` (7 pt / 0.8 pt). A
+rendered reference of the defaults lives in `evals/visual-baseline/` — re-render and look
+at it whenever you change them.
+
+**② Legends and stat blocks never sit on top of data.**
+Use the helper defaults (`make_trend`, `make_grouped_bar` place the legend outside the axes);
+statistics go into a frameless strip above the plotting area (`add_stat_strip`). Only allow an
+inside legend when the panel is genuinely empty.
+
+**③ One export helper, one file set.**
+Export every figure with `save_pub_set(fig, out_dir, stem)` from `references/api.md` —
+editable SVG (primary) + TrueType PDF + 600 dpi TIFF. Do not hand-roll a second
+`save_pub_*` in the script: that is how dpi and formats drift apart inside one manuscript set.
+
+---
+
 ## Backend and contract rules
 
 Ask the user to choose **Python or R** unless the backend is already specified.
